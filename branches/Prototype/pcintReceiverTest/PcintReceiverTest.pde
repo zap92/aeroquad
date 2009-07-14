@@ -1,23 +1,4 @@
 #include "pins_arduino.h"
-/*
- * an extension to the interrupt support for arduino.
- * add pin change interrupts to the external interrupts, giving a way
- * for users to have interrupts drive off of any pin.
- * Refer to avr-gcc header files, arduino source and atmega datasheet.
- */
-
-/*
- * Theory: all IO pins on Atmega168 are covered by Pin Change Interrupts.
- * The PCINT corresponding to the pin must be enabled and masked, and
- * an ISR routine provided.  Since PCINTs are per port, not per pin, the ISR
- * must use some logic to actually implement a per-pin interrupt service.
- */
-
-/* Pin to interrupt map:
- * D0-D7 = PCINT 16-23 = PCIR2 = PD = PCIE2 = pcmsk2
- * D8-D13 = PCINT 0-5 = PCIR0 = PB = PCIE0 = pcmsk0
- * A0-A5 (D14-D19) = PCINT 8-13 = PCIR1 = PC = PCIE1 = pcmsk1
- */
 
 volatile uint8_t *port_to_pcmask[] = {
   &PCMSK0,
@@ -36,11 +17,7 @@ typedef struct {
 
 volatile static pinTimingData pinData[24]; 
 
-/*
- * attach an interrupt to a specific pin using pin change interrupts.
- * First version only supports CHANGE mode.
- */
- void PCattachInterrupt(uint8_t pin) {
+void attachPinChangeInterrupt(uint8_t pin) {
   uint8_t bit = digitalPinToBitMask(pin);
   uint8_t port = digitalPinToPort(pin);
   uint8_t slot;
@@ -60,7 +37,7 @@ volatile static pinTimingData pinData[24];
   PCICR |= 0x01 << port;
 }
 
-void PCdetachInterrupt(uint8_t pin) {
+void detachPinChangeInterrupt(uint8_t pin) {
   uint8_t bit = digitalPinToBitMask(pin);
   uint8_t port = digitalPinToPort(pin);
   volatile uint8_t *pcmask;
@@ -82,9 +59,7 @@ void PCdetachInterrupt(uint8_t pin) {
   }
 }
 
-// common code for isr handler. "port" is the PCINT number.
-// there isn't really a good way to back-map ports and masks to pins.
-static void PCint(uint8_t port) {
+static void measurePulseWidthISR(uint8_t port) {
   uint8_t bit;
   uint8_t curr;
   uint8_t mask;
@@ -105,30 +80,25 @@ static void PCint(uint8_t port) {
     bit = 0x01 << i;
     if (bit & mask) {
       pin = port * 8 + i;
-      //Serial.print(pin, DEC); Serial.print(", ");
+      // for each pin changed, record time of change
       if (bit & PCintLast[port]) {
         pinData[pin].riseTime = currentTime;
-        //Serial.print("riseTime = ");
-        //Serial.println(pinData[pin].riseTime, DEC);
       }
       else {
         pinData[pin].fallTime = currentTime;
-        //Serial.print("fallTime = ");
-        //Serial.println(pinData[pin].fallTime, DEC);
       }
     }
   }
-  //Serial.println();
 }
 
 SIGNAL(PCINT0_vect) {
-  PCint(0);
+  measurePulseWidthISR(0);
 }
 SIGNAL(PCINT1_vect) {
-  PCint(1);
+  measurePulseWidthISR(1);
 }
 SIGNAL(PCINT2_vect) {
-  PCint(2);
+  measurePulseWidthISR(2);
 }
 
 #define ROLLPIN 2 
@@ -148,18 +118,17 @@ SIGNAL(PCINT2_vect) {
 #define MAXWIDTH 2050
 int receiverChannel[6] = {ROLLPIN, PITCHPIN, YAWPIN, THROTTLEPIN, MODEPIN, AUXPIN};
 int receiverPin[6] = {18, 21, 22, 20, 23, 0};
-volatile byte nextChannel = ROLL;
 
 unsigned long currentTime;
 unsigned long previousTime;
-byte channel = 0;
+byte channel;
 
 void setup()
 {
   Serial.begin(115200);
   for (channel = ROLL; channel < LASTCHANNEL; channel++) {
     pinMode(channel, INPUT);
-    PCattachInterrupt(receiverChannel[channel]);
+    attachPinChangeInterrupt(receiverChannel[channel]);
   }
   previousTime = millis();
 }
