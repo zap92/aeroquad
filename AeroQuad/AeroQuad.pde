@@ -69,9 +69,10 @@
 
 // ************************************************************
 // ********************** Setup AeroQuad **********************
-// ************************************************************
+// *******s*****************************************************
 void setup() {
   Serial.begin(BAUD);
+  Serial1.begin(BAUD);
   analogReference(EXTERNAL); // Current external ref is connected to 3.3V
   pinMode (LEDPIN, OUTPUT);
   
@@ -180,7 +181,7 @@ void loop () {
     // Apply low pass filter to sensor values and center around zero
     // Did not convert to engineering units, since will experiment to find P gain anyway
     for (axis = ROLL; axis < LASTAXIS; axis++) {
-      gyroADC[axis] = analogRead(gyroChannel[axis]) - gyroZero[axis];
+      gyroADC[axis] = (gyroInvert[axis] ? (1024 - analogRead(gyroChannel[axis])) : analogRead(gyroChannel[axis]))  - gyroZero[axis];
       accelADC[axis] = analogRead(accelChannel[axis]) - accelZero[axis];
     }
     // Compiler seems to like calculating this in separate loop better
@@ -198,7 +199,7 @@ void loop () {
     //flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroData[PITCH], atan2(accelData[PITCH], accelData[ZAXIS]), filterTermPitch, dt);
     analogInputTime = currentTime;
   } // End of analog input loop
-  
+
   // *********************** Flight Control Loop ************************
   if ((currentTime > controlLoopTime + 2) && (controlLoop == ON)) { // 500Hz
 
@@ -220,7 +221,7 @@ void loop () {
           levelAdjust[ROLL] = 0;
       }
     #endif
-    
+  
     // ************************ Heading Hold ***********************
     #ifdef HeadingHold
       heading = heading + (gyroData[YAW] * headingScaleFactor * dt);
@@ -237,11 +238,10 @@ void loop () {
     motorAxisCommand[PITCH] = updatePID(transmitterCommand[PITCH] - levelAdjust[PITCH], (gyroData[PITCH] * mMotorRate) + bMotorRate, &PID[PITCH]);
     #ifdef HeadingHold
       motorAxisCommand[YAW] = updatePID(commandedYaw, heading, &PID[YAW]);
+    #else
+    motorAxisCommand[YAW] = updatePID(transmitterCommand[YAW], (gyroData[YAW] * mMotorRate) + bMotorRate, &PID[YAW]);
     #endif
-    #ifndef HeadingHold
-      motorAxisCommand[YAW] = updatePID(transmitterCommand[YAW], (gyroData[YAW] * mMotorRate) + bMotorRate, &PID[YAW]);
-    #endif
-    
+  
     // ****************** Calculate Motor Commands *****************
     if (armed && safetyCheck) {
       #ifdef plusConfig
@@ -284,7 +284,7 @@ void loop () {
           motorCommand[motor] = MINCOMMAND;
       }
     }
-    
+
     // *********************** Command Motors **********************
     commandMotors();
     controlLoopTime = currentTime;
@@ -292,8 +292,11 @@ void loop () {
   
 // **************** Command & Telemetry Functions **************
   if ((currentTime > telemetryTime + 100) && (telemetryLoop == ON)) { // 10Hz    
-    readSerialCommand();
-    sendSerialTelemetry();
+    readSerialCommand(&Serial, &queryType);
+    readSerialCommand(&Serial1, &queryType1);
+    
+    sendSerialTelemetry(&Serial, &queryType);
+    sendSerialTelemetry(&Serial1, &queryType1);
     telemetryTime = currentTime;
   } // End of telemetry loop
   
@@ -307,11 +310,23 @@ void loop () {
 #endif
 
 // ****************** Fast Transfer Of Sensor Data ****************
-  if ((currentTime > (fastTelemetryTime + 5)) && (fastTransfer == ON)) { // 200Hz means up to 100Hz signal can be detected by FFT
-    printInt(21845); // Start word of 0x5555
-    for (axis = ROLL; axis < LASTAXIS; axis++) printInt(gyroADC[axis]);
-    for (axis = ROLL; axis < LASTAXIS; axis++) printInt(accelADC[axis]);
-    printInt(32767); // Stop word of 0x7FFF
-    fastTelemetryTime = currentTime;
+  if ((currentTime > (fastTelemetryTime + 5)))
+  {
+    // 200Hz means up to 100Hz signal can be detected by FFT
+    if (fastTransfer == ON) 
+    { 
+      printInt(21845, &Serial); // Start word of 0x5555
+      for (axis = ROLL; axis < LASTAXIS; axis++) printInt(gyroADC[axis], &Serial);
+      for (axis = ROLL; axis < LASTAXIS; axis++) printInt(accelADC[axis], &Serial);
+      printInt(32767, &Serial); // Stop word of 0x7FFF
+    }
+    if (fastTransfer1 == ON)
+    {
+      printInt(21845, &Serial1); // Start word of 0x5555
+      for (axis = ROLL; axis < LASTAXIS; axis++) printInt(gyroADC[axis], &Serial1);
+      for (axis = ROLL; axis < LASTAXIS; axis++) printInt(accelADC[axis], &Serial1);
+      printInt(32767, &Serial1); // Stop word of 0x7FFF
+    }
+      fastTelemetryTime = currentTime;
   }
 }

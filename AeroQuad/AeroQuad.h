@@ -46,11 +46,11 @@ int levelOff; // Read in from EEPROM
 // Camera stabilization variables
 // Note: stabilization camera software is still under development
 #ifdef Camera
-  #define ROLLCAMERAPIN 12
-  #define PITCHCAMERAPIN 13
-  // map +/-90 degrees to 1000-2000
-  float mCamera = 5.556;
-  float bCamera = 1500;
+#define ROLLCAMERAPIN 12
+#define PITCHCAMERAPIN 13
+// map +/-90 degrees to 1000-2000
+float mCamera = 5.556;
+float bCamera = 1500;
   Servo rollCamera;
   Servo pitchCamera;
 #endif
@@ -64,6 +64,7 @@ int remoteCommand[4] = {1000,1000,1000,1000};
 
 // Communication
 char queryType = 'X';
+char queryType1 = 'X';
 byte tlmType = 0;
 char string[32];
 byte armed = 0;
@@ -93,6 +94,7 @@ byte testSignal = LOW;
 
 // Sensor fast data transfer;
 byte fastTransfer = OFF;
+byte fastTransfer1 = OFF;
 
 // Timing
 unsigned long previousTime = 0;

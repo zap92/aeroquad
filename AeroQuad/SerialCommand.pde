@@ -1,94 +1,100 @@
 /*
-  AeroQuad v1.4 - September 2009
-  www.AeroQuad.info
-  Copyright (c) 2009 Ted Carancho.  All rights reserved.
-  An Open Source Arduino based quadrocopter.
+  AeroQuad v1.3.2 - September 2009
+ www.AeroQuad.info
+ Copyright (c) 2009 Ted Carancho.  All rights reserved.
+ An Open Source Arduino based quadrocopter.
  
-  This program is free software: you can redistribute it and/or modify 
-  it under the terms of the GNU General Public License as published by 
-  the Free Software Foundation, either version 3 of the License, or 
-  (at your option) any later version. 
+ This program is free software: you can redistribute it and/or modify 
+ it under the terms of the GNU General Public License as published by 
+ the Free Software Foundation, either version 3 of the License, or 
+ (at your option) any later version. 
+ 
+ This program is distributed in the hope that it will be useful, 
+ but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+ GNU General Public License for more details. 
+ 
+ You should have received a copy of the GNU General Public License 
+ along with this program. If not, see <http://www.gnu.org/licenses/>. 
+ */
 
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the implied warranty of 
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-  GNU General Public License for more details. 
-
-  You should have received a copy of the GNU General Public License 
-  along with this program. If not, see <http://www.gnu.org/licenses/>. 
-*/
-
-void readSerialCommand() {
+void readSerialCommand(HardwareSerial *serialPort, char *queryType) 
+{
   // Check for serial message
-  if (Serial.available()) {
+  if (serialPort->available()) 
+  {
     digitalWrite(LEDPIN, LOW);
-    queryType = Serial.read();
-    switch (queryType) {
+    *queryType = serialPort->read(); 
+
+    switch (*queryType)
+    {
+
     case 'A': // Receive roll and pitch gyro PID
-      PID[ROLL].P = readFloatSerial();
-      PID[ROLL].I = readFloatSerial();
-      PID[ROLL].D = readFloatSerial();
+      PID[ROLL].P = readFloatSerial(serialPort);
+      PID[ROLL].I = readFloatSerial(serialPort);
+      PID[ROLL].D = readFloatSerial(serialPort);
       PID[ROLL].lastPosition = 0;
       PID[ROLL].integratedError = 0;
-      PID[PITCH].P = readFloatSerial();
-      PID[PITCH].I = readFloatSerial();
-      PID[PITCH].D = readFloatSerial();
+      PID[PITCH].P = readFloatSerial(serialPort);
+      PID[PITCH].I = readFloatSerial(serialPort);
+      PID[PITCH].D = readFloatSerial(serialPort);
       PID[PITCH].lastPosition = 0;
       PID[PITCH].integratedError = 0;
       break;
+
     case 'C': // Receive yaw PID
-      PID[YAW].P = readFloatSerial();
-      PID[YAW].I = readFloatSerial();
-      PID[YAW].D = readFloatSerial();
+      PID[YAW].P = readFloatSerial(serialPort);
+      PID[YAW].I = readFloatSerial(serialPort);
+      PID[YAW].D = readFloatSerial(serialPort);
       PID[YAW].lastPosition = 0;
       PID[YAW].integratedError = 0;
       break;
     case 'E': // Receive roll and pitch auto level PID
-      PID[LEVELROLL].P = readFloatSerial();
-      PID[LEVELROLL].I = readFloatSerial();
-      PID[LEVELROLL].D = readFloatSerial();
+      PID[LEVELROLL].P = readFloatSerial(serialPort);
+      PID[LEVELROLL].I = readFloatSerial(serialPort);
+      PID[LEVELROLL].D = readFloatSerial(serialPort);
       PID[LEVELROLL].lastPosition = 0;
       PID[LEVELROLL].integratedError = 0;
-      PID[LEVELPITCH].P = readFloatSerial();
-      PID[LEVELPITCH].I = readFloatSerial();
-      PID[LEVELPITCH].D = readFloatSerial();
+      PID[LEVELPITCH].P = readFloatSerial(serialPort);
+      PID[LEVELPITCH].I = readFloatSerial(serialPort);
+      PID[LEVELPITCH].D = readFloatSerial(serialPort);
       PID[LEVELPITCH].lastPosition = 0;
       PID[LEVELPITCH].integratedError = 0;
       break;
     case 'G': // Receive auto level configuration
-      levelLimit = readFloatSerial();
-      levelOff = readFloatSerial();
+      levelLimit = readFloatSerial(serialPort);
+      levelOff = readFloatSerial(serialPort);
       break;
     case 'I': // Receive flight control configuration
-      windupGuard = readFloatSerial();
-      xmitFactor = readFloatSerial();
+      windupGuard = readFloatSerial(serialPort);
+      xmitFactor = readFloatSerial(serialPort);
       break;
     case 'K': // Receive data filtering values
-      smoothFactor[GYRO] = readFloatSerial();
-      smoothFactor[ACCEL] = readFloatSerial();
-      timeConstant = readFloatSerial();
+      smoothFactor[GYRO] = readFloatSerial(serialPort);
+      smoothFactor[ACCEL] = readFloatSerial(serialPort);
+      timeConstant = readFloatSerial(serialPort);
       break;
-    case 'M': // Receive transmitter smoothing values
-      smoothTransmitter[ROLL] = readFloatSerial();
-      smoothTransmitter[PITCH] = readFloatSerial();
-      smoothTransmitter[YAW] = readFloatSerial();
-      smoothTransmitter[THROTTLE] = readFloatSerial();
-      smoothTransmitter[MODE] = readFloatSerial();
-      smoothTransmitter[AUX] = readFloatSerial();
+    case 'M': // Receive motor smoothing values
+      smoothTransmitter[ROLL] = readFloatSerial(serialPort);
+      smoothTransmitter[PITCH] = readFloatSerial(serialPort);
+      smoothTransmitter[YAW] = readFloatSerial(serialPort);
+      smoothTransmitter[THROTTLE] = readFloatSerial(serialPort);
+      smoothTransmitter[MODE] = readFloatSerial(serialPort);
+      smoothTransmitter[AUX] = readFloatSerial(serialPort);
       break;
-    case 'O': // Receive transmitter calibration values
-      mTransmitter[ROLL] = readFloatSerial();
-      bTransmitter[ROLL] = readFloatSerial();
-      mTransmitter[PITCH] = readFloatSerial();
-      bTransmitter[PITCH] = readFloatSerial();
-      mTransmitter[YAW] = readFloatSerial();
-      bTransmitter[YAW] = readFloatSerial();
-      mTransmitter[THROTTLE] = readFloatSerial();
-      bTransmitter[THROTTLE] = readFloatSerial();
-      mTransmitter[MODE] = readFloatSerial();
-      bTransmitter[MODE] = readFloatSerial();
-      mTransmitter[AUX] = readFloatSerial();
-      bTransmitter[AUX] = readFloatSerial();
+    case 'O': // Received transmitter calibrtion values
+      mTransmitter[ROLL] = readFloatSerial(serialPort);
+      bTransmitter[ROLL] = readFloatSerial(serialPort);
+      mTransmitter[PITCH] = readFloatSerial(serialPort);
+      bTransmitter[PITCH] = readFloatSerial(serialPort);
+      mTransmitter[YAW] = readFloatSerial(serialPort);
+      bTransmitter[YAW] = readFloatSerial(serialPort);
+      mTransmitter[THROTTLE] = readFloatSerial(serialPort);
+      bTransmitter[THROTTLE] = readFloatSerial(serialPort);
+      mTransmitter[MODE] = readFloatSerial(serialPort);
+      bTransmitter[MODE] = readFloatSerial(serialPort);
+      mTransmitter[AUX] = readFloatSerial(serialPort);
+      bTransmitter[AUX] = readFloatSerial(serialPort);
       break;
     case 'W': // Write all user configurable values to EEPROM
       writeFloat(PID[ROLL].P, PGAIN_ADR);
@@ -165,7 +171,7 @@ void readSerialCommand() {
       smoothTransmitter[THROTTLE] = 1.0;
       smoothTransmitter[ROLL] = 1.0;
       smoothTransmitter[PITCH] = 1.0;
-      smoothTransmitter[YAW] = 0.5;
+      smoothTransmitter[YAW] = 0.5;  
       smoothTransmitter[MODE] = 1.0;
       smoothTransmitter[AUX] = 1.0;
 
@@ -183,48 +189,50 @@ void readSerialCommand() {
       break;
     case '3': // Test ESC calibration
       armed = 0;
-      testCommand = readFloatSerial();
+      testCommand = readFloatSerial(serialPort);
       calibrateESC = 3;
       break;
     case '4': // Turn off ESC calibration
       armed = 0;
       calibrateESC = 0;
       testCommand = 1000;
-      break;
+      break;        
     case '5': // Send individual motor commands (motor, command)
       armed = 0;
       calibrateESC = 5;
       for (motor = FRONT; motor < LASTMOTOR; motor++)
-        remoteCommand[motor] = readFloatSerial();
+        remoteCommand[motor] = readFloatSerial(serialPort);
       break;
     case 'a': // Enable/disable fast data transfer of sensor data
-      queryType = 'X'; // Stop any other telemetry streaming
-      if (readFloatSerial() == 1)
+      *queryType = 'X'; // Stop any other telemetry streaming
+      if (readFloatSerial(serialPort) == 1)
         fastTransfer = ON;
       else
         fastTransfer = OFF;
       break;
     }
-  digitalWrite(LEDPIN, HIGH);
+    digitalWrite(LEDPIN, HIGH);
   }
 }
 
 // Used to read floating point values from the serial port
-float readFloatSerial() {
+float readFloatSerial(HardwareSerial *serialPort) 
+{
   byte index = 0;
   byte timeout = 0;
   char data[128] = "";
 
   do {
-    if (Serial.available() == 0) {
+    if (serialPort->available() == 0) {
       delay(10);
       timeout++;
     }
     else {
-      data[index] = Serial.read();
+      data[index] = serialPort->read();
       timeout = 0;
       index++;
     }
-  }  while ((data[limitRange(index-1, 0, 128)] != ';') && (timeout < 5) && (index < 128));
+  }  
+  while ((data[limitRange(index-1, 0, 128)] != ';') && (timeout < 5) && (index < 128));
   return atof(data);
 }

@@ -34,17 +34,14 @@
 #define MAXCHECK MAXCOMMAND - 100
 #define MINTHROTTLE MINCOMMAND + 100
 #define LEVELOFF 100
-#define ROLLPIN 2
-#define THROTTLEPIN 4
-#define PITCHPIN 5
-#define YAWPIN 6
-#define MODEPIN 7
-#ifdef ServoControl
-  #define AUXPIN 3
-#endif
-#ifdef AnalogWrite
-  #define AUXPIN 8
-#endif
+
+#define ROLLPIN 52 //D52    
+#define PITCHPIN 51 //51
+#define YAWPIN 53 // 53
+#define THROTTLEPIN 50 //D50
+#define MODEPIN 12 //D12
+#define AUXPIN 11 //D11
+
 #define ROLL 0
 #define PITCH 1
 #define YAW 2
@@ -79,14 +76,9 @@ typedef struct {
 volatile static pinTimingData pinData[24]; 
 
 int receiverChannel[6] = {ROLLPIN, PITCHPIN, YAWPIN, THROTTLEPIN, MODEPIN, AUXPIN}; // defines Arduino pins
-// To pick your own PCINT pins look at page 2 of Atmega 328 data sheet and the Duemilanove data sheet and match the PCINT pin with the Arduino pinout
-// These pins need to correspond to the ROLL/PITCH/YAW/THROTTLE/MODE/AUXPIN #define pin definitions at the start of Received.h
-#ifdef ServoControl
-  int receiverPin[6] = {18, 21, 22, 20, 23, 19}; // defines ATmega328P pins (Arduino pins converted to ATmega328P pinouts)
-#endif
-#ifdef AnalogWrite
-  int receiverPin[6] = {18, 21, 22, 20, 23, 0}; // defines ATmega328P pins (Arduino pins converted to ATmega328P pinouts)
-#endif
+
+int receiverPin[6] = {1, 2, 0, 3, 6, 5}; // defines ATmega1280 pins (Arduino pins converted to ATmega1280 pinouts)
+
 int receiverData[6];
 int transmitterCommand[6] = {1500,1500,1500,1000,1000,1000};
 int transmitterCommandSmooth[6] = {0,0,0,0,0,0};

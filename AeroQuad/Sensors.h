@@ -52,6 +52,7 @@ int accelADC[3] = {0,0,0};
 int gyroData[3] = {0,0,0};
 int gyroZero[3] = {0,0,0};
 int gyroADC[3] = {0,0,0};
+int gyroInvert[3] = {1,1,0};
 
 // Calibration parameters
 #define FINDZERO 50
