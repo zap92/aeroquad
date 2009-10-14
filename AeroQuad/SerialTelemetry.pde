@@ -204,11 +204,14 @@ void sendSerialTelemetry(HardwareSerial *serialPort, char *queryType) {
       serialPort->print(remoteCommand[motor]);
       comma(serialPort);
     }
-    Serial.println(remoteCommand[LEFT]);
+    serialPort->println(remoteCommand[LEFT]);
     break;
   case '!': // Send flight software version
-    serialPort->println("1.3");
+    serialPort->println("1.4");
     *queryType = 'X';
+    break;
+  case 'e': // Send Heading smooth value
+    serialPort->println(smoothHeading);
     break;
   }
 }
