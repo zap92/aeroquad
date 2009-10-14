@@ -27,14 +27,11 @@ void configureMotors() {
   rightMotor.attach(RIGHTMOTORPIN);
   leftMotor.attach(LEFTMOTORPIN);
 #endif
-#ifdef AnalogWrite
-  for (int i = 0 ; i < 4; i++) 
-  {		
+#ifdef AnalogWrite		
     analogWrite(FRONTMOTORPIN, 124);
     analogWrite(REARMOTORPIN, 124);
     analogWrite(RIGHTMOTORPIN, 124);
     analogWrite(LEFTMOTORPIN, 124);
-  }
 #endif
 }
 
