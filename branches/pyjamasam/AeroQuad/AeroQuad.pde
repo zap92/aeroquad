@@ -45,13 +45,18 @@
 #define AnalogWrite
 
 // Camera Stabilization (experimental)
+// Will move development to Arduino Mega (needs analogWrite support for additional pins)
 //#define Camera
 
+byte flightHelpersEnabled = 0;
 // Heading Hold (experimental)
-//#define HeadingHold
-
+#define HeadingHold
 // Auto Level (experimental)
-//#define AutoLevel
+#define AutoLevel
+
+// Yaw Gyro Type
+#define IDG // InvenSense
+//#define LPY // STMicroelectronics
 
 // *************************************************************
 
@@ -69,7 +74,7 @@
 
 // ************************************************************
 // ********************** Setup AeroQuad **********************
-// *******s*****************************************************
+// ************************************************************
 void setup() {
   Serial.begin(BAUD);
   Serial1.begin(BAUD);
@@ -84,6 +89,7 @@ void setup() {
   readEEPROM();
   
   // Setup receiver pins for pin change interrupts
+  if (receiverLoop == ON)
   configureReceiver();
   
   #ifdef CalibrationAtStartup
@@ -203,27 +209,47 @@ void loop () {
   // *********************** Flight Control Loop ************************
   if ((currentTime > controlLoopTime + 2) && (controlLoop == ON)) { // 500Hz
 
+#ifdef HeadingHold || AutoLevel
+  if (transmitterCommand[MODE] < 1500) 
+  {
+    flightHelpersEnabled = 1;
+  }
+  else
+  {
+    flightHelpersEnabled = 0;
+  }
+#else
+  flightHelpersEnabled = 0;
+#endif
+
+
   // ********************* Check Flight Mode *********************
-    #ifdef AutoLevel
-      if (transmitterCommandSmooth[MODE] < 1500) {
-        // Acrobatic Mode
-        levelAdjust[ROLL] = 0;
-        levelAdjust[PITCH] = 0;
-      }
-      else {
-        // Stable Mode
-        for (axis = ROLL; axis < YAW; axis++)
-          levelAdjust[axis] = limitRange(updatePID(0, flightAngle[axis], &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
-        // Turn off Stable Mode if transmitter stick applied
-        if ((abs(receiverData[PITCH] - transmitterCenter[PITCH]) > levelOff))
-          levelAdjust[PITCH] = 0;
-        if ((abs(receiverData[ROLL] - transmitterCenter[ROLL]) > levelOff))
-          levelAdjust[ROLL] = 0;
-      }
-    #endif
   
-    // ************************ Heading Hold ***********************
-    #ifdef HeadingHold
+    levelAdjust[ROLL] = 0;
+    levelAdjust[PITCH] = 0;
+    if (flightHelpersEnabled)
+    {
+      #ifdef AutoLevel
+      //Auto Level
+      for (axis = ROLL; axis < YAW; axis++)
+      {
+          levelAdjust[axis] = limitRange(updatePID(0, flightAngle[axis], &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
+      }
+      
+      // Turn off Stable Mode if transmitter stick applied
+      if ((abs(receiverData[PITCH] - transmitterCenter[PITCH]) > levelOff))
+      {
+          levelAdjust[PITCH] = 0;
+      }
+      
+      if ((abs(receiverData[ROLL] - transmitterCenter[ROLL]) > levelOff))
+      {
+          levelAdjust[ROLL] = 0;
+      }      
+      #endif
+      
+      #ifdef HeadingHold
+      //Heading Hold
       heading = smooth((gyroData[YAW] * headingScaleFactor * dt), heading, smoothHeading);
       //heading = heading + (gyroData[YAW] * headingScaleFactor * dt); 
       if (transmitterCommand[THROTTLE] > MINCHECK ) 
@@ -240,17 +266,27 @@ void loop () {
       else
       {
         commandedYaw = heading;
-      }
-    #endif
+      }       
+      #endif
+    }      
   
     // ************************* Update PID ************************
     motorAxisCommand[ROLL] = updatePID(transmitterCommand[ROLL] + levelAdjust[ROLL], (gyroData[ROLL] * mMotorRate) + bMotorRate, &PID[ROLL]);
     motorAxisCommand[PITCH] = updatePID(transmitterCommand[PITCH] - levelAdjust[PITCH], (gyroData[PITCH] * mMotorRate) + bMotorRate, &PID[PITCH]);
+    
     #ifdef HeadingHold
+    if (flightHelpersEnabled)
+    {
       motorAxisCommand[YAW] = updatePID(commandedYaw, heading, &PID[YAW]);
+    }
+    else
+    {
+      motorAxisCommand[YAW] = updatePID(transmitterCommand[YAW], (gyroData[YAW] * mMotorRate) + bMotorRate, &PID[YAW]);
+    }
     #else
     motorAxisCommand[YAW] = updatePID(transmitterCommand[YAW], (gyroData[YAW] * mMotorRate) + bMotorRate, &PID[YAW]);
     #endif
+    
   
     // ****************** Calculate Motor Commands *****************
     if (armed && safetyCheck) {
@@ -311,7 +347,7 @@ void loop () {
   } // End of telemetry loop
   
 // ******************* Camera Stailization *********************
-#ifdef Camera
+#ifdef Camera // Development moved to Arduino Mega
   if ((currentTime > (cameraTime + 20)) && (cameraLoop == ON)) { // 50Hz
     rollCamera.write((mCamera * flightAngle[ROLL]) + bCamera);
     pitchCamera.write(-(mCamera * flightAngle[PITCH]) + bCamera);
