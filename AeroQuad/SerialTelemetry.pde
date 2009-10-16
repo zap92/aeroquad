@@ -149,11 +149,7 @@ void sendSerialTelemetry(HardwareSerial *serialPort, char *queryType) {
     }
     serialPort->print(armed, BIN);
     comma(serialPort);
-#ifdef AutoLevel
-    serialPort->println(transmitterCommandSmooth[MODE]);
-#else
-    serialPort->println(1000);
-#endif
+    serialPort->println(flightHelpersEnabled);
     break;
   case 'T': // Send processed transmitter values
     serialPort->print(xmitFactor);
