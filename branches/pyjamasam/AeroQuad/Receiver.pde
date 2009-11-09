@@ -1,5 +1,5 @@
 /*
-  AeroQuad v1.4 - September 2009
+  AeroQuad v1.5 - Novmeber 2009
   www.AeroQuad.info
   Copyright (c) 2009 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -7,8 +7,6 @@
   Interrupt based method inspired by Dror Caspi
   http://www.rcgroups.com/forums/showpost.php?p=12356667&postcount=1639
   
-  Version in AeroQuad code is written by Ted Carancho
- 
   This program is free software: you can redistribute it and/or modify 
   it under the terms of the GNU General Public License as published by 
   the Free Software Foundation, either version 3 of the License, or 

@@ -1,5 +1,5 @@
 /*
-  AeroQuad v1.4 - September 2009
+  AeroQuad v1.5 - Novmeber 2009
   www.AeroQuad.info
   Copyright (c) 2009 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -23,10 +23,10 @@
 
 #define byte uint8_t 
 
-#define FRONTMOTORPIN 2
-#define REARMOTORPIN 3
-#define RIGHTMOTORPIN 5
-#define LEFTMOTORPIN 6
+#define FRONTMOTORPIN 5
+#define REARMOTORPIN 8
+#define RIGHTMOTORPIN 2
+#define LEFTMOTORPIN 3
 
 #define FRONT 0
 #define REAR 1
