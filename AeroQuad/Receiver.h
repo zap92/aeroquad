@@ -1,5 +1,5 @@
 /*
-  AeroQuad v1.4 - September 2009
+  AeroQuad v1.5 - Novmeber 2009
   www.AeroQuad.info
   Copyright (c) 2009 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -24,6 +24,19 @@
 #include "pins_arduino.h"
 #define byte uint8_t 
 
+#define ROLLPIN 52    
+#define PITCHPIN 51
+#define YAWPIN 53
+#define THROTTLEPIN 50
+#define MODEPIN 12
+#define AUXPIN 11
+int receiverPin[6] = {
+  //  1, 2, 0, 3, 6, 5}; // defines ATmega1280 pins (Arduino pins converted to ATmega1280 pinouts)
+  6, 5, 0, 3, 1, 2}; // defines ATmega1280 pins (Arduino pins converted to ATmega1280 pinouts)
+
+int receiverChannel[6] = {
+  ROLLPIN, PITCHPIN, YAWPIN, THROTTLEPIN, MODEPIN, AUXPIN}; // defines Arduino pins
+
 // Receiver variables
 #define TIMEOUT 25000
 #define MINCOMMAND 1000
@@ -34,14 +47,6 @@
 #define MAXCHECK MAXCOMMAND - 100
 #define MINTHROTTLE MINCOMMAND + 100
 #define LEVELOFF 100
-
-#define ROLLPIN 52 //D52    
-#define PITCHPIN 51 //51
-#define YAWPIN 53 // 53
-#define THROTTLEPIN 50 //D50
-#define MODEPIN 12 //D12
-#define AUXPIN 11 //D11
-
 #define ROLL 0
 #define PITCH 1
 #define YAW 2
@@ -74,10 +79,6 @@ typedef struct {
 } pinTimingData;  
 
 volatile static pinTimingData pinData[24]; 
-
-int receiverChannel[6] = {ROLLPIN, PITCHPIN, YAWPIN, THROTTLEPIN, MODEPIN, AUXPIN}; // defines Arduino pins
-
-int receiverPin[6] = {1, 2, 0, 3, 6, 5}; // defines ATmega1280 pins (Arduino pins converted to ATmega1280 pinouts)
 
 int receiverData[6];
 int transmitterCommand[6] = {1500,1500,1500,1000,1000,1000};

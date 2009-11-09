@@ -1,5 +1,5 @@
 /*
-  AeroQuad v1.4 - September 2009
+  AeroQuad v1.5 - Novmeber 2009
   www.AeroQuad.info
   Copyright (c) 2009 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -24,9 +24,11 @@
 
 #define BAUD 115200
 #define LEDPIN 13
+#define AZPIN1 22
+#define AZPIN2 23
 
 // Analog Reference Value
-float aref = 2.896; // With 4.7k Ohm resistor
+float aref = 2.895; // Measured with a DMM using a 4.7k resistor
 
 // Auto level setup
 int levelAdjust[2] = {0,0};
@@ -34,14 +36,12 @@ int levelLimit; // Read in from EEPROM
 int levelOff; // Read in from EEPROM
 
 // Heading hold
-#ifdef HeadingHold
-  float heading = 0;
-  // aref / 1024 = voltage per A/D bit
-  // 0.002 = V / deg/sec (from gyro data sheet)
-  float headingScaleFactor = (aref / 1024.0) / 0.002;
-  float commandedYaw = 0;
-  float yawFactor = 0.0015;
-#endif
+// aref / 1024 = voltage per A/D bit
+// 0.002 = V / deg/sec (from gyro data sheet)
+  float headingScaleFactor = (aref / 1024.0) / 0.002 * PI;
+  float heading = 0; // measured heading from yaw gyro (process variable)
+  float headingHold = 0; // calculated adjustment for quad to go to heading (PID output)
+  float currentHeading = 0; // current heading the quad is set to (set point)
 
 // Camera stabilization variables
 // Note: stabilization camera software is still under development
@@ -63,8 +63,6 @@ int testCommand = 1000;
 int remoteCommand[4] = {1000,1000,1000,1000};
 
 // Communication
-char queryType = 'X';
-char queryType1 = 'X';
 byte tlmType = 0;
 char string[32];
 byte armed = 0;
@@ -75,11 +73,22 @@ byte update = 0;
 //#define DEBUG
 #define ON 1
 #define OFF 0
+#define RECEIVERLOOPTIME 100
+#define TELEMETRYLOOPTIME 100
+#define FASTTELEMETRYTIME 10
+#define AILOOPTIME 2
+#define CONTROLLOOPTIME 2
+#define AUTOZEROTIME 30000
+
+float AIdT = AILOOPTIME / 1000.0;
+float controldT = CONTROLLOOPTIME / 1000.0;
+
 byte receiverLoop = ON;
 byte telemetryLoop = ON;
 byte analogInputLoop = ON;
 byte controlLoop = ON;
 byte cameraLoop = ON; // Note: stabilization camera software is still under development, moved to Arduino Mega
+byte autoZeroGyro = ON;
 byte testSignal = LOW;
 // Measured test signal with an oscilloscope:
 // All loops on = 2.4 ms
@@ -92,20 +101,15 @@ byte testSignal = LOW;
 // Telemetry loop = .04 ms (with no telemetry transmitted)
 // Fast Telemetry Transfer (sending 12 bytes = 1.1 ms, sending 14 bytes = 1.3 ms, sending 16 bytes = 1.45 ms, sending 18 bytes = 1.625 ms) 2 bytes = 0.175 ms
 
-// Sensor fast data transfer;
-byte fastTransfer = OFF;
-byte fastTransfer1 = OFF;
-
 // Timing
 unsigned long previousTime = 0;
 unsigned long currentTime = 0;
 unsigned long deltaTime = 0;
 unsigned long receiverTime = 0;
-unsigned long telemetryTime = 50; // make telemetry output 50ms offset from receiver check
 unsigned long analogInputTime = 0;
 unsigned long controlLoopTime = 1; // offset control loop from analog input loop by 1ms
 unsigned long cameraTime = 0;
-unsigned long fastTelemetryTime = 0;
+unsigned long autoZeroGyroTime = 0;
 float dt = 0.002;
 
 #endif

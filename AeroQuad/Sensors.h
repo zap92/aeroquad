@@ -1,5 +1,5 @@
 /*
-  AeroQuad v1.4 - September 2009
+  AeroQuad v1.5 - Novmeber 2009
   www.AeroQuad.info
   Copyright (c) 2009 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -25,9 +25,14 @@
 #define PITCHACCELPIN 0
 #define ROLLACCELPIN 1
 #define ZACCELPIN 2
-#define PITCHRATEPIN 3
-#define ROLLRATEPIN 4
+#define PITCHRATEPIN 4
+#define ROLLRATEPIN 3
 #define YAWRATEPIN 5
+
+#define VOLTSPIN 12
+#define CURRENTPIN 11
+#define PROX1PIN 9
+
 int gyroChannel[3] = {ROLLRATEPIN, PITCHRATEPIN, YAWRATEPIN};
 int accelChannel[3] = {ROLLACCELPIN, PITCHACCELPIN, ZACCELPIN};
 
@@ -47,12 +52,13 @@ int axis;
 int accelData[3] = {0,0,0};
 int accelZero[3] = {0,0,0};
 int accelADC[3] = {0,0,0};
+int accelInvert[3] = {1,1,0};
 
 // Gyro setup
 int gyroData[3] = {0,0,0};
 int gyroZero[3] = {0,0,0};
 int gyroADC[3] = {0,0,0};
-int gyroInvert[3] = {1,1,0};
+int gyroInvert[3] = {0,0,1};
 
 // Calibration parameters
 #define FINDZERO 50
@@ -60,6 +66,7 @@ int findZero[FINDZERO];
 
 int findMode(int *data, int arraySize);
 void zeroGyros();
+void autoZeroGyros();
 void zeroAccelerometers();
 int limitRange(int data, int minLimit, int maxLimit);
 
