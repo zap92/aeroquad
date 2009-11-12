@@ -167,7 +167,7 @@ void loop() {
   }
   
   // LEVEL LOOP
-  if(time.current > (time.level + 20)) {
+  if(time.current > (time.level + 10)) {
     updateLevel();
     time.level = time.current;
   }
