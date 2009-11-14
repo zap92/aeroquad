@@ -72,18 +72,30 @@
 #include "Motors.h"
 #include "AeroQuad.h"
 
+#include "GPS.h"
+GPS gps;
+
+#include "SerialComs.h"
+SerialComs serialcoms;
+
+
+
 // ************************************************************
 // ********************** Setup AeroQuad **********************
 // ************************************************************
+
 void setup() 
 {
   analogReference(EXTERNAL); // Current external ref is connected to 3.3V
   pinMode (LEDPIN, OUTPUT);
   
-  SerialComs_assignSerialPort(&Serial);
-  SerialComs_assignSerialPort(&Serial1);
-  SerialComs_initialize();
+  serialcoms.assignSerialPort(&Serial);
+  serialcoms.assignSerialPort(&Serial1);
+  serialcoms.initialize(100, 50);
   
+  gps.assignSerialPort(&Serial2);
+  gps.initialize(100, 75);
+    
   pinMode (AZPIN1, OUTPUT);
   digitalWrite(AZPIN1, LOW);
 
@@ -340,8 +352,10 @@ void loop () {
 /////////////////////////
 // End of control loop //
 /////////////////////////
+
+  serialcoms.process(currentTime);
   
-  SerialComs_process(currentTime);
+  gps.process(currentTime);
   
 // *************************************************************
 // ******************* Camera Stailization *********************
