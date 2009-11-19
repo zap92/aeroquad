@@ -75,6 +75,9 @@
 #include "GPS.h"
 GPS gps;
 
+#include "Blinkie.h"
+Blinkie blinkie;
+
 #include "SerialComs.h"
 SerialComs serialcoms;
 
@@ -95,6 +98,9 @@ void setup()
   
   gps.assignSerialPort(&Serial2);
   gps.initialize(100, 75);
+  
+  //Initialize the blinkie SubSystem to run every 500 ms, with an offset of 0 ms
+  blinkie.initialize(500,0);
     
   pinMode (AZPIN1, OUTPUT);
   digitalWrite(AZPIN1, LOW);
@@ -353,9 +359,9 @@ void loop () {
 // End of control loop //
 /////////////////////////
 
-  serialcoms.process(currentTime);
-  
+  serialcoms.process(currentTime);  
   gps.process(currentTime);
+  blinkie.process(currentTime);
   
 // *************************************************************
 // ******************* Camera Stailization *********************
