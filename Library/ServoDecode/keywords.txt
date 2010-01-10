@@ -1,0 +1,22 @@
+#######################################
+# Syntax Coloring Map Servo
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+ServoDecode  KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin KEYWORD2
+getState KEYWORD2
+GetChannelPulseWidth KEYWORD2
+setFailsafe KEYWORD2
+getChanCount KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
