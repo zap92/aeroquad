@@ -34,7 +34,7 @@
 
 // Camera Stabilization (experimental)
 // Will move development to Arduino Mega (needs analogWrite support for additional pins)
-#define Camera
+//#define Camera
 
 // Heading Hold (experimental)
 // Currently uses yaw gyro which drifts over time, for Mega development will use magnetometer
@@ -71,6 +71,7 @@ void setup() {
   Serial.begin(BAUD);
   analogReference(EXTERNAL); // Current external ref is connected to 3.3V
   pinMode(LEDPIN, OUTPUT);
+  pinMode(11, INPUT);
   analogRead(11);
   
   // Configure motors
@@ -124,7 +125,7 @@ void setup() {
 // ************************************************************
 void loop () {
   // Measure loop rate
-  currentTime = micros();
+  currentTime = millis();
   deltaTime = currentTime - previousTime;
   previousTime = currentTime;
   #ifdef DEBUG
@@ -210,12 +211,21 @@ void loop () {
     }
 
     // ****************** Calculate Absolute Angle *****************
+    
+    // Fix for calculating unfiltered flight angle per RoyLB
+    // http://carancho.com/AeroQuad/forum/index.php?action=profile;u=77;sa=showPosts
+    // perpendicular = sqrt((analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS])) ^2 + (analogRead(accelChannel[PITCH]) - accelZero[PITCH]) ^2)
+    // flightAngle[ROLL] = atan2(analogRead(accelChannel[ROLL]) - accelZero[ROLL], perpendicular) * 57.2957795;    
+
+    rawRollAngle = atan2(accelADC[ROLL], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
+    rawPitchAngle = atan2(accelADC[PITCH], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
+    
     #ifndef KalmanFilter
       //filterData(previousAngle, gyroADC, angle, *filterTerm, dt)
-      flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], atan2(accelADC[ROLL], accelADC[ZAXIS]), filterTermRoll, AIdT);
-      flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], atan2(accelADC[PITCH], accelADC[ZAXIS]), filterTermPitch, AIdT);
-      //flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroData[ROLL], atan2(accelData[ROLL], accelData[ZAXIS]), filterTermRoll, AIdT);
-      //flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroData[PITCH], atan2(accelData[PITCH], accelData[ZAXIS]), filterTermPitch, AIdT);
+      flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], rawRollAngle, filterTermRoll, AIdT);
+      flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], rawPitchAngle, filterTermPitch, AIdT);
+      //flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroData[ROLL], arctan2(accelData[ROLL], accelData[ZAXIS]), filterTermRoll, AIdT);
+      //flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroData[PITCH], arctan2(accelData[PITCH], accelData[ZAXIS]), filterTermPitch, AIdT);
     #endif
       
     #ifdef KalmanFilter

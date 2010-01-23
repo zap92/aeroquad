@@ -28,12 +28,14 @@
 #define AZYAWPIN 23
 
 // Analog Reference Value
-float aref = 2.8; // Measured with a DMM
+float aref = 2.725; // Measured with a DMM
 
 // Auto level setup
 int levelAdjust[2] = {0,0};
 int levelLimit; // Read in from EEPROM
 int levelOff; // Read in from EEPROM
+float rawRollAngle;
+float rawPitchAngle;
 
 // Heading hold
   // aref / 1024 = voltage per A/D bit
@@ -54,9 +56,9 @@ int levelOff; // Read in from EEPROM
   SoftwareServo rollCamera;
   SoftwareServo pitchCamera;
   unsigned long rollCameraTime = 0;
-  unsigned long rollCameraLoop = 20000;
+  unsigned long rollCameraLoop = 2000;
   unsigned long pitchCameraTime = 0;
-  unsigned long pitchCameraLoop = 20000;
+  unsigned long pitchCameraLoop = 2000;
   byte rollState = LOW;
   byte pitchState = LOW;
 #endif
@@ -97,15 +99,15 @@ byte update = 0;
 //#define DEBUG
 #define ON 1
 #define OFF 0
-#define RECEIVERLOOPTIME 100000
-#define TELEMETRYLOOPTIME 100000
-#define FASTTELEMETRYTIME 10000
-#define AILOOPTIME 2000
-#define CONTROLLOOPTIME 2000
-#define COMPASSTIME 100000
-#define CAMERALOOPTIME 20000
+#define RECEIVERLOOPTIME 100
+#define TELEMETRYLOOPTIME 100
+#define FASTTELEMETRYTIME 10
+#define AILOOPTIME 2
+#define CONTROLLOOPTIME 2
+#define COMPASSTIME 100
+#define CAMERALOOPTIME 20
 
-float AIdT = AILOOPTIME / 1000000.0;
+float AIdT = AILOOPTIME / 1000.0;
 float controldT = CONTROLLOOPTIME / 1000.0;
 
 byte receiverLoop = ON;
@@ -134,13 +136,13 @@ unsigned long previousTime = 0;
 unsigned long currentTime = 0;
 unsigned long deltaTime = 0;
 unsigned long receiverTime = 0;
-unsigned long telemetryTime = 50000; // make telemetry output 50ms offset from receiver check
+unsigned long telemetryTime = 50; // make telemetry output 50ms offset from receiver check
 unsigned long analogInputTime = 0;
-unsigned long controlLoopTime = 1000; // offset control loop from analog input loop by 1ms
+unsigned long controlLoopTime = 1; // offset control loop from analog input loop by 1ms
 unsigned long cameraTime = 0;
 unsigned long fastTelemetryTime = 0;
 unsigned long autoZeroGyroTime = 0;
-unsigned long compassTime = 3000;
+unsigned long compassTime = 3;
 //float dt = 0.002;
 
 #endif

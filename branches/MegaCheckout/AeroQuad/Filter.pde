@@ -27,8 +27,8 @@ void configureFilter(float timeConstant) {
   #ifndef KalmanFilter
     flightAngle[ROLL] = atan2(analogRead(accelChannel[ROLL]) - accelZero[ROLL], analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS]) * 57.2957795;
     flightAngle[PITCH] = atan2(analogRead(accelChannel[PITCH]) - accelZero[PITCH], analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS]) * 57.2957795;
-    filterTermRoll[2] = -(analogRead(gyroChannel[ROLL]) - gyroZero[ROLL]) / 29473.792 * 57.2957795;
-    filterTermPitch[2] = -(analogRead(gyroChannel[PITCH]) - gyroZero[PITCH]) / 29473.792 * 57.2957795;
+    filterTermRoll[2] = -((analogRead(gyroChannel[ROLL]) - gyroZero[ROLL]) / 1024) * aref / 0.002 * 57.2957795;
+    filterTermPitch[2] = -((analogRead(gyroChannel[PITCH]) - gyroZero[PITCH]) / 1024) * aref / 0.002 * 57.2957795;
   #endif
   #ifdef KalmanFilter
     // These parameters need to be further optimized
@@ -48,7 +48,7 @@ float filterData(float previousAngle, int gyroADC, float angle, float *filterTer
   // For Sparkfun 5DOF IMU
   // accelerometerOutput = (N-512)/1024*(double)10.78; (rad)
   // gyroOutput = (N-512)/1024*(double)28.783; (rad/sec)
-  accel = angle * 57.2957795;
+  accel = degrees(angle);
   //gyro = (N-512)/1024 * (double) 28.783;
   gyro = (gyroADC / 1024) * aref / 0.002;
   

@@ -37,8 +37,8 @@ int accelChannel[3] = {ROLLACCELPIN, PITCHACCELPIN, ZACCELPIN};
 // #define XMAX 607
 // #define YMIN 409
 // #define YMAX 618
-#define ZMIN 454
-#define ZMAX 687
+#define ZMIN 487
+#define ZMAX 727
 #define ZAXIS 2
 #define ZEROLIMIT 2
 int axis;
