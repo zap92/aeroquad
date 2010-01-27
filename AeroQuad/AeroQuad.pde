@@ -1,7 +1,7 @@
  /*
-  AeroQuad v1.5 - Novmeber 2009
-  www.AeroQuad.info
-  Copyright (c) 2009 Ted Carancho.  All rights reserved.
+  AeroQuad v2.0 - January 2010
+  www.AeroQuad.com
+  Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
  
   This program is free software: you can redistribute it and/or modify 
@@ -25,22 +25,12 @@
 *****************************************************************************/
 
 // Define Flight Configuration
-#define plusConfig
-//#define XConfig
+//#define plusConfig
+#define XConfig
 
 // Calibration At Start Up
 //#define CalibrationAtStartup
 #define GyroCalibrationAtStartup
-
-// Motor Control Method (ServoControl = higher ESC resolution, cooler motors, slight jitter in control, AnalogWrite = lower ESC resolution, warmer motors, no jitter)
-// Before your first flight, to use the ServoControl method change the following line in Servo.h
-// Which can be found in \arduino-0017\hardware\libraries\Servo\Servo.h
-// For camera stabilization off, update line 54 with: #define REFRESH_INTERVAL 8000
-// For camera stabilization on, update line 54 with: #define REFRESH_INTERVAL 12000
-// For ServoControl method connect AUXPIN=3, MOTORPIN=8 for compatibility with PCINT
-//#define ServoControl // This is only compatible with Arduino 0017 or greater
-// For AnalogWrite method connect AUXPIN=8, MOTORPIN=3
-#define AnalogWrite
 
 // Camera Stabilization (experimental)
 // Will move development to Arduino Mega (needs analogWrite support for additional pins)
@@ -52,24 +42,6 @@
 
 // Auto Level (experimental)
 //#define AutoLevel
-
-// 5DOF IMU Version
-//#define OriginalIMU // Use this if you have the 5DOF IMU which uses the IDG300
-
-// Arduino Mega with AeroQuad Shield v1.x
-// If you are using the Arduino Mega with an AeroQuad Shield v1.x, the receiver pins must be configured differently due to bug in Arduino core.
-// Put a jumper wire between the Shield and Mega as indicated below
-// For Roll (Aileron) Channel, place jumper between AQ Shield pin 2 and Mega AI13
-// For Pitch (Elevator) Channel, place jumper between AQ Shield pin 5 and Mega AI11
-// For Yaw (Rudder) Channel, place jumper between AQ Shield pin 6 and Mega AI10
-// For Throttle Channel, place jumper between AQ Shield pin 4 and Mega AI12
-// For Mode (Gear) Channel, place jumper between AQ Shield pin 7 and Mega AI9
-// For Aux Channel, place jumper between AQ Shield 8 and Mega AI8
-//#define Mega_AQ1x
-
-// Yaw Gyro Type (experimental, used for investigation of lower cost gyros)
-#define IDG // InvenSense
-//#define LPY // STMicroelectronics
 
 // Sensor Filter
 // The Kalman Filter implementation is here for comparison against the Complementary Filter
@@ -88,7 +60,12 @@
 #include "Receiver.h"
 #include "Sensors.h"
 #include "Motors.h"
+#include <SoftwareServo.h>
 #include "AeroQuad.h"
+//#include "Servo.h"
+#include "Sensors.h"
+
+Sensors sensors;
 
 // ************************************************************
 // ********************** Setup AeroQuad **********************
@@ -96,10 +73,9 @@
 void setup() {
   Serial.begin(BAUD);
   analogReference(EXTERNAL); // Current external ref is connected to 3.3V
-  pinMode (LEDPIN, OUTPUT);
-  pinMode (AZPIN, OUTPUT);
-  digitalWrite(AZPIN, LOW);
-  delay(1);
+  pinMode(LEDPIN, OUTPUT);
+  pinMode(11, INPUT);
+  analogRead(11);
   
   // Configure motors
   configureMotors();
@@ -107,23 +83,19 @@ void setup() {
 
   // Read user values from EEPROM
   readEEPROM();
+
+  // Compass setup
+  if (compassLoop == ON)
+    configureCompass();
   
   // Setup receiver pins for pin change interrupts
   if (receiverLoop == ON)
      configureReceiver();
   
-  //  Auto Zero Gyros
-  autoZeroGyros();
-  
-  #ifdef CalibrationAtStartup
-    // Calibrate sensors
-    zeroGyros();
-    zeroAccelerometers();
-    zeroIntegralError();
-  #endif
-  #ifdef GyroCalibrationAtStartup
-    zeroGyros();
-  #endif
+  sensors.initialize();
+  sensors.zeroGyros();
+
+  zeroIntegralError();
   levelAdjust[ROLL] = 0;
   levelAdjust[PITCH] = 0;
   
@@ -135,6 +107,7 @@ void setup() {
   
   // Complementary filter setup
   configureFilter(timeConstant);
+  
   
   previousTime = millis();
   digitalWrite(LEDPIN, HIGH);
@@ -210,53 +183,7 @@ void loop () {
 // End of transmitter loop //
 /////////////////////////////
   
-// ***********************************************************
-// ********************* Analog Input Loop *******************
-// ***********************************************************
-  if ((currentTime > (analogInputTime + AILOOPTIME)) && (analogInputLoop == ON)) { // 500Hz
-    // *********************** Read Sensors **********************
-    // Apply low pass filter to sensor values and center around zero
-    // Did not convert to engineering units, since will experiment to find P gain anyway
-    for (axis = ROLL; axis < LASTAXIS; axis++) {
-      gyroADC[axis] = analogRead(gyroChannel[axis]) - gyroZero[axis];
-      accelADC[axis] = analogRead(accelChannel[axis]) - accelZero[axis];
-    }
-
-    #ifndef OriginalIMU
-      gyroADC[ROLL] = -gyroADC[ROLL];
-      gyroADC[PITCH] = -gyroADC[PITCH];
-    #endif
-    #ifdef LPY
-      gyroADC[YAW] = -gyroADC[YAW];
-    #endif
-  
-    // Compiler seems to like calculating this in separate loop better
-    for (axis = ROLL; axis < LASTAXIS; axis++) {
-      gyroData[axis] = smooth(gyroADC[axis], gyroData[axis], smoothFactor[GYRO]);
-      accelData[axis] = smooth(accelADC[axis], accelData[axis], smoothFactor[ACCEL]);
-    }
-
-    // ****************** Calculate Absolute Angle *****************
-    #ifndef KalmanFilter
-      //filterData(previousAngle, gyroADC, angle, *filterTerm, dt)
-      flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], atan2(accelADC[ROLL], accelADC[ZAXIS]), filterTermRoll, AIdT);
-      flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], atan2(accelADC[PITCH], accelADC[ZAXIS]), filterTermPitch, AIdT);
-      //flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroData[ROLL], atan2(accelData[ROLL], accelData[ZAXIS]), filterTermRoll, AIdT);
-      //flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroData[PITCH], atan2(accelData[PITCH], accelData[ZAXIS]), filterTermPitch, AIdT);
-    #endif
-      
-    #ifdef KalmanFilter
-      predictKalman(&rollFilter, (gyroADC[ROLL]/1024) * aref * 8.72, AIdT);
-      flightAngle[ROLL] = updateKalman(&rollFilter, atan2(accelADC[ROLL], accelADC[ZAXIS])) * 57.2957795;
-      predictKalman(&pitchFilter, (gyroADC[PITCH]/1024) * aref * 8.72, AIdT);
-      flightAngle[PITCH] = updateKalman(&pitchFilter, atan2(accelADC[PITCH], accelADC[ZAXIS])) * 57.2957795;
-    #endif
-    
-    analogInputTime = currentTime;
-  } 
-//////////////////////////////
-// End of analog input loop //
-//////////////////////////////
+  sensors.process();  
   
 // ********************************************************************
 // *********************** Flight Control Loop ************************
@@ -386,11 +313,43 @@ void loop () {
 // ******************* Camera Stailization *********************
 // *************************************************************
 #ifdef Camera // Development moved to Arduino Mega
+
   if ((currentTime > (cameraTime + CAMERALOOPTIME)) && (cameraLoop == ON)) { // 50Hz
-    rollCamera.write((mCamera * flightAngle[ROLL]) + bCamera);
-    pitchCamera.write(-(mCamera * flightAngle[PITCH]) + bCamera);
+    //rollCamera.write((mCamera * flightAngle[ROLL]) + bCamera);
+    //pitchCamera.write((mCamera * flightAngle[PITCH]) + bCamera);
+    rollCamera.write((int)flightAngle[ROLL]+90);
+    pitchCamera.write((int)flightAngle[PITCH]+90);
     cameraTime = currentTime;
   }
+  SoftwareServo::refresh();
+  /*if ((currentTime > (rollCameraTime + rollCameraLoop)) && (cameraLoop == ON)) { // 50Hz
+    Serial.print(rollState, DEC); Serial.print(" - "); Serial.print(currentTime); Serial.print(" - ");
+    Serial.println(rollCameraLoop);
+    if (rollState == HIGH) {
+      rollCameraLoop = 20000;
+      digitalWrite(ROLLCAMERAPIN, LOW);
+      rollState = LOW;
+    }
+    else { // rollState = LOW
+      rollCameraLoop = (mCamera * flightAngle[ROLL]) + bCamera;
+      digitalWrite(ROLLCAMERAPIN, HIGH);
+      rollState = HIGH;
+    }
+    rollCameraTime = currentTime;
+  }*/  
+  /*if ((currentTime > (pitchCameraTime + pitchCameraLoop)) && (cameraLoop == ON)) { // 50Hz
+    if (pitchState == HIGH) {
+      pitchCameraLoop = 20000;
+      digitalWrite(PITCHCAMERAPIN, LOW);
+      pitchState = LOW;
+    }
+    else { // rollState = LOW
+      pitchCameraLoop = (mCamera * flightAngle[PITCH]) + bCamera;
+      digitalWrite(PITCHCAMERAPIN, HIGH);
+      pitchState = HIGH;
+    }
+    pitchCameraTime = currentTime;
+  }*/  
 #endif
 ////////////////////////
 // End of camera loop //
@@ -410,4 +369,27 @@ void loop () {
 // End of fast telemetry loop //
 ////////////////////////////////
 
+// **************************************************************
+// ************************* Compass Data ***********************
+// **************************************************************
+  if ((currentTime > (compassTime + COMPASSTIME)) && (compassLoop == ON)) { // 200Hz means up to 100Hz signal can be detected by FFT
+    compassX = readCompass(MAG_XAXIS);  // read the x-axis magnetic field value
+    compassY = readCompass(MAG_YAXIS);  // read the y-axis magnetic field value
+    compassZ = readCompass(MAG_ZAXIS);  // read the z-axis magnetic field value
+    
+    rollRad = radians(flightAngle[ROLL]);
+    pitchRad = radians(flightAngle[PITCH]);
+    
+    CMx = (compassX * cos(pitchRad)) + (compassY *sin(rollRad) * sin(pitchRad)) - (compassZ * cos(rollRad) * sin(pitchRad));
+    CMy = (compassY * cos(rollRad)) + (compassZ * sin(rollRad));
+    heading = abs(degrees(atan(CMy/CMx)));
+    if (CMx >= 0 && CMy >= 0) {heading = 180 - heading;}
+    if (CMx >= 0 && CMy < 0) {heading = heading + 180;}
+    if (CMx < 0 && CMy < 0) {heading = 360 - heading;}
+
+    compassTime = currentTime;
+  }
+////////////////////////////////
+//     End of compass loop    //
+////////////////////////////////
 }

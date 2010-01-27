@@ -1,7 +1,7 @@
 /*
-  AeroQuad v1.5 - Novmeber 2009
-  www.AeroQuad.info
-  Copyright (c) 2009 Ted Carancho.  All rights reserved.
+  AeroQuad v2.0 - January 2010
+  www.AeroQuad.com
+  Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
  
   This program is free software: you can redistribute it and/or modify 
@@ -23,16 +23,17 @@
 #include "WProgram.h"
 
 #define BAUD 115200
-#define LEDPIN 13
-#define AZPIN 12
+#define LEDPIN 31
 
 // Analog Reference Value
-float aref = 2.892; // Measured with a DMM
+float aref = 2.725; // Measured with a DMM
 
 // Auto level setup
 int levelAdjust[2] = {0,0};
 int levelLimit; // Read in from EEPROM
 int levelOff; // Read in from EEPROM
+float rawRollAngle;
+float rawPitchAngle;
 
 // Heading hold
   // aref / 1024 = voltage per A/D bit
@@ -45,13 +46,19 @@ int levelOff; // Read in from EEPROM
 // Camera stabilization variables
 // Note: stabilization camera software is still under development
 #ifdef Camera
-  #define ROLLCAMERAPIN 12
-  #define PITCHCAMERAPIN 13
+  #define ROLLCAMERAPIN 32
+  #define PITCHCAMERAPIN 33
   // map +/-90 degrees to 1000-2000
   float mCamera = 5.556;
   float bCamera = 1500;
-  Servo rollCamera;
-  Servo pitchCamera;
+  SoftwareServo rollCamera;
+  SoftwareServo pitchCamera;
+  unsigned long rollCameraTime = 0;
+  unsigned long rollCameraLoop = 2000;
+  unsigned long pitchCameraTime = 0;
+  unsigned long pitchCameraLoop = 2000;
+  byte rollState = LOW;
+  byte pitchState = LOW;
 #endif
 
 // ESC Calibration
@@ -60,6 +67,23 @@ int testCommand = 1000;
 
 // Ground station control (experimental)
 int remoteCommand[4] = {1000,1000,1000,1000};
+
+// Pin assignments for MicroMag 3
+#define MAG_RESET 49
+#define MAG_DRDY 48
+
+#define MAG_WAIT 1
+#define MAG_XAXIS 0
+#define MAG_YAXIS 1
+#define MAG_ZAXIS 2
+
+int compassX = 0;        // magnetic field x axis
+int compassY = 0;        // magnetic field y axis
+int compassZ = 0;        // magnetic field z axis
+float rollRad = 0;
+float pitchRad = 0;
+float CMx = 0;
+float CMy = 0;
 
 // Communication
 char queryType = 'X';
@@ -78,6 +102,8 @@ byte update = 0;
 #define FASTTELEMETRYTIME 10
 #define AILOOPTIME 2
 #define CONTROLLOOPTIME 2
+#define COMPASSTIME 100
+#define CAMERALOOPTIME 20
 
 float AIdT = AILOOPTIME / 1000.0;
 float controldT = CONTROLLOOPTIME / 1000.0;
@@ -87,6 +113,7 @@ byte telemetryLoop = ON;
 byte analogInputLoop = ON;
 byte controlLoop = ON;
 byte cameraLoop = OFF; // Note: stabilization camera software is still under development, moved to Arduino Mega
+byte compassLoop = OFF;
 byte testSignal = LOW;
 // Measured test signal with an oscilloscope:
 // All loops on = 2.4 ms
@@ -113,6 +140,7 @@ unsigned long controlLoopTime = 1; // offset control loop from analog input loop
 unsigned long cameraTime = 0;
 unsigned long fastTelemetryTime = 0;
 unsigned long autoZeroGyroTime = 0;
+unsigned long compassTime = 3;
 //float dt = 0.002;
 
 #endif
