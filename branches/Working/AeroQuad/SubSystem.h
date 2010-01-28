@@ -28,7 +28,7 @@ To use this class you would create a subclass of it and impliment the specific l
 */
 
 class SubSystem
-{
+ {
 private:
   //Private properties used to store the state of a SubSystem
   unsigned int _enabled;              //Is this SubSystem enabled
