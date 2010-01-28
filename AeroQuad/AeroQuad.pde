@@ -66,6 +66,8 @@
 #include "Sensors.h"
 
 Sensors sensors;
+Filter gyro[3];
+Filter accel[3];
 
 // ************************************************************
 // ********************** Setup AeroQuad **********************
