@@ -199,9 +199,9 @@ public:
       for (int i=0; i<FINDZERO; i++) _findZero[i] = analogRead(_gyroChannel[axis]);
       _gyroZero[axis] = _findMode(_findZero, FINDZERO);
     }
-    writeFloat(_gyroZero[ROLL], GYRO_ROLL_ZERO_ADR);
-    writeFloat(_gyroZero[PITCH], GYRO_PITCH_ZERO_ADR);
-    writeFloat(_gyroZero[YAW], GYRO_YAW_ZERO_ADR);
+    eeprom.write(_gyroZero[ROLL], GYRO_ROLL_ZERO_ADR);
+    eeprom.write(_gyroZero[PITCH], GYRO_PITCH_ZERO_ADR);
+    eeprom.write(_gyroZero[YAW], GYRO_YAW_ZERO_ADR);
   }
 
   void zeroAccelerometers() { // Finds ADC value which represents zero acceleration
@@ -210,9 +210,9 @@ public:
       _accelZero[axis] = _findMode(_findZero, FINDZERO);
     }
     _accelZero[ZAXIS] = ZMAX - ((ZMAX - ZMIN)/2);
-    writeFloat(_accelZero[ROLL], LEVELROLLCAL_ADR);
-    writeFloat(_accelZero[PITCH], LEVELPITCHCAL_ADR);
-    writeFloat(_accelZero[ZAXIS], LEVELZCAL_ADR);
+    eeprom.write(_accelZero[ROLL], LEVELROLLCAL_ADR);
+    eeprom.write(_accelZero[PITCH], LEVELPITCHCAL_ADR);
+    eeprom.write(_accelZero[ZAXIS], LEVELZCAL_ADR);
   }
   
   float arctan2(float y, float x) {
