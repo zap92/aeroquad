@@ -52,9 +52,8 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <EEPROM.h>
 #include <Servo.h>
-#include "EEPROM_AQ.h"
+#include "Eeprom.h"
 #include "Filter.h"
 #include "PID.h"
 #include "Receiver.h"
@@ -62,12 +61,11 @@
 #include "Motors.h"
 #include <SoftwareServo.h>
 #include "AeroQuad.h"
-//#include "Servo.h"
-#include "Sensors.h"
 
 Sensors sensors;
 Filter gyro[3];
 Filter accel[3];
+Eeprom eeprom;
 
 // ************************************************************
 // ********************** Setup AeroQuad **********************

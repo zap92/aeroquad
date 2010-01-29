@@ -37,6 +37,7 @@ class Filter {
       if (smoothFactor > 1.0) smoothFactor = 1.0;
       if (smoothFactor <= 0) smoothFactor = 0.001;
       _smoothFactor = smoothFactor;
+      _previousData = 0;
     }
     
     int smooth(int currentData) {

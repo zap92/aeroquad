@@ -24,6 +24,10 @@
 
 #define BAUD 115200
 #define LEDPIN 31
+#define ROLL 0
+#define PITCH 1
+#define YAW 2
+#define LASTAXIS 3
 
 // Analog Reference Value
 float aref = 2.725; // Measured with a DMM
