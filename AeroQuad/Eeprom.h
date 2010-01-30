@@ -21,6 +21,7 @@
 #ifndef EEPROM_H
 #define EEPROM_H
 
+#include "SubSystem.h"
 #include <EEPROM.h>
 
 class Eeprom {

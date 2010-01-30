@@ -1,8 +1,5 @@
-#ifndef __SUBSYSTEM_H__
-#define __SUBSYSTEM_H__
-
 /*
-  AeroQuad v1.5 - Novmeber 2009
+ AeroQuad v2.0 - Novmeber 2009
  www.AeroQuad.info
  Copyright (c) 2009 Chris Whiteford.  All rights reserved.
  An Open Source Arduino based quadrocopter.
@@ -26,6 +23,9 @@
 This is the base SubSystem class.  Its designed purpose is to abstract all the "scheduleing" for an AeroQuad component.
 To use this class you would create a subclass of it and impliment the specific logic for what your building.
 */
+
+#ifndef __SUBSYSTEM_H__
+#define __SUBSYSTEM_H__
 
 class SubSystem
  {

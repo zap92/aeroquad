@@ -35,6 +35,9 @@ class Sensors:
 public SubSystem
 {
 private:
+  Filter gyro[3];
+  Filter accel[3];
+
   // Need to write a calibration routine for accelerometers (including Z axis)
   // These A/D values depend on how well the sensors are mounted
   // change these values to your unique configuration
@@ -151,8 +154,8 @@ public:
 
     // Compiler seems to like calculating this in separate loop better
     for (_axis = ROLL; _axis < LASTAXIS; _axis++) {
-      _gyroData[_axis] = gyro.smooth[_axis](_gyroADC[_axis]);
-      _accelData[_axis] = accel.smooth[_axis](_accelADC[_axis];
+      _gyroData[_axis] = gyro[_axis].smooth(_gyroADC[_axis]);
+      _accelData[_axis] = accel[_axis].smooth(_accelADC[_axis];
     }
 
     // ****************** Calculate Absolute Angle *****************

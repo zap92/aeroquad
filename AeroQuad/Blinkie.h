@@ -14,7 +14,7 @@ public:
   Blinkie():
   SubSystem()
   {
-    //Perform any initalization of varialbes you need in the constructor of this SubSystem
+    //Perform any initalization of variables you need in the constructor of this SubSystem
     _blinkState = false;
     _blinkPin = 13;
   }
