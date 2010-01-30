@@ -1,7 +1,5 @@
-#include "SubSystem.h"
-
 /*
-  AeroQuad v1.5 - Novmeber 2009
+  AeroQuad v2.0 - Novmeber 2009
  www.AeroQuad.info
  Copyright (c) 2009 Ted Carancho, Chris Whiteford.  All rights reserved.
  An Open Source Arduino based quadrocopter.
@@ -19,6 +17,8 @@
  You should have received a copy of the GNU General Public License 
  along with this program. If not, see <http://www.gnu.org/licenses/>. 
  */
+
+#include "SubSystem.h"
 
 #define BAUD 115200
 #define MAXASSIGNEDSERIALPORTS 4

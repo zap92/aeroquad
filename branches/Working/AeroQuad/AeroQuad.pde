@@ -52,20 +52,25 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <Servo.h>
-#include "Eeprom.h"
+#include "AeroQuad.h"
 #include "Filter.h"
 #include "PID.h"
-#include "Receiver.h"
-#include "Sensors.h"
 #include "Motors.h"
-#include <SoftwareServo.h>
-#include "AeroQuad.h"
 
-Sensors sensors;
-Filter gyro[3];
-Filter accel[3];
+#include "Eeprom.h"
 Eeprom eeprom;
+
+#include "Sensors.h"
+Sensors sensors;
+
+#include "Receiver.h"
+Receiver receiver;
+
+#include "SerialComs.h"
+SerialComs serialcoms;
+
+#include "GPS.h"
+GPS gps;
 
 // ************************************************************
 // ********************** Setup AeroQuad **********************
@@ -77,28 +82,28 @@ void setup() {
   pinMode(11, INPUT);
   analogRead(11);
   
+  // Read user values from EEPROM
+  eeprom.initialize();
+
+  // Setup and calibrate sensors
+  sensors.initialize(2, 0);
+  sensors.zeroGyros();
+  zeroIntegralError();
+  levelAdjust[ROLL] = 0;
+  levelAdjust[PITCH] = 0;
+  
+  // Setup receiver pins for pin change interrupts
+  receiver.intialize();
+
   // Configure motors
   configureMotors();
   commandAllMotors(MINCOMMAND);
-
-  // Read user values from EEPROM
-  readEEPROM();
 
   // Compass setup
   if (compassLoop == ON)
     configureCompass();
   
-  // Setup receiver pins for pin change interrupts
-  if (receiverLoop == ON)
-     configureReceiver();
-  
-  sensors.initialize();
-  sensors.zeroGyros();
-
-  zeroIntegralError();
-  levelAdjust[ROLL] = 0;
-  levelAdjust[PITCH] = 0;
-  
+ 
   // Camera stabilization setup
   #ifdef Camera
     rollCamera.attach(ROLLCAMERAPIN);
@@ -108,6 +113,12 @@ void setup() {
   // Complementary filter setup
   configureFilter(timeConstant);
   
+  serialcoms.assignSerialPort(&Serial);
+  serialcoms.assignSerialPort(&Serial1);
+  serialcoms.initialize(100, 50);
+  
+  gps.assignSerialPort(&Serial2);
+  gps.initialize(100, 75);
   
   previousTime = millis();
   digitalWrite(LEDPIN, HIGH);
@@ -128,62 +139,10 @@ void loop () {
     digitalWrite(LEDPIN, testSignal);
   #endif
   
-// ************************************************************************
-// ****************** Transmitter/Receiver Command Loop *******************
-// ************************************************************************
-  if ((currentTime > (receiverTime + RECEIVERLOOPTIME)) && (receiverLoop == ON)) { // 10Hz
-    // Buffer receiver values read from pin change interrupt handler
-    for (channel = ROLL; channel < LASTCHANNEL; channel++)
-      receiverData[channel] = (mTransmitter[channel] * readReceiver(receiverPin[channel])) + bTransmitter[channel];
-    // Smooth the flight control transmitter inputs (roll, pitch, yaw, throttle)
-    for (channel = ROLL; channel < LASTCHANNEL; channel++)
-      transmitterCommandSmooth[channel] = smooth(receiverData[channel], transmitterCommandSmooth[channel], smoothTransmitter[channel]);
-    // Reduce transmitter commands using xmitFactor and center around 1500
-    for (channel = ROLL; channel < LASTAXIS; channel++)
-      transmitterCommand[channel] = ((transmitterCommandSmooth[channel] - transmitterZero[channel]) * xmitFactor) + transmitterZero[channel];
-    // No xmitFactor reduction applied for throttle, mode and AUX
-    for (channel = THROTTLE; channel < LASTCHANNEL; channel++)
-      transmitterCommand[channel] = transmitterCommandSmooth[channel];
-    // Read quad configuration commands from transmitter when throttle down
-    if (receiverData[THROTTLE] < MINCHECK) {
-      zeroIntegralError();
-      // Disarm motors (left stick lower left corner)
-      if (receiverData[YAW] < MINCHECK && armed == 1) {
-        armed = 0;
-        commandAllMotors(MINCOMMAND);
-      }    
-      // Zero sensors (left stick lower left, right stick lower right corner)
-      if ((receiverData[YAW] < MINCHECK) && (receiverData[ROLL] > MAXCHECK) && (receiverData[PITCH] < MINCHECK)) {
-        autoZeroGyros();
-        zeroGyros();
-        zeroAccelerometers();
-        zeroIntegralError();
-        pulseMotors(3);
-      }   
-      // Arm motors (left stick lower right corner)
-      if (receiverData[YAW] > MAXCHECK && armed == 0 && safetyCheck == 1) {
-        armed = 1;
-        zeroIntegralError();
-        minCommand = MINTHROTTLE;
-        transmitterCenter[PITCH] = receiverData[PITCH];
-        transmitterCenter[ROLL] = receiverData[ROLL];
-      }
-      // Prevents accidental arming of motor output if no transmitter command received
-      if (receiverData[YAW] > MINCHECK) safetyCheck = 1; 
-    }
-    // Prevents too little power applied to motors during hard manuevers
-    if (receiverData[THROTTLE] > (MIDCOMMAND - MINDELTA)) minCommand = receiverData[THROTTLE] - MINDELTA;
-    if (receiverData[THROTTLE] < MINTHROTTLE) minCommand = MINTHROTTLE;
-    // Allows quad to do acrobatics by turning off opposite motors during hard manuevers
-    //if ((receiverData[ROLL] < MINCHECK) || (receiverData[ROLL] > MAXCHECK) || (receiverData[PITCH] < MINCHECK) || (receiverData[PITCH] > MAXCHECK))
-      //minCommand = MINTHROTTLE;
-    receiverTime = currentTime;
-  } 
-/////////////////////////////
-// End of transmitter loop //
-/////////////////////////////
-  
-  sensors.process();  
+  sensors.process();  // Measure sensor output
+  receiver.process(); // Read R/C receiver and execute pilot commands
+  serialcoms.process(currentTime); // Process serial command and telemetry
+  gps.process(currentTime); // Read GPS
   
 // ********************************************************************
 // *********************** Flight Control Loop ************************
