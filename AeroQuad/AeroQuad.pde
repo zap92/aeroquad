@@ -46,7 +46,7 @@
 //#define Camera
 
 // Heading Hold (experimental)
-//#define HeadingHold // Currently uses yaw gyro which drifts over time, for Mega development will use magnetometer
+#define HeadingHold // Currently uses yaw gyro which drifts over time, for Mega development will use magnetometer
 
 // Auto Level (experimental)
 #define AutoLevel
@@ -80,8 +80,6 @@ Blinkie blinkie;
 
 #include "SerialComs.h"
 SerialComs serialcoms;
-
-
 
 // ************************************************************
 // ********************** Setup AeroQuad **********************
@@ -144,7 +142,6 @@ void setup()
   configureFilter(timeConstant);
   
   previousTime = millis();
-  digitalWrite(LEDPIN, HIGH);
   safetyCheck = 0;
 }
 
