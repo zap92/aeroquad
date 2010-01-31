@@ -52,13 +52,13 @@ int axis;
 int accelData[3] = {0,0,0};
 int accelZero[3] = {0,0,0};
 int accelADC[3] = {0,0,0};
-int accelInvert[3] = {1,1,0};
+int accelInvert[3] = {0,1,0};
 
 // Gyro setup
 int gyroData[3] = {0,0,0};
 int gyroZero[3] = {0,0,0};
 int gyroADC[3] = {0,0,0};
-int gyroInvert[3] = {0,0,1};
+int gyroInvert[3] = {0,0,0};
 
 // Calibration parameters
 #define FINDZERO 50
