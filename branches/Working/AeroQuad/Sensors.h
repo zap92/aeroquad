@@ -141,49 +141,61 @@ public:
     {
       //If the code reaches this point the SubSystem is allowed to run.
 
-    // *********************** Read Sensors **********************
-    // Apply low pass filter to sensor values and center around zero
-    // Did not convert to engineering units, since will experiment to find P gain anyway
-    for (_axis = ROLL; _axis < LASTAXIS; _axis++) {
-      _gyroADC[_axis] = _gyroZero[_axis] - analogRead(_gyroChannel[_axis]);
-      _accelADC[_axis] = analogRead(_accelChannel[_axis]) - _accelZero[_axis];
-    }
+      // *********************** Read Sensors **********************
+      // Apply low pass filter to sensor values and center around zero
+      // Did not convert to engineering units, since will experiment to find P gain anyway
+      for (_axis = ROLL; _axis < LASTAXIS; _axis++) {
+        _gyroADC[_axis] = _gyroZero[_axis] - analogRead(_gyroChannel[_axis]);
+        _accelADC[_axis] = analogRead(_accelChannel[_axis]) - _accelZero[_axis];
+      }
     
-    //gyroADC[YAW] = -gyroADC[YAW];
-    //accelADC[ZAXIS] = -accelADC[ZAXIS];
+      //gyroADC[YAW] = -gyroADC[YAW];
+      //accelADC[ZAXIS] = -accelADC[ZAXIS];
 
-    // Compiler seems to like calculating this in separate loop better
-    for (_axis = ROLL; _axis < LASTAXIS; _axis++) {
-      _gyroData[_axis] = gyro[_axis].smooth(_gyroADC[_axis]);
-      _accelData[_axis] = accel[_axis].smooth(_accelADC[_axis];
-    }
+      // Compiler seems to like calculating this in separate loop better
+      for (_axis = ROLL; _axis < LASTAXIS; _axis++) {
+        _gyroData[_axis] = gyro[_axis].smooth(_gyroADC[_axis]);
+        _accelData[_axis] = accel[_axis].smooth(_accelADC[_axis];
+      }
 
-    // ****************** Calculate Absolute Angle *****************
+      // ****************** Calculate Absolute Angle *****************
     
-    // Fix for calculating unfiltered flight angle per RoyLB
-    // http://carancho.com/AeroQuad/forum/index.php?action=profile;u=77;sa=showPosts
-    // perpendicular = sqrt((analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS])) ^2 + (analogRead(accelChannel[PITCH]) - accelZero[PITCH]) ^2)
-    // flightAngle[ROLL] = atan2(analogRead(accelChannel[ROLL]) - accelZero[ROLL], perpendicular) * 57.2957795;    
+      // Fix for calculating unfiltered flight angle per RoyLB
+      // http://carancho.com/AeroQuad/forum/index.php?action=profile;u=77;sa=showPosts
+      // perpendicular = sqrt((analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS])) ^2 + (analogRead(accelChannel[PITCH]) - accelZero[PITCH]) ^2)
+      // flightAngle[ROLL] = atan2(analogRead(accelChannel[ROLL]) - accelZero[ROLL], perpendicular) * 57.2957795;    
 
-    rawPitchAngle = atan2(_accelADC[PITCH], sqrt((_accelADC[ROLL] * _accelADC[ROLL]) + (_accelADC[ZAXIS] * _accelADC[ZAXIS])));
-    rawRollAngle = atan2(_accelADC[ROLL], sqrt((_accelADC[PITCH] * _accelADC[PITCH]) + (_accelADC[ZAXIS] * _accelADC[ZAXIS])));
+      rawPitchAngle = atan2(_accelADC[PITCH], sqrt((_accelADC[ROLL] * _accelADC[ROLL]) + (_accelADC[ZAXIS] * _accelADC[ZAXIS])));
+      rawRollAngle = atan2(_accelADC[ROLL], sqrt((_accelADC[PITCH] * _accelADC[PITCH]) + (_accelADC[ZAXIS] * _accelADC[ZAXIS])));
     
-    #ifndef KalmanFilter
-      //filterData(previousAngle, gyroADC, angle, *filterTerm, dt)
-      flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], rawRollAngle, filterTermRoll, AIdT);
-      flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], rawPitchAngle, filterTermPitch, AIdT);
-      //flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroData[ROLL], arctan2(accelData[ROLL], accelData[ZAXIS]), filterTermRoll, AIdT);
-      //flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroData[PITCH], arctan2(accelData[PITCH], accelData[ZAXIS]), filterTermPitch, AIdT);
-    #endif
+      #ifndef KalmanFilter
+        //filterData(previousAngle, gyroADC, angle, *filterTerm, dt)
+        flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], rawRollAngle, filterTermRoll, AIdT);
+        flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], rawPitchAngle, filterTermPitch, AIdT);
+        //flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroData[ROLL], arctan2(accelData[ROLL], accelData[ZAXIS]), filterTermRoll, AIdT);
+        //flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroData[PITCH], arctan2(accelData[PITCH], accelData[ZAXIS]), filterTermPitch, AIdT);
+      #endif
       
-    #ifdef KalmanFilter
-      predictKalman(&rollFilter, (gyroADC[ROLL]/1024) * aref * 8.72, AIdT);
-      flightAngle[ROLL] = updateKalman(&rollFilter, atan2(accelADC[ROLL], accelADC[ZAXIS])) * 57.2957795;
-      predictKalman(&pitchFilter, (gyroADC[PITCH]/1024) * aref * 8.72, AIdT);
-      flightAngle[PITCH] = updateKalman(&pitchFilter, atan2(accelADC[PITCH], accelADC[ZAXIS])) * 57.2957795;
-    #endif
+      #ifdef KalmanFilter
+        predictKalman(&rollFilter, (gyroADC[ROLL]/1024) * aref * 8.72, AIdT);
+        flightAngle[ROLL] = updateKalman(&rollFilter, atan2(accelADC[ROLL], accelADC[ZAXIS])) * 57.2957795;
+        predictKalman(&pitchFilter, (gyroADC[PITCH]/1024) * aref * 8.72, AIdT);
+        flightAngle[PITCH] = updateKalman(&pitchFilter, atan2(accelADC[PITCH], accelADC[ZAXIS])) * 57.2957795;
+      #endif
     
-    analogInputTime = currentTime;
+      compassX = readCompass(MAG_XAXIS);  // read the x-axis magnetic field value
+      compassY = readCompass(MAG_YAXIS);  // read the y-axis magnetic field value
+      compassZ = readCompass(MAG_ZAXIS);  // read the z-axis magnetic field value
+    
+      rollRad = radians(flightAngle[ROLL]);
+      pitchRad = radians(flightAngle[PITCH]);
+    
+      CMx = (compassX * cos(pitchRad)) + (compassY *sin(rollRad) * sin(pitchRad)) - (compassZ * cos(rollRad) * sin(pitchRad));
+      CMy = (compassY * cos(rollRad)) + (compassZ * sin(rollRad));
+      heading = abs(degrees(atan(CMy/CMx)));
+      if (CMx >= 0 && CMy >= 0) {heading = 180 - heading;}
+      if (CMx >= 0 && CMy < 0) {heading = heading + 180;}
+      if (CMx < 0 && CMy < 0) {heading = 360 - heading;}
     }
   }
 
