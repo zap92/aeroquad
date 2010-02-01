@@ -80,6 +80,7 @@ void setup()
 	
 	//Run the LEDs at 5hz offset 75ms
 	led.initialize(200, 75);
+	led.setPatternType(LED::LEDPatternInsideOut);
 }
 
 
