@@ -15,6 +15,9 @@ class FlightControl : public SubSystem
 		  float integratedError;
 		} _PIDs[6];
 		
+		bool _autoLevel;
+		bool _headingHold;
+		
 		const int _updatePID(const float targetPosition, const float currentPosition, struct PIDdata *PIDparameters)
 		{
 		  	float error;
@@ -33,7 +36,8 @@ class FlightControl : public SubSystem
 	public:
 		FlightControl() : SubSystem()
 		{
-			
+			_autoLevel = false;
+			_headingHold = false;
 		}
 		
 		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
@@ -75,6 +79,18 @@ class FlightControl : public SubSystem
 				int pitchAdjust = 0;
 				int yawAdjust = 0;
 				
+				if (_autoLevel)
+				{
+					//Process adjustments needed to autolevel the quad
+					//TODO
+				}
+				
+				if (_headingHold)
+				{
+					//Process adjustments needed to keep the quad pointed in the right direction
+					//TODO
+				}
+				
 				int currentRollPosition = fconstrain(fmap(currentRollRate, -1,1, 1000,2000), 1000, 2000);
 				int currentPitchPosition = fconstrain(fmap(currentPitchRate, -1,1, 1000,2000), 1000,2000);
 				int currentYawPosition = fconstrain(fmap(currentYawRate, -1,1, 1000,2000), 1000,2000);
@@ -90,6 +106,37 @@ class FlightControl : public SubSystem
 				DEBUGSERIALPRINT(yawTransmitterCommand);
 				DEBUGSERIALPRINTLN("");*/
 			}
+		}
+		
+		//Setters for the flight control options
+		void enableAutoLevel()
+		{
+			_autoLevel = true;
+		}
+		
+		void disableAutoLevel()
+		{
+			_autoLevel = false;
+		}
+		
+		const bool autoLevel()
+		{
+			return _autoLevel;
+		}
+		
+		void enableHeadingHold()
+		{
+			_headingHold = true;
+		}
+		
+		void disableHeadingHold()
+		{
+			_headingHold = false;
+		}
+		
+		const bool headingHold()
+		{
+			return _headingHold;
 		}
 		
 		//Accessors for the flight control data
