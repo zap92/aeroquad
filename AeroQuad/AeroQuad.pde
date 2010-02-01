@@ -66,6 +66,9 @@ Sensors sensors;
 #include "Receiver.h"
 Receiver receiver;
 
+#include "Motors.h"
+Motors motors;
+
 #include "SerialComs.h"
 SerialComs serialcoms;
 
@@ -96,8 +99,7 @@ void setup() {
   receiver.intialize();
 
   // Configure motors
-  configureMotors();
-  commandAllMotors(MINCOMMAND);
+  motors.initialize();
 
   // Compass setup
   if (compassLoop == ON)
@@ -133,140 +135,14 @@ void loop () {
   currentTime = millis();
   deltaTime = currentTime - previousTime;
   previousTime = currentTime;
-  #ifdef DEBUG
-    if (testSignal == LOW) testSignal = HIGH;
-    else testSignal = LOW;
-    digitalWrite(LEDPIN, testSignal);
-  #endif
   
   sensors.process();  // Measure sensor output
   receiver.process(); // Read R/C receiver and execute pilot commands
+  flightcontrol.process();
+  motors.process()
   serialcoms.process(currentTime); // Process serial command and telemetry
   gps.process(currentTime); // Read GPS
   
-// ********************************************************************
-// *********************** Flight Control Loop ************************
-// ********************************************************************
-  if ((currentTime > controlLoopTime + CONTROLLOOPTIME) && (controlLoop == ON)) { // 500Hz
-
-  // ********************* Check Flight Mode *********************
-    #ifdef AutoLevel
-      if (transmitterCommandSmooth[MODE] < 1500) {
-        // Acrobatic Mode
-        levelAdjust[ROLL] = 0;
-        levelAdjust[PITCH] = 0;
-      }
-      else {
-        // Stable Mode
-        for (axis = ROLL; axis < YAW; axis++)
-          levelAdjust[axis] = limitRange(updatePID(0, flightAngle[axis], &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
-        // Turn off Stable Mode if transmitter stick applied
-        if ((abs(receiverData[ROLL] - transmitterCenter[ROLL]) > levelOff)) {
-          levelAdjust[ROLL] = 0;
-          PID[axis].integratedError = 0;
-        }
-        if ((abs(receiverData[PITCH] - transmitterCenter[PITCH]) > levelOff)) {
-          levelAdjust[PITCH] = 0;
-          PID[PITCH].integratedError = 0;
-        }
-      }
-    #endif
-    
-    // ************************** Update Roll/Pitch ***********************
-    // updatedPID(target, measured, PIDsettings);
-    // measured = rate data from gyros scaled to PWM (1000-2000), since PID settings are found experimentally
-    motorAxisCommand[ROLL] = updatePID(transmitterCommand[ROLL] + levelAdjust[ROLL], (gyroData[ROLL] * mMotorRate) + bMotorRate, &PID[ROLL]);
-    motorAxisCommand[PITCH] = updatePID(transmitterCommand[PITCH] - levelAdjust[PITCH], (gyroData[PITCH] * mMotorRate) + bMotorRate, &PID[PITCH]);
-
-    // ***************************** Update Yaw ***************************
-    // Note: gyro tends to drift over time, this will be better implemented when determining heading with magnetometer
-    // Current method of calculating heading with gyro does not give an absolute heading, but rather is just used relatively to get a number to lock heading when no yaw input applied
-    #ifdef HeadingHold
-      currentHeading += gyroData[YAW] * headingScaleFactor * controldT;
-      if (transmitterCommand[THROTTLE] > MINCHECK ) { // apply heading hold only when throttle high enough to start flight
-        if ((transmitterCommand[YAW] > (MIDCOMMAND + 25)) || (transmitterCommand[YAW] < (MIDCOMMAND - 25))) { // if commanding yaw, turn off heading hold
-          headingHold = 0;
-          heading = currentHeading;
-        }
-        else // no yaw input, calculate current heading vs. desired heading heading hold
-          headingHold = updatePID(heading, currentHeading, &PID[HEADING]);
-      }
-      else {
-        heading = 0;
-        currentHeading = 0;
-        headingHold = 0;
-        PID[HEADING].integratedError = 0;
-      }
-      motorAxisCommand[YAW] = updatePID(transmitterCommand[YAW] + headingHold, (gyroData[YAW] * mMotorRate) + bMotorRate, &PID[YAW]);
-    #endif
-    
-    #ifndef HeadingHold
-      motorAxisCommand[YAW] = updatePID(transmitterCommand[YAW], (gyroData[YAW] * mMotorRate) + bMotorRate, &PID[YAW]);
-    #endif
-    
-    // ****************** Calculate Motor Commands *****************
-    if (armed && safetyCheck) {
-      #ifdef plusConfig
-        motorCommand[FRONT] = limitRange(transmitterCommand[THROTTLE] - motorAxisCommand[PITCH] - motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-        motorCommand[REAR] = limitRange(transmitterCommand[THROTTLE] + motorAxisCommand[PITCH] - motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-        motorCommand[RIGHT] = limitRange(transmitterCommand[THROTTLE] - motorAxisCommand[ROLL] + motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-        motorCommand[LEFT] = limitRange(transmitterCommand[THROTTLE] + motorAxisCommand[ROLL] + motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-      #endif
-      #ifdef XConfig
-        // Front = Front/Right, Back = Left/Rear, Left = Front/Left, Right = Right/Rear 
-        motorCommand[FRONT] = limitRange(transmitterCommand[THROTTLE] - motorAxisCommand[PITCH] + motorAxisCommand[ROLL] - motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-        motorCommand[RIGHT] = limitRange(transmitterCommand[THROTTLE] - motorAxisCommand[PITCH] - motorAxisCommand[ROLL] + motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-        motorCommand[LEFT] = limitRange(transmitterCommand[THROTTLE] + motorAxisCommand[PITCH] + motorAxisCommand[ROLL] + motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-        motorCommand[REAR] = limitRange(transmitterCommand[THROTTLE] + motorAxisCommand[PITCH] - motorAxisCommand[ROLL] - motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-      #endif
-    }
-  
-    // If throttle in minimum position, don't apply yaw
-    if (transmitterCommand[THROTTLE] < MINCHECK) {
-      for (motor = FRONT; motor < LASTMOTOR; motor++)
-        motorCommand[motor] = minCommand;
-    }
-    // If motor output disarmed, force motor output to minimum
-    if (armed == 0) {
-      switch (calibrateESC) { // used for calibrating ESC's
-      case 1:
-        for (motor = FRONT; motor < LASTMOTOR; motor++)
-          motorCommand[motor] = MAXCOMMAND;
-        break;
-      case 3:
-        for (motor = FRONT; motor < LASTMOTOR; motor++)
-          motorCommand[motor] = limitRange(testCommand, 1000, 1200);
-        break;
-      case 5:
-        for (motor = FRONT; motor < LASTMOTOR; motor++)
-          motorCommand[motor] = limitRange(remoteCommand[motor], 1000, 1200);
-        safetyCheck = 1;
-        break;
-      default:
-        for (motor = FRONT; motor < LASTMOTOR; motor++)
-          motorCommand[motor] = MINCOMMAND;
-      }
-    }
-    
-    // *********************** Command Motors **********************
-    commandMotors();
-    controlLoopTime = currentTime;
-  } 
-/////////////////////////
-// End of control loop //
-/////////////////////////
-  
-// *************************************************************
-// **************** Command & Telemetry Functions **************
-// *************************************************************
-  if ((currentTime > telemetryTime + TELEMETRYLOOPTIME) && (telemetryLoop == ON)) { // 10Hz    
-    readSerialCommand();
-    sendSerialTelemetry();
-    telemetryTime = currentTime;
-  }
-///////////////////////////
-// End of telemetry loop //
-///////////////////////////
   
 // *************************************************************
 // ******************* Camera Stailization *********************
@@ -313,42 +189,4 @@ void loop () {
 ////////////////////////
 // End of camera loop //
 ////////////////////////
-
-// **************************************************************
-// ***************** Fast Transfer Of Sensor Data ***************
-// **************************************************************
-  if ((currentTime > (fastTelemetryTime + FASTTELEMETRYTIME)) && (fastTransfer == ON)) { // 200Hz means up to 100Hz signal can be detected by FFT
-    printInt(21845); // Start word of 0x5555
-    for (axis = ROLL; axis < LASTAXIS; axis++) printInt(gyroADC[axis]);
-    for (axis = ROLL; axis < LASTAXIS; axis++) printInt(accelADC[axis]);
-    printInt(32767); // Stop word of 0x7FFF
-    fastTelemetryTime = currentTime;
-  }
-////////////////////////////////
-// End of fast telemetry loop //
-////////////////////////////////
-
-// **************************************************************
-// ************************* Compass Data ***********************
-// **************************************************************
-  if ((currentTime > (compassTime + COMPASSTIME)) && (compassLoop == ON)) { // 200Hz means up to 100Hz signal can be detected by FFT
-    compassX = readCompass(MAG_XAXIS);  // read the x-axis magnetic field value
-    compassY = readCompass(MAG_YAXIS);  // read the y-axis magnetic field value
-    compassZ = readCompass(MAG_ZAXIS);  // read the z-axis magnetic field value
-    
-    rollRad = radians(flightAngle[ROLL]);
-    pitchRad = radians(flightAngle[PITCH]);
-    
-    CMx = (compassX * cos(pitchRad)) + (compassY *sin(rollRad) * sin(pitchRad)) - (compassZ * cos(rollRad) * sin(pitchRad));
-    CMy = (compassY * cos(rollRad)) + (compassZ * sin(rollRad));
-    heading = abs(degrees(atan(CMy/CMx)));
-    if (CMx >= 0 && CMy >= 0) {heading = 180 - heading;}
-    if (CMx >= 0 && CMy < 0) {heading = heading + 180;}
-    if (CMx < 0 && CMy < 0) {heading = 360 - heading;}
-
-    compassTime = currentTime;
-  }
-////////////////////////////////
-//     End of compass loop    //
-////////////////////////////////
 }
