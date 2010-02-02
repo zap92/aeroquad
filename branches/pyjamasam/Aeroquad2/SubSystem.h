@@ -3,7 +3,7 @@
 
 class SubSystem
 {
-	private:
+	protected:
 		unsigned int _enabled;
 		unsigned long _lastRunTime;
 

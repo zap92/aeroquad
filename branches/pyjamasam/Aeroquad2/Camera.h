@@ -17,11 +17,11 @@ class Camera : public SubSystem
 		{
 			if (this->_canProcess(currentTime))
 			{
-				float currentPitchAngle = imu.currentPitchAngle();
-				float currentRollAngle = imu.currentRollAngle();
+				float currentPitchAngle = -imu.currentPitchAngle();
+				float currentRollAngle = -imu.currentRollAngle();
 				
-				//Invert the angle and drive the servos as needed.
 				//TODO
+				//Tell the servos where to go now that we know what angle we need to set them to.
 			}
 		}
 };

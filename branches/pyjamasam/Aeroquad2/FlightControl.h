@@ -2,6 +2,9 @@
 
 class FlightControl : public SubSystem
 {
+	public:
+		typedef enum { PIDTypeRoll = 0, PIDTypePitch = 1, PIDTypeYaw = 2 } PIDType;
+	
 	private:
 		int _pitchCommand;
 		int _rollCommand;
@@ -21,15 +24,16 @@ class FlightControl : public SubSystem
 		const int _updatePID(const float targetPosition, const float currentPosition, struct PIDdata *PIDparameters)
 		{
 		  	float error;
-		  	float dTerm;
-		
-			error = targetPosition - currentPosition;
+			float dTerm;
 
-			PIDparameters->integratedError = constrain(PIDparameters->integratedError + error, -_windupGuard, _windupGuard);
+		  	error = targetPosition - currentPosition;
+
+			PIDparameters->integratedError += error;
+			if (PIDparameters->integratedError < -_windupGuard) PIDparameters->integratedError = -_windupGuard;
+			else if (PIDparameters->integratedError > _windupGuard) PIDparameters->integratedError = _windupGuard;
 
 			dTerm = PIDparameters->D * (currentPosition - PIDparameters->lastPosition);
 			PIDparameters->lastPosition = currentPosition;
-			
 			return (PIDparameters->P * error) + (PIDparameters->I * (PIDparameters->integratedError)) + dTerm;
 		}
 		
@@ -44,29 +48,43 @@ class FlightControl : public SubSystem
 		{ 
 			SubSystem::initialize(frequency, offset);
 			
-			_PIDs[0].P = 3;
-			_PIDs[0].I = 0.0;
-			_PIDs[0].D = -10.0;
+			_PIDs[FlightControl::PIDTypeRoll].P = 5;
+			_PIDs[FlightControl::PIDTypeRoll].I = 0;
+			_PIDs[FlightControl::PIDTypeRoll].D = 0;
 			
-			_PIDs[1].P = 3;
-			_PIDs[1].I = 0.0;
-			_PIDs[1].D = -10.0;
+			_PIDs[FlightControl::PIDTypePitch].P = 5;
+			_PIDs[FlightControl::PIDTypePitch].I = 0;
+			_PIDs[FlightControl::PIDTypePitch].D = 0;
 			
-			_PIDs[2].P = 12;
-			_PIDs[2].I = 0.0;
-			_PIDs[2].D = 0.0;
+			_PIDs[FlightControl::PIDTypeYaw].P = 5;
+			_PIDs[FlightControl::PIDTypeYaw].I = 0;
+			_PIDs[FlightControl::PIDTypeYaw].D = 0;
 			
 			_windupGuard = 1000;
+		}
+		
+		//PID accessors
+		void setPidParameters(const float P, const float I, const float D, PIDType pidType)
+		{
+			_PIDs[pidType].P = P;
+			_PIDs[pidType].I = I;
+			_PIDs[pidType].D = D;
+		}
+		
+		void getPidParameters(float *P, float *I, float *D, PIDType pidType)
+		{
+			if (P) *P = _PIDs[pidType].P;
+			if (I) *I = _PIDs[pidType].I;
+			if (D) *D = _PIDs[pidType].D;
 		}
 		
 		void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{
-				int pitchTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel2);
 				int rollTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel1);
+				int pitchTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel2);
 				int yawTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel4);
-				int throttleTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel3);
 				
 				float currentPitchAngle = imu.currentPitchAngle();
 				float currentRollAngle = imu.currentRollAngle();
@@ -91,19 +109,19 @@ class FlightControl : public SubSystem
 					//TODO
 				}
 				
-				int currentRollPosition = fconstrain(fmap(currentRollRate, -1,1, 1000,2000), 1000, 2000);
-				int currentPitchPosition = fconstrain(fmap(currentPitchRate, -1,1, 1000,2000), 1000,2000);
-				int currentYawPosition = fconstrain(fmap(currentYawRate, -1,1, 1000,2000), 1000,2000);
+				float currentRollPosition = currentRollRate * 465;
+				float currentPitchPosition = currentPitchRate * 465;
+				float currentYawPosition = currentYawRate * 465;
 				
-				_rollCommand = _updatePID(rollTransmitterCommand + rollAdjust, currentRollPosition, &_PIDs[0]);
-				_pitchCommand = _updatePID(pitchTransmitterCommand + pitchAdjust, currentPitchPosition, &_PIDs[1]);
-				_yawCommand = _updatePID(yawTransmitterCommand + yawAdjust, currentYawPosition, &_PIDs[2]);
+				_rollCommand = _updatePID(rollTransmitterCommand, (currentRollPosition + 1500), &_PIDs[FlightControl::PIDTypeRoll]);
+				_pitchCommand = _updatePID(pitchTransmitterCommand, (currentPitchPosition + 1500), &_PIDs[FlightControl::PIDTypePitch]);
+				_yawCommand = _updatePID(yawTransmitterCommand, (currentYawPosition + 1500), &_PIDs[FlightControl::PIDTypeYaw]);				
 				
-				/*DEBUGSERIALPRINT(rollTransmitterCommand);
+				/*DEBUGSERIALPRINT(_rollCommand);
 				DEBUGSERIALPRINT(",");
-				DEBUGSERIALPRINT(pitchTransmitterCommand);
+				DEBUGSERIALPRINT(_yawCommand);
 				DEBUGSERIALPRINT(",");
-				DEBUGSERIALPRINT(yawTransmitterCommand);
+				DEBUGSERIALPRINT(_yawCommand);
 				DEBUGSERIALPRINTLN("");*/
 			}
 		}
