@@ -62,10 +62,10 @@ void setup()
 	//Run the sensors at 50hz offset 25ms
 	sensors.initialize(20,25);
 	
-	//Run the receiver at 20hz
-	receiver.initialize(50,0);
-	//receiver.setHardwareType(Receiver::HardwareTypeI2C);
-	receiver.setHardwareType(Receiver::HardwareTypeFake);
+	//Run the receiver at 50hz
+	receiver.initialize(20,0);
+	receiver.setHardwareType(Receiver::HardwareTypeI2C);
+	//receiver.setHardwareType(Receiver::HardwareTypeFake);
 	
 	//Run flight control at 200hz
 	flightcontrol.initialize(5,0);

@@ -31,7 +31,7 @@ class MotorHardware : public HardwareComponent
 	public:
 		MotorHardware() : HardwareComponent()
 		{
-			_armed = false;
+			_armed = true;
 		}
 
 		virtual void initialize()
@@ -91,7 +91,7 @@ class MotorControlOnboard : public MotorHardware
 				if (i >= 4)
 				{
 					if (i > 4) DEBUGSERIALPRINT(",");
-					DEBUGSERIALPRINT(analogOutputValue);
+					DEBUGSERIALPRINT(rawOutputValue);
 				}
 				
 				analogWrite(_motorPins[i], analogOutputValue);
