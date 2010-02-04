@@ -57,6 +57,39 @@ class IMUHardware : public HardwareComponent
 			HardwareComponent::process(currentTime);	
 		}
 		
+#define ZEROLEVELSAMPLECOUNT 50
+		virtual void calibrateZero()
+		{
+			int zeroLevelSamples[ZEROLEVELSAMPLECOUNT];
+			//Calibrate each axis
+			for (int i = 0; i < 9; i++)
+			{
+				if (_inputLayout[i] != -1 && _inputLayout[i] != IMUPinAcclZ)
+				{
+					//We Ignore the Z Axis of the Accel since its "special"
+					
+					//Sample the analog reading a bunch of times
+					for (int j = 0; j < ZEROLEVELSAMPLECOUNT; j++) 
+					{
+						zeroLevelSamples[j] = analogRead(_inputLayout[i]);
+					}
+					
+					//find the mode of the sampled data
+					int sampleMode = findMode(zeroLevelSamples, ZEROLEVELSAMPLECOUNT);
+					
+					//convert the mode value to mV and assign it to the related _inputConfigurations structre for this input
+					_inputConfigurations[i].zeroLevel = (sampleMode * HardwareComponent::getReferenceVoltage()) / 1024.0f;
+					
+					/*DEBUGSERIALPRINT(i);
+					DEBUGSERIALPRINT(":");
+					DEBUGSERIALPRINT(sampleMode);
+					DEBUGSERIALPRINT(":");
+					DEBUGSERIALPRINT(_inputConfigurations[i].zeroLevel);
+					DEBUGSERIALPRINTLN("");*/
+				}
+			}
+		}
+		
 		const float *getCurrentReadings()
 		{
 			return _lastReading;
@@ -237,7 +270,7 @@ class SimplifiedKalmanIMUFilter : public IMUFilter
 			
 			_firstSample = 1;
 			
-			_gyroWeight = 10;
+			_gyroWeight = 7;
 		}
 		
 		void filter(const unsigned long currentTime)
@@ -385,23 +418,37 @@ class IMU : public SubSystem
 				{
 					_imuHardware->process(currentTime);
 
-					_imuFilter->setCurrentReadings(_imuHardware->getCurrentReadings());
-
-					_imuFilter->filter(currentTime);
+					if (_imuFilter)
+					{
+						_imuFilter->setCurrentReadings(_imuHardware->getCurrentReadings());
+						_imuFilter->filter(currentTime);
+					}
 					
-					/*DEBUGSERIALPRINT(this->currentRollRate());
-					DEBUGSERIALPRINT(",");
-					DEBUGSERIALPRINT(this->currentPitchRate());
-					DEBUGSERIALPRINT(",");
-					DEBUGSERIALPRINT(this->currentYawRate());
-					DEBUGSERIALPRINTLN("");*/
+					int rollTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel1);
+					int pitchTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel2);
+					int throttleTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel3);
+					int yawTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel4);
 					
-					/*DEBUGSERIALPRINT(this->currentRollAngle());
-					DEBUGSERIALPRINT(",");
-					DEBUGSERIALPRINT(this->currentPitchAngle());
-					DEBUGSERIALPRINTLN("");*/
+					//DEBUGSERIALPRINT(throttleTransmitterCommand);
+					//DEBUGSERIALPRINT(",");
+					//DEBUGSERIALPRINT(yawTransmitterCommand);
+					//DEBUGSERIALPRINTLN("");
+					
+					//Check for some basic "Command" stick positions
+					if ((throttleTransmitterCommand < 1100 && yawTransmitterCommand < 1100) && (rollTransmitterCommand > 1900 && pitchTransmitterCommand < 1100))
+					{
+						this->calibrateZero();
+					}
 				}
 			}
+		}
+		
+		void calibrateZero()
+		{
+			if (_imuHardware)
+			{
+				_imuHardware->calibrateZero();
+			}	
 		}
 		
 		//Accessors for the processed values

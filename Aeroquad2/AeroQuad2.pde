@@ -7,14 +7,14 @@
 #include "SerialComs.h"
 SerialComs serialcoms;
 
+#include "Receiver.h"
+Receiver receiver;
+
 #include "GPS.h"
 GPS gps;
 
 #include "IMU.h"
 IMU imu;
-
-#include "Receiver.h"
-Receiver receiver;
 
 #include "Sensors.h"
 Sensors sensors;
@@ -58,6 +58,7 @@ void setup()
 	imu.initialize(5,0);
 	imu.setHardwareType(IMU::HardwareTypeRazor);
 	imu.setFilterType(IMU::FilterTypeSimplifiedKalman);
+	imu.calibrateZero();
 	
 	//Run the sensors at 50hz offset 25ms
 	sensors.initialize(20,25);
@@ -69,6 +70,8 @@ void setup()
 	
 	//Run flight control at 200hz
 	flightcontrol.initialize(5,0);
+	flightcontrol.enableAutoLevel();
+	//flightcontrol.enableHeadingHold();
 	
 	//Run the camera at 10hz offset 50ms
 	camera.initialize(100, 50);
@@ -76,11 +79,13 @@ void setup()
 	//Run the motors at 200hz
 	motors.initialize(5,0);
 	motors.setHardwareType(Motors::HardwareTypeOnboard);
-	motors.setOrientationType(MotorHardware::OrientationTypePlus4Motor);
+	motors.setOrientationType(MotorOrientationType::QuadPlusMotor);
 	
 	//Run the LEDs at 5hz offset 75ms
 	led.initialize(200, 75);
 	led.setPatternType(LED::LEDPatternInsideOut);
+	
+	pinMode(40, OUTPUT);
 }
 
 
@@ -92,6 +97,9 @@ void loop()
 	currentTime = millis();
 	deltaTime = currentTime - previousTime;
 	previousTime - currentTime;
+	
+	//for the purposes of timing the main loop we toggle a digital pin high and then low at the end
+	digitalWrite(40, HIGH);
 	
 	//process all the "inputs" to the system
 	imu.process(currentTime);
@@ -109,4 +117,6 @@ void loop()
 	//process accessory sub systems
 	led.process(currentTime);
 	serialcoms.process(currentTime);
+	
+	digitalWrite(40, LOW);
 }
