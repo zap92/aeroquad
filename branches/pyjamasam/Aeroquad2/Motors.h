@@ -1,15 +1,20 @@
 #include "SubSystem.h"
 #include "HardwareComponent.h"
 
+class MotorOrientationType
+{
+	public:
+		typedef enum { QuadPlusMotor = 0, QuadXMotor = 1, OctoMotor = 2, TriMotor = 4 } OrientationType;
+};
+
 class MotorHardware : public HardwareComponent
 {
 	public:
-		typedef enum { OrientationTypePlus4Motor = 0, OrientationTypeX4Motor = 1, OrientationType8Motor} OrientationType;
 		static const int MinimumMotorCommand = 1100;
 		static const int MaximumMotorCommand = 2000;
 	
 	private:
-		OrientationType _orientationType;
+		MotorOrientationType::OrientationType _orientationType;
 	
 	protected:
 		int _motorOutput[8];
@@ -47,8 +52,7 @@ class MotorHardware : public HardwareComponent
 		void arm()
 		{
 			if (!_armed)
-			{
-				DEBUGSERIALPRINTLN("Arming");	
+			{	
 				this->zeroOutputs();
 				_armed = true;
 			}
@@ -57,19 +61,18 @@ class MotorHardware : public HardwareComponent
 		void disarm()
 		{
 			if (_armed)
-			{
-				DEBUGSERIALPRINTLN("Disarming");	
+			{	
 				this->zeroOutputs();
 				_armed = false;
 			}
 		}
 		
-		void setOrientationType(const MotorHardware::OrientationType orientationType)
+		void setOrientationType(const MotorOrientationType::OrientationType orientationType)
 		{
 			_orientationType = orientationType;
 		}
 		
-		const MotorHardware::OrientationType orientationType()
+		const MotorOrientationType::OrientationType orientationType()
 		{
 			return _orientationType;
 		}
@@ -91,7 +94,7 @@ class MotorControlOnboard : public MotorHardware
 				if (i >= 4)
 				{
 					if (i > 4) DEBUGSERIALPRINT(",");
-					DEBUGSERIALPRINT(rawOutputValue);
+					DEBUGSERIALPRINT(analogOutputValue);
 				}
 				
 				analogWrite(_motorPins[i], analogOutputValue);
@@ -135,7 +138,7 @@ class MotorControlOnboard : public MotorHardware
 			{
 				switch (this->orientationType())
 				{
-					case OrientationTypePlus4Motor:
+					case MotorOrientationType::QuadPlusMotor:
 					{
 						//Front
 						_motorOutput[4] = (throttleCommand - flightControlPitchCommand + flightControlYawCommand);
@@ -151,12 +154,19 @@ class MotorControlOnboard : public MotorHardware
 						break;
 					}
 				
-					case OrientationTypeX4Motor:
+					case MotorOrientationType::QuadXMotor:
 					{
-						_motorOutput[4] = constrain(throttleCommand - flightControlPitchCommand + flightControlRollCommand - flightControlYawCommand, MinimumMotorCommand, MaximumMotorCommand);
-						_motorOutput[5] = constrain(throttleCommand - flightControlPitchCommand - flightControlRollCommand + flightControlYawCommand, MinimumMotorCommand, MaximumMotorCommand);
-						_motorOutput[6] = constrain(throttleCommand + flightControlPitchCommand + flightControlRollCommand + flightControlYawCommand, MinimumMotorCommand, MaximumMotorCommand);
-						_motorOutput[7] = constrain(throttleCommand + flightControlPitchCommand - flightControlRollCommand - flightControlYawCommand, MinimumMotorCommand, MaximumMotorCommand);
+						//Front Right
+						_motorOutput[4] = throttleCommand - flightControlPitchCommand - flightControlRollCommand - flightControlYawCommand;
+						
+						//Front Left
+						_motorOutput[5] = throttleCommand - flightControlPitchCommand + flightControlRollCommand + flightControlYawCommand;
+						
+						//Back Right
+						_motorOutput[6] = throttleCommand + flightControlPitchCommand - flightControlRollCommand + flightControlYawCommand;
+						
+						//Back Left
+						_motorOutput[7] = throttleCommand + flightControlPitchCommand + flightControlRollCommand - flightControlYawCommand;
 						break;
 					}
 				}
@@ -202,7 +212,7 @@ class Motors : public SubSystem
 			}
 		}
 		
-		void setOrientationType(const MotorHardware::OrientationType orientationType)
+		void setOrientationType(const MotorOrientationType::OrientationType orientationType)
 		{
 			if (_motorHardware)
 			{
@@ -210,7 +220,7 @@ class Motors : public SubSystem
 			}
 		}
 		
-		const MotorHardware::OrientationType orientationType()
+		const MotorOrientationType::OrientationType orientationType()
 		{
 			if (_motorHardware)
 			{
@@ -218,7 +228,7 @@ class Motors : public SubSystem
 			}
 			else
 			{
-				return MotorHardware::OrientationTypePlus4Motor;
+				return MotorOrientationType::QuadPlusMotor;
 			}
 		}
 		

@@ -3,7 +3,7 @@
 class FlightControl : public SubSystem
 {
 	public:
-		typedef enum { PIDTypeRoll = 0, PIDTypePitch = 1, PIDTypeYaw = 2 } PIDType;
+		typedef enum { PIDTypeRoll = 0, PIDTypePitch = 1, PIDTypeYaw = 2, PIDTypeRollAngle = 3, PIDTypePitchAngle = 4, PIDTypeHeading = 5 } PIDType;
 	
 	private:
 		int _pitchCommand;
@@ -11,6 +11,7 @@ class FlightControl : public SubSystem
 		int _yawCommand;
 		
 		int _windupGuard;
+		int _autoLevelTriggerLimit;
 		
 		struct PIDdata {
 		  float P, I, D;
@@ -29,9 +30,8 @@ class FlightControl : public SubSystem
 		  	error = targetPosition - currentPosition;
 
 			PIDparameters->integratedError += error;
-			if (PIDparameters->integratedError < -_windupGuard) PIDparameters->integratedError = -_windupGuard;
-			else if (PIDparameters->integratedError > _windupGuard) PIDparameters->integratedError = _windupGuard;
-
+			PIDparameters->integratedError = constrain(PIDparameters->integratedError, -_windupGuard, _windupGuard);
+			
 			dTerm = PIDparameters->D * (currentPosition - PIDparameters->lastPosition);
 			PIDparameters->lastPosition = currentPosition;
 			return (PIDparameters->P * error) + (PIDparameters->I * (PIDparameters->integratedError)) + dTerm;
@@ -48,11 +48,11 @@ class FlightControl : public SubSystem
 		{ 
 			SubSystem::initialize(frequency, offset);
 			
-			_PIDs[FlightControl::PIDTypeRoll].P = 5;
+			_PIDs[FlightControl::PIDTypeRoll].P = 3.15;
 			_PIDs[FlightControl::PIDTypeRoll].I = 0;
 			_PIDs[FlightControl::PIDTypeRoll].D = 0;
 			
-			_PIDs[FlightControl::PIDTypePitch].P = 5;
+			_PIDs[FlightControl::PIDTypePitch].P = 3.15;
 			_PIDs[FlightControl::PIDTypePitch].I = 0;
 			_PIDs[FlightControl::PIDTypePitch].D = 0;
 			
@@ -60,7 +60,20 @@ class FlightControl : public SubSystem
 			_PIDs[FlightControl::PIDTypeYaw].I = 0;
 			_PIDs[FlightControl::PIDTypeYaw].D = 0;
 			
+			_PIDs[FlightControl::PIDTypeRollAngle].P = 3.15;
+			_PIDs[FlightControl::PIDTypeRollAngle].I = 0;
+			_PIDs[FlightControl::PIDTypeRollAngle].D = 0;
+			
+			_PIDs[FlightControl::PIDTypePitchAngle].P = 3.15;
+			_PIDs[FlightControl::PIDTypePitchAngle].I = 0;
+			_PIDs[FlightControl::PIDTypePitchAngle].D = 0;
+			
+			_PIDs[FlightControl::PIDTypeHeading].P = 3.15;
+			_PIDs[FlightControl::PIDTypeHeading].I = 0;
+			_PIDs[FlightControl::PIDTypeHeading].D = 0;
+			
 			_windupGuard = 1000;
+			_autoLevelTriggerLimit = 100;
 		}
 		
 		//PID accessors
@@ -100,7 +113,31 @@ class FlightControl : public SubSystem
 				if (_autoLevel)
 				{
 					//Process adjustments needed to autolevel the quad
-					//TODO
+					//We always target a 0 angle.  So let the PID sort out how to get us there
+					
+					// Check to see if the roll stick is anywhere but a deadzone around "0"
+					if (rollTransmitterCommand > (1500 - _autoLevelTriggerLimit) && rollTransmitterCommand < (1500 + _autoLevelTriggerLimit))
+					{
+						//Roll stick is in the dead zone.  Apply auto level for the roll axis
+						rollAdjust = _updatePID(0, currentRollAngle, &_PIDs[FlightControl::PIDTypeRollAngle]);
+					}
+					else
+					{
+						//Roll transmitter stick is outside the dead zone.  Don't bother with auto level for this axis.  And zero out the pid
+						_PIDs[FlightControl::PIDTypeRollAngle].integratedError = 0;
+					}
+					
+					// Check to see if the pitch stick is anywhere but a deadzone around "0"
+					if (pitchTransmitterCommand > (1500 - _autoLevelTriggerLimit) && pitchTransmitterCommand < (1500 + _autoLevelTriggerLimit))
+					{
+						//pitch stick is in the dead zone.  Apply auto level for the pitch axis
+						pitchAdjust = _updatePID(0, currentPitchAngle, &_PIDs[FlightControl::PIDTypePitchAngle]);
+					}
+					else
+					{
+						//Pitch transmitter stick is outside the dead zone.  Don't bother with auto level for this axis.  And zero out the pid
+						_PIDs[FlightControl::PIDTypePitchAngle].integratedError = 0;
+					}
 				}
 				
 				if (_headingHold)
@@ -109,13 +146,14 @@ class FlightControl : public SubSystem
 					//TODO
 				}
 				
-				float currentRollPosition = currentRollRate * 465;
-				float currentPitchPosition = currentPitchRate * 465;
-				float currentYawPosition = currentYawRate * 465;
+				//Sort out the current scaled gyro rates
+				float currentScaledRollRate = (currentRollRate * 465) + 1500;
+				float currentScaledPitchRate = (currentPitchRate * 465) + 1500;
+				float currentScaledYawRate = (currentYawRate * 465) + 1500;
 				
-				_rollCommand = _updatePID(rollTransmitterCommand, (currentRollPosition + 1500), &_PIDs[FlightControl::PIDTypeRoll]);
-				_pitchCommand = _updatePID(pitchTransmitterCommand, (currentPitchPosition + 1500), &_PIDs[FlightControl::PIDTypePitch]);
-				_yawCommand = _updatePID(yawTransmitterCommand, (currentYawPosition + 1500), &_PIDs[FlightControl::PIDTypeYaw]);				
+				_rollCommand = _updatePID(rollTransmitterCommand + rollAdjust, currentScaledRollRate, &_PIDs[FlightControl::PIDTypeRoll]);
+				_pitchCommand = _updatePID(pitchTransmitterCommand + pitchAdjust, currentScaledPitchRate, &_PIDs[FlightControl::PIDTypePitch]);
+				_yawCommand = _updatePID(yawTransmitterCommand + yawAdjust, currentScaledYawRate, &_PIDs[FlightControl::PIDTypeYaw]);				
 				
 				/*DEBUGSERIALPRINT(_rollCommand);
 				DEBUGSERIALPRINT(",");
