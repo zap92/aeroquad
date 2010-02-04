@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.0 - January 2010
+  AeroQuad v1.6 - March 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -21,30 +21,29 @@
 #ifndef __FILTER_H__
 #define __FILTER_H__
 
-class Filter {
-  private:
-    float _smoothFactor;
-    int _previousData;
-    int _smoothedData;
+private:
+  float _smoothFactor;
+  int _previousData;
+  int _smoothedData;
 
-  public:
-    Filter {
-      _smoothFactor = 1.0;
-      _previousData = 0;
-    }
+public:
+  Filter {
+    _smoothFactor = 1.0;
+    _previousData = 0;
+  }
     
-    void initialize(float smoothFactor) {
-      if (smoothFactor > 1.0) smoothFactor = 1.0;
-      if (smoothFactor <= 0) smoothFactor = 0.001;
-      _smoothFactor = smoothFactor;
-      _previousData = 0;
-    }
+  void initialize(float smoothFactor) {
+    if (smoothFactor > 1.0) smoothFactor = 1.0;
+    if (smoothFactor <= 0) smoothFactor = 0.001;
+    _smoothFactor = smoothFactor;
+    _previousData = 0;
+  }
     
-    int smooth(int currentData) {
-      _smoothedData = _previousData * (1 - _smoothFactor) + (currentData * _smoothFactor));
-      _previousData = currentData;
-      return _smoothedData;
-    }
+  int smooth(int currentData) {
+    _smoothedData = _previousData * (1 - _smoothFactor) + (currentData * _smoothFactor));
+    _previousData = currentData;
+    return _smoothedData;
+  }
 };
 
 #endif

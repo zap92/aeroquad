@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.0 - Novmeber 2009
+ AeroQuad v1.6 - March 2010
  www.AeroQuad.info
  Copyright (c) 2009 Ted Carancho, Chris Whiteford.  All rights reserved.
  An Open Source Arduino based quadrocopter.
@@ -27,6 +27,11 @@ class SerialComs:
 public SubSystem
 {
 private:
+  // Communication
+  char queryType = 'X';
+  byte tlmType = 0;
+  char string[32];
+
   unsigned int _serialPortCount;
   HardwareSerial *_serialPorts[MAXASSIGNEDSERIALPORTS];
 

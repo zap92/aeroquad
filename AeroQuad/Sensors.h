@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.0 - January 2010
+  AeroQuad v1.6 - March 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -31,38 +31,43 @@
 #define AZPIN 22
 #define AZYAWPIN 23
 
+// Need to write a calibration routine for accelerometers (including Z axis)
+// These A/D values depend on how well the sensors are mounted
+// change these values to your unique configuration
+#define ZMIN 454
+#define ZMAX 687
+#define ZAXIS 2
+
+// Calibration parameters
+#define FINDZERO 50
+
 class Sensors:
 public SubSystem
 {
 private:
-  Filter gyro[3];
-  Filter accel[3];
+  // Analog Reference Value
+  const float aref = 2.725; // Measured with a DMM
 
-  // Need to write a calibration routine for accelerometers (including Z axis)
-  // These A/D values depend on how well the sensors are mounted
-  // change these values to your unique configuration
-  #define ZMIN 454
-  #define ZMAX 687
-  #define ZAXIS 2
-
-  int _axis;
+  
+  int axis; // Use as an index
+  int findZero[FINDZERO]; // Defines number of measurements to use for finding zero ADC value
+  
   // Accelerometer setup
-  int _accelChannel[3];
-  int _accelData[3];
-  int _accelZero[3];
-  int _accelADC[3];
-  int _accelInvert[3];
+  filter gyroFilter[3];
+  int accelChannel[3];
+  int accelData[3];
+  int accelZero[3];
+  int accelADC[3];
+  int accelInvert[3];
   // Gyro setup
-  int _gyroChannel[3];
-  int _gyroData[3];
-  int _gyroZero[3];
-  int _gyroADC[3];
-  int _gyroInvert[3];
-  // Calibration parameters
-  #define FINDZERO 50
-  int _findZero[FINDZERO];
+  filter accelFilter[3];
+  int gyroChannel[3];
+  int gyroData[3];
+  int gyroZero[3];
+  int gyroADC[3];
+  int gyroInvert[3];
 
-  int _findMode(int *data, int arraySize) {
+  int findMode(int *data, int arraySize) {
     // The mode of a set of numbers is the value that occurs most frequently
     byte i;
     int temp, maxData;
@@ -98,24 +103,45 @@ private:
     return maxData;
   }
 
+  float arctan2(float y, float x) {
+    // Taken from: http://www.dspguru.com/comp.dsp/tricks/alg/fxdatan2.htm
+    float coeff_1 = PI/4;
+    float coeff_2 = 3*coeff_1;
+    float abs_y = abs(y)+1e-10;      // kludge to prevent 0/0 condition
+    float r, angle;
+
+    if (x >= 0) {
+      r = (x - abs_y) / (x + abs_y);
+      angle = coeff_1 - coeff_1 * r;
+    }
+    else {
+      r = (x + abs_y) / (abs_y - x);
+      angle = coeff_2 - coeff_1 * r;
+    }
+    if (y < 0)
+      return(-angle);     // negate if in quad III or IV
+    else
+      return(angle);
+  }
+
 public:
   // Required methods to implement a SubSystem
   Sensors():
   SubSystem()
   {
     // Perform any initalization of variables you need in the constructor of this SubSystem
-    _gyroChannel[3] = {ROLLRATEPIN, PITCHRATEPIN, YAWRATEPIN};
-    _accelChannel[3] = {ROLLACCELPIN, PITCHACCELPIN, ZACCELPIN};
+    gyroChannel[3] = {ROLLRATEPIN, PITCHRATEPIN, YAWRATEPIN};
+    accelChannel[3] = {ROLLACCELPIN, PITCHACCELPIN, ZACCELPIN};
     // Accelerometer setup
-    _accelData[3] = {0,0,0};
-    _accelZero[3] = {0,0,0};
-    _accelADC[3] = {0,0,0};
-    _accelInvert[3] = {1,1,0};
+    accelData[3] = {0,0,0};
+    accelZero[3] = {0,0,0};
+    accelADC[3] = {0,0,0};
+    accelInvert[3] = {0,0,0};
     // Gyro setup
-    _gyroData[3] = {0,0,0};
-    _gyroZero[3] = {0,0,0};
-    _gyroADC[3] = {0,0,0};
-    _gyroInvert[3] = {0,0,1};
+    gyroData[3] = {0,0,0};
+    gyroZero[3] = {0,0,0};
+    gyroADC[3] = {0,0,0};
+    gyroInvert[3] = {0,0,0};
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0)
@@ -124,12 +150,26 @@ public:
     this->_initialize(frequency, offset);
 
     //Perform any custom initalization you need for this SubSystem
-
     // Configure gyro auto zero pins
+    analogReference(EXTERNAL); // Current external ref is connected to 3.3V
     pinMode (AZPIN, OUTPUT);
     pinMode (AZYAWPIN, OUTPUT);
     digitalWrite(AZPIN, LOW);
     digitalWrite(AZYAWPIN, LOW);
+    
+    accelZero[ROLL] = eeprom.read(LEVELROLLCAL_ADR);
+    accelZero[PITCH] = eeprom.read(LEVELPITCHCAL_ADR);
+    accelZero[ZAXIS] = eeprom.read(LEVELZCAL_ADR);
+    gyroZero[ROLL] = eeprom.read(GYRO_ROLL_ZERO_ADR);
+    gyroZero[PITCH] = eeprom.read(GYRO_PITCH_ZERO_ADR);
+    gyroZero[YAW] = eeprom.read(GYRO_YAW_ZERO_ADR);
+    timeConstant = eeprom.read(FILTERTERM_ADR);
+
+    for (axis = ROLL; axis < LASTAXIS; i++)
+      gyroFilter[axis].initalize(eeprom.read(GYROSMOOTH_ADR));
+    for (int axis = ROLL; axis < LASTAXIS; i++)
+      accelFilter[axis].initalize(eeprom.read(ACCSMOOTH_ADR));
+
   }
 
   void process(unsigned long currentTime)
@@ -144,58 +184,29 @@ public:
       // *********************** Read Sensors **********************
       // Apply low pass filter to sensor values and center around zero
       // Did not convert to engineering units, since will experiment to find P gain anyway
-      for (_axis = ROLL; _axis < LASTAXIS; _axis++) {
-        _gyroADC[_axis] = _gyroZero[_axis] - analogRead(_gyroChannel[_axis]);
-        _accelADC[_axis] = analogRead(_accelChannel[_axis]) - _accelZero[_axis];
+      for (axis = ROLL; axis < LASTAXIS; axis++) {
+        gyroADC[axis] =  analogRead(gyroChannel[axis]) - gyroZero[axis];
+        accelADC[_axis] = analogRead(accelChannel[axis]) - accelZero[axis];
       }
     
-      //gyroADC[YAW] = -gyroADC[YAW];
-      //accelADC[ZAXIS] = -accelADC[ZAXIS];
-
       // Compiler seems to like calculating this in separate loop better
-      for (_axis = ROLL; _axis < LASTAXIS; _axis++) {
-        _gyroData[_axis] = gyro[_axis].smooth(_gyroADC[_axis]);
-        _accelData[_axis] = accel[_axis].smooth(_accelADC[_axis];
+      for (axis = ROLL; axis < LASTAXIS; axis++) {
+        gyroData[axis] = gyroFilter[axis].smooth(gyroADC[axis]);
+        accelData[axis] = accelFilter[axis].smooth(accelADC[axis]);
       }
 
       // ****************** Calculate Absolute Angle *****************
     
       // Fix for calculating unfiltered flight angle per RoyLB
       // http://carancho.com/AeroQuad/forum/index.php?action=profile;u=77;sa=showPosts
-      // perpendicular = sqrt((analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS])) ^2 + (analogRead(accelChannel[PITCH]) - accelZero[PITCH]) ^2)
+      // perpendicular = sqrt((analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS])) ^2 + (analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS]) ^2)
       // flightAngle[ROLL] = atan2(analogRead(accelChannel[ROLL]) - accelZero[ROLL], perpendicular) * 57.2957795;    
 
-      rawPitchAngle = atan2(_accelADC[PITCH], sqrt((_accelADC[ROLL] * _accelADC[ROLL]) + (_accelADC[ZAXIS] * _accelADC[ZAXIS])));
-      rawRollAngle = atan2(_accelADC[ROLL], sqrt((_accelADC[PITCH] * _accelADC[PITCH]) + (_accelADC[ZAXIS] * _accelADC[ZAXIS])));
+      rawPitchAngle = arctan2(accelADC[PITCH], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
+      rawRollAngle = arctan2(accelADC[ROLL], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
     
-      #ifndef KalmanFilter
-        //filterData(previousAngle, gyroADC, angle, *filterTerm, dt)
-        flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], rawRollAngle, filterTermRoll, AIdT);
-        flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], rawPitchAngle, filterTermPitch, AIdT);
-        //flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroData[ROLL], arctan2(accelData[ROLL], accelData[ZAXIS]), filterTermRoll, AIdT);
-        //flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroData[PITCH], arctan2(accelData[PITCH], accelData[ZAXIS]), filterTermPitch, AIdT);
-      #endif
-      
-      #ifdef KalmanFilter
-        predictKalman(&rollFilter, (gyroADC[ROLL]/1024) * aref * 8.72, AIdT);
-        flightAngle[ROLL] = updateKalman(&rollFilter, atan2(accelADC[ROLL], accelADC[ZAXIS])) * 57.2957795;
-        predictKalman(&pitchFilter, (gyroADC[PITCH]/1024) * aref * 8.72, AIdT);
-        flightAngle[PITCH] = updateKalman(&pitchFilter, atan2(accelADC[PITCH], accelADC[ZAXIS])) * 57.2957795;
-      #endif
-    
-      compassX = readCompass(MAG_XAXIS);  // read the x-axis magnetic field value
-      compassY = readCompass(MAG_YAXIS);  // read the y-axis magnetic field value
-      compassZ = readCompass(MAG_ZAXIS);  // read the z-axis magnetic field value
-    
-      rollRad = radians(flightAngle[ROLL]);
-      pitchRad = radians(flightAngle[PITCH]);
-    
-      CMx = (compassX * cos(pitchRad)) + (compassY *sin(rollRad) * sin(pitchRad)) - (compassZ * cos(rollRad) * sin(pitchRad));
-      CMy = (compassY * cos(rollRad)) + (compassZ * sin(rollRad));
-      heading = abs(degrees(atan(CMy/CMx)));
-      if (CMx >= 0 && CMy >= 0) {heading = 180 - heading;}
-      if (CMx >= 0 && CMy < 0) {heading = heading + 180;}
-      if (CMx < 0 && CMy < 0) {heading = 360 - heading;}
+      flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], rawRollAngle, filterTermRoll, AIdT);
+      flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], rawPitchAngle, filterTermPitch, AIdT);
     }
   }
 
@@ -229,26 +240,5 @@ public:
     eeprom.write(_accelZero[PITCH], LEVELPITCHCAL_ADR);
     eeprom.write(_accelZero[ZAXIS], LEVELZCAL_ADR);
   }
-  
-  float arctan2(float y, float x) {
-    // Taken from: http://www.dspguru.com/comp.dsp/tricks/alg/fxdatan2.htm
-     float coeff_1 = PI/4;
-     float coeff_2 = 3*coeff_1;
-     float abs_y = abs(y)+1e-10;      // kludge to prevent 0/0 condition
-     float r, angle;
-
-     if (x >= 0) {
-       r = (x - abs_y) / (x + abs_y);
-       angle = coeff_1 - coeff_1 * r;
-     }
-     else {
-       r = (x + abs_y) / (abs_y - x);
-       angle = coeff_2 - coeff_1 * r;
-     }
-     if (y < 0)
-       return(-angle);     // negate if in quad III or IV
-     else
-       return(angle);
-     }
- };
+};
 

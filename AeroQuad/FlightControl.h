@@ -1,13 +1,89 @@
+ /*
+  AeroQuad v1.6 - March 2010
+  www.AeroQuad.com
+  Copyright (c) 2010 Ted Carancho.  All rights reserved.
+  An Open Source Arduino based quadrocopter.
+ 
+  This program is free software: you can redistribute it and/or modify 
+  it under the terms of the GNU General Public License as published by 
+  the Free Software Foundation, either version 3 of the License, or 
+  (at your option) any later version. 
+
+  This program is distributed in the hope that it will be useful, 
+  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+  GNU General Public License for more details. 
+
+  You should have received a copy of the GNU General Public License 
+  along with this program. If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+// This class implements the PID control algorithm
+
 #include "SubSystem.h"
 
 class FlightControl:
-public SubSystem
-{
+public SubSystem {
 private:
+  #define ROLL 0
+  #define PITCH 1
+  #define YAW 2
+  #define LASTAXIS 3
 
-  bool _blinkState;
-  int _blinkPin;
+  // PID Values
+  #define LASTAXIS 3
+  #define LEVELROLL 3
+  #define LEVELPITCH 4
+  #define LASTLEVELAXIS 5
+  #define HEADING 5 // other axes defined in Receiver.h
 
+  // Auto level setup
+  int levelAdjust[2] = {0,0};
+  int levelLimit; // Read in from EEPROM
+  int levelOff; // Read in from EEPROM
+  float rawRollAngle;
+  float rawPitchAngle;
+
+  // Heading hold
+  // aref / 1024 = voltage per A/D bit
+  // 0.002 = V / deg/sec (from gyro data sheet)
+  float headingScaleFactor = (aref / 1024.0) / 0.002 * (PI/2.0);
+  float heading = 0; // measured heading from yaw gyro (process variable)
+  float headingHold = 0; // calculated adjustment for quad to go to heading (PID output)
+  float currentHeading = 0; // current heading the quad is set to (set point)
+
+  float AIdT = AILOOPTIME / 1000.0;
+  float controldT = CONTROLLOOPTIME / 1000.0;
+  
+  struct PIDdata {
+    float P, I, D;
+    float lastPosition;
+    float integratedError;
+  } PID[6];
+  float windupGuard; // Read in from EEPROM
+
+  // Modified from http://www.arduino.cc/playground/Main/BarebonesPIDForEspresso
+  float updatePID(float targetPosition, float currentPosition, struct PIDdata *PIDparameters)
+  {
+    float error;
+    float dTerm;
+
+    error = targetPosition - currentPosition;
+  
+    PIDparameters->integratedError += error;
+    if (PIDparameters->integratedError < -windupGuard) PIDparameters->integratedError = -windupGuard;
+    else if (PIDparameters->integratedError > windupGuard) PIDparameters->integratedError = windupGuard;
+  
+    dTerm = PIDparameters->D * (currentPosition - PIDparameters->lastPosition);
+    PIDparameters->lastPosition = currentPosition;
+    return (PIDparameters->P * error) + (PIDparameters->I * (PIDparameters->integratedError)) + dTerm;
+  }
+
+  void zeroIntegralError() {
+    for (axis = ROLL; axis < LASTLEVELAXIS; axis++)
+      PID[axis].integratedError = 0;
+  }
+  
 public:
 
   //Required methods to impliment for a SubSystem
@@ -15,8 +91,8 @@ public:
   SubSystem()
   {
     //Perform any initalization of variables you need in the constructor of this SubSystem
-    _blinkState = false;
-    _blinkPin = 13;
+    levelAdjust[ROLL] = 0;
+    levelAdjust[PITCH] = 0;
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0)
@@ -25,8 +101,46 @@ public:
     this->_initialize(frequency, offset);
 
     //Perform any custom initalization you need for this SubSystem
-    pinMode(_blinkPin, OUTPUT);
-    digitalWrite(_blinkPin, LOW);
+      PID[ROLL].P = eeprom.read(PGAIN_ADR);
+      PID[ROLL].I = eeprom.read(IGAIN_ADR);
+      PID[ROLL].D = eeprom.read(DGAIN_ADR);
+      PID[ROLL].lastPosition = 0;
+      PID[ROLL].integratedError = 0;
+  
+      PID[PITCH].P = eeprom.read(PITCH_PGAIN_ADR);
+      PID[PITCH].I = eeprom.read(PITCH_IGAIN_ADR);
+      PID[PITCH].D = eeprom.read(PITCH_DGAIN_ADR);
+      PID[PITCH].lastPosition = 0;
+      PID[PITCH].integratedError = 0;
+  
+      PID[YAW].P = eeprom.read(YAW_PGAIN_ADR);
+      PID[YAW].I = eeprom.read(YAW_IGAIN_ADR);
+      PID[YAW].D = eeprom.read(YAW_DGAIN_ADR);
+      PID[YAW].lastPosition = 0;
+      PID[YAW].integratedError = 0;
+  
+      PID[LEVELROLL].P = eeprom.read(LEVEL_PGAIN_ADR);
+      PID[LEVELROLL].I = eeprom.read(LEVEL_IGAIN_ADR);
+      PID[LEVELROLL].D = eeprom.read(LEVEL_DGAIN_ADR);
+      PID[LEVELROLL].lastPosition = 0;
+      PID[LEVELROLL].integratedError = 0;  
+  
+      PID[LEVELPITCH].P = eeprom.read(LEVEL_PITCH_PGAIN_ADR);
+      PID[LEVELPITCH].I = eeprom.read(LEVEL_PITCH_IGAIN_ADR);
+      PID[LEVELPITCH].D = eeprom.read(LEVEL_PITCH_DGAIN_ADR);
+      PID[LEVELPITCH].lastPosition = 0;
+      PID[LEVELPITCH].integratedError = 0;
+  
+      PID[HEADING].P = eeprom.read(HEADING_PGAIN_ADR);
+      PID[HEADING].I = eeprom.read(HEADING_IGAIN_ADR);
+      PID[HEADING].D = eeprom.read(HEADING_DGAIN_ADR);
+      PID[HEADING].lastPosition = 0;
+      PID[HEADING].integratedError = 0;  
+            
+      smoothHeading = eeprom.read(HEADINGSMOOTH_ADR);
+      windupGuard = eeprom.read(WINDUPGUARD_ADR);
+      levelLimit = eeprom.read(LEVELLIMIT_ADR);
+      levelOff = eeprom.read(LEVELOFF_ADR);
   }
 
   void process(unsigned long currentTime)

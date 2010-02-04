@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.0 - Feburary 2010
+  AeroQuad v1.6 - March 2010
  www.AeroQuad.info
  Copyright (c) 2010 Ted Carancho.  All rights reserved.
  An Open Source Arduino based quadrocopter.
@@ -44,6 +44,13 @@ private:
   float mMotorRate;
   float bMotorRate;
   
+  // ESC Calibration
+  byte calibrateESC = 0;
+  int testCommand = 1000;
+
+  // Ground station control (experimental)
+  int remoteCommand[4] = {1000,1000,1000,1000};
+
   void commandMotors() {
     analogWrite(FRONTMOTORPIN, (motorCommand[FRONT] * mMotorCommand) + bMotorCommand);		
     analogWrite(REARMOTORPIN, (motorCommand[REAR] * mMotorCommand) + bMotorCommand);		

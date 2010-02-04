@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.0 - Feburary 2010
+ AeroQuad v1.6 - March 2010
  www.AeroQuad.info
  Copyright (c) 2010 Ted Carancho.  All rights reserved.
  An Open Source Arduino based quadrocopter.
@@ -78,6 +78,11 @@ private:
   int transmitterZero[3];
   int transmitterCenter[3];
   byte channel;
+  
+  // Arm motor safety check 
+  byte armed = 0;
+  byte safetyCheck = 0;
+  byte update = 0;
 
   static void PcintISR(uint8_t port) {
     uint8_t bit;
@@ -189,6 +194,28 @@ public:
     }
     SIGNAL(PCINT2_vect) {
       PcintISR(11);
+      
+      mTransmitter[THROTTLE] = eeprom.read(THROTTLESCALE_ADR);
+      bTransmitter[THROTTLE] = eeprom.read(THROTTLEOFFSET_ADR);
+      mTransmitter[ROLL] = eeprom.read(ROLLSCALE_ADR);
+      bTransmitter[ROLL] = eeprom.read(ROLLOFFSET_ADR);
+      mTransmitter[PITCH] = eeprom.read(PITCHSCALE_ADR);
+      bTransmitter[PITCH] = eeprom.read(PITCHOFFSET_ADR);
+      mTransmitter[YAW] = eeprom.read(YAWSCALE_ADR);
+      bTransmitter[YAW] = eeprom.read(YAWOFFSET_ADR);
+      mTransmitter[MODE] = eeprom.read(MODESCALE_ADR);
+      bTransmitter[MODE] = eeprom.read(MODEOFFSET_ADR);
+      mTransmitter[AUX] = eeprom.read(AUXSCALE_ADR);
+      bTransmitter[AUX] = eeprom.read(AUXOFFSET_ADR);
+      smoothTransmitter[THROTTLE] = eeprom.read(THROTTLESMOOTH_ADR);
+      smoothTransmitter[ROLL] = eeprom.read(ROLLSMOOTH_ADR);
+      smoothTransmitter[PITCH] = eeprom.read(PITCHSMOOTH_ADR);
+      smoothTransmitter[YAW] = eeprom.read(YAWSMOOTH_ADR);
+      smoothTransmitter[MODE] = eeprom.read(MODESMOOTH_ADR);
+      smoothTransmitter[AUX] = eeprom.read(AUXSMOOTH_ADR);
+      xmitFactor = eeprom.read(XMITFACTOR_ADR);
+
+      safetyCheck = 0;
     }
   }
 
