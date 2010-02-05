@@ -52,23 +52,29 @@
 
 #include "AeroQuad.h"
 
-#include "Sensors.h"
-Sensors sensors;
-
 #include "Eeprom.h"
 Eeprom eeprom;
+
+#include "Sensors.h"
+Sensors sensors;
 
 #include "Filter.h"
 Filter filter;
 
+#include "Attitude.h"
+Attitude_CompFilter attitude;
+//Attitude_KalmanFilter attitude;
+
 #include "Receiver.h"
-Receiver receiver;
+Receiver_Duemilanove receiver;
+//Receiver_Mega receiver;
 
 #include "Motors.h"
-Motors motors;
+Motors_PWM motors;
+//Motors_I2C motors;
 
 #include "FlightControl.h"
-FlightControl flightcontrol;
+FlightControl_PID flightcontrol;
 
 #include "SerialComs.h"
 SerialComs serialcoms;

@@ -151,10 +151,19 @@ public:
     if (this->_canProcess(currentTime))
     {
       //If the code reaches this point the SubSystem is allowed to run.
-// ********************************************************************
-// *********************** Flight Control Loop ************************
-// ********************************************************************
-  if ((currentTime > controlLoopTime + CONTROLLOOPTIME) && (controlLoop == ON)) { // 500Hz
+
+      // ****************** Calculate Absolute Angle *****************
+    
+      // Fix for calculating unfiltered flight angle per RoyLB
+      // http://carancho.com/AeroQuad/forum/index.php?action=profile;u=77;sa=showPosts
+      // perpendicular = sqrt((analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS])) ^2 + (analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS]) ^2)
+      // flightAngle[ROLL] = atan2(analogRead(accelChannel[ROLL]) - accelZero[ROLL], perpendicular) * 57.2957795;    
+
+      rawPitchAngle = arctan2(accelADC[PITCH], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
+      rawRollAngle = arctan2(accelADC[ROLL], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
+    
+      flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], rawRollAngle, filterTermRoll, AIdT);
+      flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], rawPitchAngle, filterTermPitch, AIdT);
 
   // ********************* Check Flight Mode *********************
     #ifdef AutoLevel

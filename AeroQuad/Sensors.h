@@ -186,7 +186,7 @@ public:
       // Did not convert to engineering units, since will experiment to find P gain anyway
       for (axis = ROLL; axis < LASTAXIS; axis++) {
         gyroADC[axis] =  analogRead(gyroChannel[axis]) - gyroZero[axis];
-        accelADC[_axis] = analogRead(accelChannel[axis]) - accelZero[axis];
+        accelADC[axis] = analogRead(accelChannel[axis]) - accelZero[axis];
       }
     
       // Compiler seems to like calculating this in separate loop better
@@ -194,19 +194,6 @@ public:
         gyroData[axis] = gyroFilter[axis].smooth(gyroADC[axis]);
         accelData[axis] = accelFilter[axis].smooth(accelADC[axis]);
       }
-
-      // ****************** Calculate Absolute Angle *****************
-    
-      // Fix for calculating unfiltered flight angle per RoyLB
-      // http://carancho.com/AeroQuad/forum/index.php?action=profile;u=77;sa=showPosts
-      // perpendicular = sqrt((analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS])) ^2 + (analogRead(accelChannel[ZAXIS]) - accelZero[ZAXIS]) ^2)
-      // flightAngle[ROLL] = atan2(analogRead(accelChannel[ROLL]) - accelZero[ROLL], perpendicular) * 57.2957795;    
-
-      rawPitchAngle = arctan2(accelADC[PITCH], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
-      rawRollAngle = arctan2(accelADC[ROLL], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
-    
-      flightAngle[ROLL] = filterData(flightAngle[ROLL], gyroADC[ROLL], rawRollAngle, filterTermRoll, AIdT);
-      flightAngle[PITCH] = filterData(flightAngle[PITCH], gyroADC[PITCH], rawPitchAngle, filterTermPitch, AIdT);
     }
   }
 
@@ -221,24 +208,24 @@ public:
     delay(8);
 
     // Due to gyro drift, finds ADC value which represents zero rate
-    for (_axis = ROLL; _axis < LASTAXIS; _axis++) {
-      for (int i=0; i<FINDZERO; i++) _findZero[i] = analogRead(_gyroChannel[axis]);
-      _gyroZero[axis] = _findMode(_findZero, FINDZERO);
+    for (axis = ROLL; axis < LASTAXIS; axis++) {
+      for (int i=0; i<FINDZERO; i++) findZero[i] = analogRead(gyroChannel[axis]);
+      gyroZero[axis] = findMode(findZero, FINDZERO);
     }
-    eeprom.write(_gyroZero[ROLL], GYRO_ROLL_ZERO_ADR);
-    eeprom.write(_gyroZero[PITCH], GYRO_PITCH_ZERO_ADR);
-    eeprom.write(_gyroZero[YAW], GYRO_YAW_ZERO_ADR);
+    eeprom.write(gyroZero[ROLL], GYRO_ROLL_ZERO_ADR);
+    eeprom.write(gyroZero[PITCH], GYRO_PITCH_ZERO_ADR);
+    eeprom.write(gyroZero[YAW], GYRO_YAW_ZERO_ADR);
   }
 
   void zeroAccelerometers() { // Finds ADC value which represents zero acceleration
     for (_axis = ROLL; _axis < YAW; _axis++) {
-      for (int i=0; i<FINDZERO; i++) _findZero[i] = analogRead(_accelChannel[axis]);
-      _accelZero[axis] = _findMode(_findZero, FINDZERO);
+      for (int i=0; i<FINDZERO; i++) findZero[i] = analogRead(accelChannel[axis]);
+      accelZero[axis] = findMode(findZero, FINDZERO);
     }
-    _accelZero[ZAXIS] = ZMAX - ((ZMAX - ZMIN)/2);
-    eeprom.write(_accelZero[ROLL], LEVELROLLCAL_ADR);
-    eeprom.write(_accelZero[PITCH], LEVELPITCHCAL_ADR);
-    eeprom.write(_accelZero[ZAXIS], LEVELZCAL_ADR);
+    accelZero[ZAXIS] = ZMAX - ((ZMAX - ZMIN)/2);
+    eeprom.write(accelZero[ROLL], LEVELROLLCAL_ADR);
+    eeprom.write(accelZero[PITCH], LEVELPITCHCAL_ADR);
+    eeprom.write(accelZero[ZAXIS], LEVELZCAL_ADR);
   }
 };
 
