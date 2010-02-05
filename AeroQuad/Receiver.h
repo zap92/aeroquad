@@ -22,7 +22,7 @@
 #include "pins_arduino.h"
 #define byte uint8_t 
 
-class Receiver:
+class Receiver_Duemilanove:
 public SubSystem {
 private:
   // Receiver pin definitions
@@ -154,7 +154,7 @@ private:
 
 public:
   //Required methods to impliment for a SubSystem
-  Receiver():
+  Receiver_Duemilanove():
   SubSystem(){
     //Perform any initalization of variables you need in the constructor of this SubSystem
     receiverPin[7] = {5,6,21,4,22,23,24}; // Corresponds to port number on ATmega (not Arduino pin number)

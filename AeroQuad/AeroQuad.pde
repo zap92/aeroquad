@@ -26,11 +26,7 @@
 
 // Define Flight Configuration
 //#define plusConfig
-#define XConfig
-
-// Calibration At Start Up
-//#define CalibrationAtStartup
-#define GyroCalibrationAtStartup
+//#define XConfig
 
 // Camera Stabilization (experimental)
 // Will move development to Arduino Mega (needs analogWrite support for additional pins)
@@ -91,6 +87,7 @@ void setup() {
 
   // Setup and calibrate sensors reading every 2ms (500Hz)
   sensors.initialize(2, 0);
+  attitude.intialize(2,0);
   flightcontrol.initialize(2,0);
   
   // Configure motors and command motors every 2ms (500Hz)
@@ -118,6 +115,9 @@ void loop () {
   
   // Measure sensor output at 500Hz rate
   sensors.process(currentTime);
+  
+  // Calculate flight angle to AeroQuad at 500Hz rate
+  attitude.process(currentTime);
   
   // Process sensor data and generate motor commands at 500Hz rate
   flightcontrol.process(currentTime);

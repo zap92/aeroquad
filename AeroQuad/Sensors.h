@@ -163,7 +163,6 @@ public:
     gyroZero[ROLL] = eeprom.read(GYRO_ROLL_ZERO_ADR);
     gyroZero[PITCH] = eeprom.read(GYRO_PITCH_ZERO_ADR);
     gyroZero[YAW] = eeprom.read(GYRO_YAW_ZERO_ADR);
-    timeConstant = eeprom.read(FILTERTERM_ADR);
 
     for (axis = ROLL; axis < LASTAXIS; i++)
       gyroFilter[axis].initalize(eeprom.read(GYROSMOOTH_ADR));
@@ -227,5 +226,10 @@ public:
     eeprom.write(accelZero[PITCH], LEVELPITCHCAL_ADR);
     eeprom.write(accelZero[ZAXIS], LEVELZCAL_ADR);
   }
+  
+  int getRawGyro(byte axis) return gyroADC[axis];
+  int getGyro(byte axis) return gyroData[axis];
+  int getRawAccel(byte axis) return accelADC[axis];
+  int getAccel(byte axis) return accelData[axis];
 };
 

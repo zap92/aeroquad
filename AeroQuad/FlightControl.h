@@ -22,7 +22,7 @@
 
 #include "SubSystem.h"
 
-class FlightControl:
+class FlightControl_PID:
 public SubSystem {
 private:
   #define ROLL 0
@@ -87,7 +87,7 @@ private:
 public:
 
   //Required methods to impliment for a SubSystem
-  FlightControl():
+  FlightControl_PID():
   SubSystem()
   {
     //Perform any initalization of variables you need in the constructor of this SubSystem
