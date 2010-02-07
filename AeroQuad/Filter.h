@@ -44,47 +44,14 @@ public:
     _previousData = currentData;
     return _smoothedData;
   }
-
-  float getFlightAngle(float previousAngle, int gyroADC, float angle, float *filterTerm, float dt) {
-    // Written by RoyLB at:
-    // http://www.rcgroups.com/forums/showpost.php?p=12082524&postcount=1286
-    static float filter;
-    float accel, gyro;
   
-    // For Sparkfun 5DOF IMU
-    // accelerometerOutput = (N-512)/1024*(double)10.78; (rad)
-    // gyroOutput = (N-512)/1024*(double)28.783; (rad/sec)
-    accel = degrees(angle);
-    //gyro = (N-512)/1024 * (double) 28.783;
-    gyro = (gyroADC / 1024) * aref / 0.002;
-  
-    ///////////////////////
-    // constants or parameters:
-    // timeConstant - bandwidth of filter (1/sec). Need to tune this to match sensor performance.
-    // T - iteration rate of the filter (sec)
-    ///////////////////////
-    // variables:
-    // int_x1 (filterTerm[0]) - input to the first integrator (deg/sec/sec)
-    // int_x2 (filterTerm[1]) - input to the second integrator (deg/sec)
-    // int_y1 (filterTerm[2]) - output of the first integrator (deg/sec). This needs to be saved each iteration
-    //////////////////////
-    // inputs:
-    // gyro - gyro output (deg/sec)
-    // accel - accelerometer input to filter (deg)
-    // x_accel - accelerometer output in x-axis (g)
-    // z_accel - accelerometer output in z-axis (g)
-    // accel_ang - derived angle based on arctan(x_accel,z_accel), (deg)
-    //////////////////////
-    // outputs:
-    // filter - complementary filter output (and output of second integrator), (deg)
-    //            This also needs to be saved each iteration.
-    ///////////////////////
-
-    filterTerm[0] = (accel - previousAngle) * timeConstant * timeConstant;
-    filterTerm[2] = (dt * filterTerm[0]) + filterTerm[2];
-    filterTerm[1] = filterTerm[2] + (accel - previousAngle) * 2 * timeConstant + gyro;
-    return (dt * filterTerm[1]) + previousAngle;
+  // Works faster and is smaller than the constrain() function
+  int limitRange(int data, int minLimit, int maxLimit) {
+    if (data < minLimit) return minLimit;
+    else if (data > maxLimit) return maxLimit;
+    else return data;
   }
+
 };
 
 #endif
