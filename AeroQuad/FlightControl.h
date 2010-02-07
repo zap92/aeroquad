@@ -141,7 +141,7 @@ public:
         else {
           // Stable Mode
           for (axis = ROLL; axis < YAW; axis++)
-            levelAdjust[axis] = filter.limitRange(updatePID(0, attitude.getFlightAngle[axis], &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
+            levelAdjust[axis] = constrain(updatePID(0, attitude.getFlightAngle[axis], &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
           // Turn off Stable Mode if transmitter stick applied
           if (receiver.getPilotCommand(ROLL) > levelOff)) {
             levelAdjust[ROLL] = 0;

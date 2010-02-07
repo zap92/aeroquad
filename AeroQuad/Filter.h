@@ -44,14 +44,6 @@ public:
     _previousData = currentData;
     return _smoothedData;
   }
-  
-  // Works faster and is smaller than the constrain() function
-  int limitRange(int data, int minLimit, int maxLimit) {
-    if (data < minLimit) return minLimit;
-    else if (data > maxLimit) return maxLimit;
-    else return data;
-  }
-
 };
 
 #endif

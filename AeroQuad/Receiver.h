@@ -270,6 +270,7 @@ public:
   }
   
   int getPilotCommand(byte axis) return transmitterCommand[axis];
+  byte getArmStatus(void) return armed;
 };
 
 

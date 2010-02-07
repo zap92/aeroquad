@@ -54,7 +54,6 @@ public:
   SubSystem()
   {
     //Perform any initalization of variables you need in the constructor of this SubSystem
-
     // Scale motor commands to analogWrite		
     // m = (250-126)/(2000-1000) = 0.124		
     // b = y1 - (m * x1) = 126 - (0.124 * 1000) = 2		
@@ -93,29 +92,20 @@ public:
 
       // ****************** Calculate Motor Commands *****************
       if (armed && safetyCheck) {
-        #ifdef plusConfig
-          motorCommand[FRONT] = limitRange(transmitterCommand[THROTTLE] - motorAxisCommand[PITCH] - motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-          motorCommand[REAR] = limitRange(transmitterCommand[THROTTLE] + motorAxisCommand[PITCH] - motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-          motorCommand[RIGHT] = limitRange(transmitterCommand[THROTTLE] - motorAxisCommand[ROLL] + motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-          motorCommand[LEFT] = limitRange(transmitterCommand[THROTTLE] + motorAxisCommand[ROLL] + motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-        #endif
-        #ifdef XConfig
-          // Front = Front/Right, Back = Left/Rear, Left = Front/Left, Right = Right/Rear 
-          motorCommand[FRONT] = limitRange(transmitterCommand[THROTTLE] - motorAxisCommand[PITCH] + motorAxisCommand[ROLL] - motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-          motorCommand[RIGHT] = limitRange(transmitterCommand[THROTTLE] - motorAxisCommand[PITCH] - motorAxisCommand[ROLL] + motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-          motorCommand[LEFT] = limitRange(transmitterCommand[THROTTLE] + motorAxisCommand[PITCH] + motorAxisCommand[ROLL] + motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-          motorCommand[REAR] = limitRange(transmitterCommand[THROTTLE] + motorAxisCommand[PITCH] - motorAxisCommand[ROLL] - motorAxisCommand[YAW], minCommand, MAXCOMMAND);
-        #endif
+        motorCommand[FRONT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.motorCommand(PITCH) - flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
+        motorCommand[REAR] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.motorCommand(PITCH) - flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
+        motorCommand[RIGHT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.motorCommand(ROLL) + flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
+        motorCommand[LEFT] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.motorCommand(ROLL) + flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
       }
   
       // If throttle in minimum position, don't apply yaw
-      if (transmitterCommand[THROTTLE] < MINCHECK) {
+      if receiver.getPilotCommand(THROTTLE) < MINCHECK) {
         for (motor = FRONT; motor < LASTMOTOR; motor++)
           motorCommand[motor] = minCommand;
       }
       // If motor output disarmed, force motor output to minimum
-      if (armed == ON) {
-        switch (calibrateESC) { // used for calibrating ESC's
+      if (receiver.getArmStatus == ON) {
+        switch (serialcoms.calibrateESC()) { // used for calibrating ESC's
         case 1:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
             motorCommand[motor] = MAXCOMMAND;
