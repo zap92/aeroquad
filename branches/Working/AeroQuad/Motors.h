@@ -18,24 +18,21 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>. 
  */
  
- #include "SubSystem.h"
+#include "SubSystem.h"
 
-class Motors:
-public SubSystem
-{
+#define FRONTMOTORPIN 6
+#define RIGHTMOTORPIN 7
+#define LEFTMOTORPIN 8
+#define REARMOTORPIN 9
+#define LASTMOTORPIN 10
+#define FRONT 0
+#define REAR 1
+#define RIGHT 2
+#define LEFT 3
+#define LASTMOTOR 4
+
+class Motors: public SubSystem {
 private:
-  #define byte uint8_t
-  #define FRONTMOTORPIN 6
-  #define RIGHTMOTORPIN 7
-  #define LEFTMOTORPIN 8
-  #define REARMOTORPIN 9
-  #define LASTMOTORPIN 10
-  #define FRONT 0
-  #define REAR 1
-  #define RIGHT 2
-  #define LEFT 3
-  #define LASTMOTOR 4
-
   float mMotorCommand;		
   float bMotorCommand;
   int motorCommand[4];
@@ -50,13 +47,6 @@ private:
 
   // Ground station control (experimental)
   int remoteCommand[4] = {1000,1000,1000,1000};
-
-  void commandMotors() {
-    analogWrite(FRONTMOTORPIN, (motorCommand[FRONT] * mMotorCommand) + bMotorCommand);		
-    analogWrite(REARMOTORPIN, (motorCommand[REAR] * mMotorCommand) + bMotorCommand);		
-    analogWrite(RIGHTMOTORPIN, (motorCommand[RIGHT] * mMotorCommand) + bMotorCommand);		
-    analogWrite(LEFTMOTORPIN, (motorCommand[LEFT] * mMotorCommand) + bMotorCommand);		
-  }
 
 public:
   //Required methods to impliment for a SubSystem
@@ -98,8 +88,7 @@ public:
     //Check to see if this SubSystem is allowed to run
     //The code in _canProcess checks to see if this SubSystem is enabled and its been long enough since the last time it ran
     //_canProcess also records the time that this SubSystem ran to use in future timing checks.
-    if (this->_canProcess(currentTime))
-    {
+    if (this->_canProcess(currentTime)) {
       //If the code reaches this point the SubSystem is allowed to run.
 
       // ****************** Calculate Motor Commands *****************
@@ -125,7 +114,7 @@ public:
           motorCommand[motor] = minCommand;
       }
       // If motor output disarmed, force motor output to minimum
-      if (armed == 0) {
+      if (armed == ON) {
         switch (calibrateESC) { // used for calibrating ESC's
         case 1:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
@@ -145,11 +134,14 @@ public:
             motorCommand[motor] = MINCOMMAND;
         }
       }
-      commandMotors();
+      analogWrite(FRONTMOTORPIN, (motorCommand[FRONT] * mMotorCommand) + bMotorCommand);		
+      analogWrite(REARMOTORPIN, (motorCommand[REAR] * mMotorCommand) + bMotorCommand);		
+      analogWrite(RIGHTMOTORPIN, (motorCommand[RIGHT] * mMotorCommand) + bMotorCommand);		
+      analogWrite(LEFTMOTORPIN, (motorCommand[LEFT] * mMotorCommand) + bMotorCommand);		
     }
   }
 
-  //Any number of optional methods can be configured as needed by the SubSystem to expose functionaly externally
+  //Any number of optional methods can be configured as needed by the SubSystem to expose functionality externally
   void commandAllMotors(int motorCommand) {   // Sends commands to all motors
     analogWrite(FRONTMOTORPIN, (motorCommand * mMotorCommand) + bMotorCommand);		
     analogWrite(REARMOTORPIN, (motorCommand * mMotorCommand) + bMotorCommand);		

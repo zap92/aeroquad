@@ -18,34 +18,6 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/**************************************************************************** 
-   Before flight, select the different user options for your AeroQuad below
-   Also, consult the ReadMe.html file for additional details
-   If you need additional assitance go to http://forum.AeroQuad.info
-*****************************************************************************/
-
-// Define Flight Configuration
-//#define plusConfig
-//#define XConfig
-
-// Camera Stabilization (experimental)
-// Will move development to Arduino Mega (needs analogWrite support for additional pins)
-//#define Camera
-
-// Heading Hold (experimental)
-// Currently uses yaw gyro which drifts over time, for Mega development will use magnetometer
-//#define HeadingHold
-
-// Auto Level (experimental)
-//#define AutoLevel
-
-// Sensor Filter
-// The Kalman Filter implementation is here for comparison against the Complementary Filter
-// To adjust the KF parameters, look at initGyro1DKalman() found inside ConfigureFilter() in Filter.pde
-//#define KalmanFilter
-
-// *************************************************************
-
 #include "AeroQuad.h"
 
 #include "Eeprom.h"
@@ -53,9 +25,6 @@ Eeprom eeprom;
 
 #include "Sensors.h"
 Sensors sensors;
-
-#include "Filter.h"
-Filter filter;
 
 #include "Attitude.h"
 Attitude_CompFilter attitude;
@@ -85,26 +54,22 @@ void setup() {
   // Read user values from EEPROM
   eeprom.initialize();
 
-  // Setup and calibrate sensors reading every 2ms (500Hz)
-  sensors.initialize(2, 0);
-  attitude.intialize(2,0);
-  flightcontrol.initialize(2,0);
-  
-  // Configure motors and command motors every 2ms (500Hz)
-  motors.initialize(2,1);
+  sensors.initialize(2, 0);// Setup and calibrate sensors, read every 2ms (500Hz)
+  attitude.intialize(2,0); // Calculate vehicle attitude in same time slot after reading sensors
 
-  // Setup receiver pins for pin change interrupts and read every 100ms (10Hz) starting
-  receiver.intialize(100,25);
+  flightcontrol.initialize(2,1); // Calculate motor commands every 2ms (500Hz), but offset by 1 ms
+  flightcontrol.disableAutoLevel();
+  flightControl.disableheadingHold();
+  
+  motors.initialize(2,1); // Configure motors and command motors every 2ms (500Hz)
 
-  // Complementary filter setup
-  filter.initialize(eeprom.readFilterSetting());
+  receiver.intialize(100,25); // Setup receiver pins for pin change interrupts and read every 100ms (10Hz) starting
+
+  serialcoms.assignSerialPort(&Serial); // Configure the serial port 1
+  serialcoms.initialize(100, 50); // Read commands/telemetry every 100ms (10Hz) starting
   
-  // Configure the serial port and read commands/telemetry every 100ms (10Hz) starting
-  serialcoms.assignSerialPort(&Serial);
-  serialcoms.initialize(100, 50);
-  
-  // Start blinking the LED every 1000ms (1Hz)
-  blinkie.initialize(1000,0);
+  // Use this class to learn how SubSystem works
+  blinkie.initialize(1000,0); // Start blinking the LED every 1000ms (1Hz)
 }
 
 // ************************************************************

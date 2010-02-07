@@ -18,6 +18,8 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+// This class is responsible for reading sensor data and applying smoothing
+
 #include "SubSystem.h"
 #include "Filter.h"
 
@@ -38,20 +40,19 @@
 #define ZMAX 687
 #define ZAXIS 2
 
-// Calibration parameters
-#define FINDZERO 50
 
 class Sensors:
 public SubSystem
 {
 private:
-  // Analog Reference Value
-  const float aref = 2.725; // Measured with a DMM
-
+  const float aref = 2.725; // Analog Reference Value measured with a DMM
+  const float gyroScaleFactor = 0.002; // Gyro scale factor from datasheet
+  
+  const int numZeroValues 50; // Defines number of measurements to use for finding zero ADC value
+  int findZero[numZeroValues];
   
   int axis; // Use as an index
-  int findZero[FINDZERO]; // Defines number of measurements to use for finding zero ADC value
-  
+
   // Accelerometer setup
   filter gyroFilter[3];
   int accelChannel[3];
@@ -126,9 +127,7 @@ private:
 
 public:
   // Required methods to implement a SubSystem
-  Sensors():
-  SubSystem()
-  {
+  Sensors(): SubSystem() {
     // Perform any initalization of variables you need in the constructor of this SubSystem
     gyroChannel[3] = {ROLLRATEPIN, PITCHRATEPIN, YAWRATEPIN};
     accelChannel[3] = {ROLLACCELPIN, PITCHACCELPIN, ZACCELPIN};
@@ -144,8 +143,7 @@ public:
     gyroInvert[3] = {0,0,0};
   }
 
-  void initialize(unsigned int frequency, unsigned int offset = 0)
-  {
+  void initialize(unsigned int frequency, unsigned int offset = 0) {
     //Call the parent class' _initialize to setup all the frequency and offset related settings
     this->_initialize(frequency, offset);
 
@@ -163,21 +161,16 @@ public:
     gyroZero[ROLL] = eeprom.read(GYRO_ROLL_ZERO_ADR);
     gyroZero[PITCH] = eeprom.read(GYRO_PITCH_ZERO_ADR);
     gyroZero[YAW] = eeprom.read(GYRO_YAW_ZERO_ADR);
-
-    for (axis = ROLL; axis < LASTAXIS; i++)
-      gyroFilter[axis].initalize(eeprom.read(GYROSMOOTH_ADR));
-    for (int axis = ROLL; axis < LASTAXIS; i++)
-      accelFilter[axis].initalize(eeprom.read(ACCSMOOTH_ADR));
-
+    for (axis = ROLL; axis < LASTAXIS; i++) gyroFilter[axis].initalize(eeprom.read(GYROSMOOTH_ADR));
+    for (int axis = ROLL; axis < LASTAXIS; i++) accelFilter[axis].initalize(eeprom.read(ACCSMOOTH_ADR));
+    smoothHeading = eeprom.read(HEADINGSMOOTH_ADR);
   }
 
-  void process(unsigned long currentTime)
-  {
+  void process(unsigned long currentTime) {
     //Check to see if this SubSystem is allowed to run
     //The code in _canProcess checks to see if this SubSystem is enabled and its been long enough since the last time it ran
     //_canProcess also records the time that this SubSystem ran to use in future timing checks.
-    if (this->_canProcess(currentTime))
-    {
+    if (this->_canProcess(currentTime)) {
       //If the code reaches this point the SubSystem is allowed to run.
 
       // *********************** Read Sensors **********************
@@ -205,7 +198,6 @@ public:
     digitalWrite(AZPIN, LOW);
     digitalWrite(AZYAWPIN, LOW);
     delay(8);
-
     // Due to gyro drift, finds ADC value which represents zero rate
     for (axis = ROLL; axis < LASTAXIS; axis++) {
       for (int i=0; i<FINDZERO; i++) findZero[i] = analogRead(gyroChannel[axis]);
@@ -228,8 +220,16 @@ public:
   }
   
   int getRawGyro(byte axis) return gyroADC[axis];
-  int getGyro(byte axis) return gyroData[axis];
   int getRawAccel(byte axis) return accelADC[axis];
+  int getGyro(byte axis) return gyroData[axis];
   int getAccel(byte axis) return accelData[axis];
+  float getGyroScaleFactor(void) return gyroScaleFactor;
+  float getRateDegPerSec(byte axis) return (gyroADC / 1024) * aref / gyroScaleFactor;
+  float getRateRadPerSec(byte axis) return radians(getRateRadPerSec(axis));
+  float getAngleDegrees(byte axis) return degrees(getAngleRadians(axis));    
+  float getAngleRadians(byte axis) {
+    if (axis == PITCH) return arctan2(accelADC[PITCH], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS]));
+    if (axis == ROLL) return arctan2(accelADC[ROLL], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS]));
+  }
 };
 

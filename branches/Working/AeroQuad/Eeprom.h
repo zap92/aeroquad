@@ -18,6 +18,8 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+// This class is responsible for access to EEPROM storage
+
 #ifndef EEPROM_H
 #define EEPROM_H
 
