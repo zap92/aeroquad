@@ -1,7 +1,7 @@
 /*
  AeroQuad v1.6 - March 2010
  www.AeroQuad.info
- Copyright (c) 2010 Ted Carancho.  All rights reserved.
+ Copyright (c) 2010 Ted Carancho, Chris Whiteford.  All rights reserved.
  An Open Source Arduino based quadrocopter.
  
  This program is free software: you can redistribute it and/or modify 
@@ -270,7 +270,16 @@ public:
   }
   
   int getPilotCommand(byte axis) return transmitterCommand[axis];
+  void setArmStatus(byte value) armed = value;
   byte getArmStatus(void) return armed;
+  void setXmitFactor(float value) xmitFactor = value;
+  float getXmitFactor(void) return xmitFactor;
+  void setTransmitterSmoothing(byte axis, float value) smoothTransmitter[axis] = value;
+  float getTransmitterSmoothing(byte axis) return smoothTransmitter[axis];
+  void setTransmitterSlope(byte axis, float value) mTransmitter[axis] = value;
+  float getTransmitterSlope(byte axis) return mTransmitter[axis];
+  void setTransmitterOffset(byte axis, float value) bTransmitter[axis] = value;
+  float getTransmitterOffset(byte axis) return bTransmitter[axis];
 };
 
 

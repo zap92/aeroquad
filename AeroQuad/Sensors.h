@@ -1,7 +1,7 @@
 /*
   AeroQuad v1.6 - March 2010
   www.AeroQuad.com
-  Copyright (c) 2010 Ted Carancho.  All rights reserved.
+  Copyright (c) 2010 Ted Carancho, Chris Whiteford.  All rights reserved.
   An Open Source Arduino based quadrocopter.
  
   This program is free software: you can redistribute it and/or modify 
@@ -231,5 +231,9 @@ public:
     if (axis == PITCH) return arctan2(accelADC[PITCH], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS]));
     if (axis == ROLL) return arctan2(accelADC[ROLL], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS]));
   }
+  void setGyroSmoothFactor(float value) gyroFilter.setSmoothFactor(value);
+  float getGyroSmoothFactor(void) return gyroFilter.getSmoothFactor();
+  void setAccelSmoothFactor(float value) accelFilter.setSmoothFactor(value);
+  float getAccelSmoothFactor(void) return accelFilter.getSmoothFactor();
 };
 
