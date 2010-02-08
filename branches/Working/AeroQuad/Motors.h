@@ -1,7 +1,7 @@
 /*
   AeroQuad v1.6 - March 2010
  www.AeroQuad.info
- Copyright (c) 2010 Ted Carancho.  All rights reserved.
+ Copyright (c) 2010 Ted Carancho, Chris Whiteford.  All rights reserved.
  An Open Source Arduino based quadrocopter.
  
  This program is free software: you can redistribute it and/or modify 
@@ -105,7 +105,7 @@ public:
       }
       // If motor output disarmed, force motor output to minimum
       if (receiver.getArmStatus == ON) {
-        switch (serialcoms.calibrateESC()) { // used for calibrating ESC's
+        switch (calibrateESC) { // used for calibrating ESC's
         case 1:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
             motorCommand[motor] = MAXCOMMAND;
@@ -147,6 +147,9 @@ public:
       delay(250);
     }
   }
+  
+  void setCalibrationESC(byte value) calibrateESC = value;
+  void remoteMotorCommand(byte motor, int value) remoteCommand[motor] = value;
 };
 
 

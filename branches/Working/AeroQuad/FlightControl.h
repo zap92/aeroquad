@@ -1,7 +1,7 @@
  /*
   AeroQuad v1.6 - March 2010
   www.AeroQuad.com
-  Copyright (c) 2010 Ted Carancho.  All rights reserved.
+  Copyright (c) 2010 Ted Carancho, Chris Whiteford.  All rights reserved.
   An Open Source Arduino based quadrocopter.
  
   This program is free software: you can redistribute it and/or modify 
@@ -188,6 +188,22 @@ public:
   void disableAutoLevel(void) autoLevel = OFF;
   void enableHeadingHold(void) headingHold = ON;
   void disableHeadingHold(void) headingHold = OFF;
+  void setP(byte axis, float value) PID[axis].P = value;
+  float getP(byte axis) return PID[axis].P;
+  void setI(byte axis, float value) PID[axis].I = value;
+  float getI(byte axis) return PID[axis].I;
+  void setD(byte axis, float value) PID[axis].D = value;
+  float getD(byte axis) return PID[axis].D;
+  void setInitPosError(byte axis) {
+    PID[axis].lastPosition = 0;
+    PID[axis].integratedError 0;
+  }
+  void setLevelLimit(float value) levelLimit = value;
+  float getLevelLimit(void) return levelLimit;
+  void setLevelOff(float value) levelOff = value;
+  float getLevelOff(void) return levelOff;
+  void setWindupGuard(float value) windupGuard = value;
+  float getWindupGuard(void) return windupGuard;
 };
 
 

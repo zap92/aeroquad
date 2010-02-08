@@ -44,6 +44,9 @@ public:
     _previousData = currentData;
     return _smoothedData;
   }
+  
+  void setSmoothFactor(float value) _smoothFactor = value;
+  float getSmoothFactor(void) return _smoothFactor;
 };
 
 #endif
