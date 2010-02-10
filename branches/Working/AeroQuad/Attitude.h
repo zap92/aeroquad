@@ -87,5 +87,6 @@ public:
   float getHeading(void) return heading;
   void setTimeConstant(float value) timeConstant = value;
   float getTimeConstant(void) return timeConstant;
-  float getFilterSmoothFactor(void) return filterHeading.getSmoothFactor();
+  float getHeadingSmoothFactor(void) return filterHeading.getSmoothFactor();
+  void setHeadingSmoothFactor(float value) filterHeading.setSmoothFactor(value);
 };

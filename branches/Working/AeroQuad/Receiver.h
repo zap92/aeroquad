@@ -239,7 +239,7 @@ public:
         // Disarm motors (left stick lower left corner)
         if (receiverData[YAW] < MINCHECK && armed == ON) {
           armed = OFF;
-          commandAllMotors(MINCOMMAND);
+          motors.commandAllMotors(MINCOMMAND);
         }    
         // Zero sensors (left stick lower left, right stick lower right corner)
         if ((receiverData[YAW] < MINCHECK) && (receiverData[ROLL] > MAXCHECK) && (receiverData[PITCH] < MINCHECK)) {
@@ -247,7 +247,7 @@ public:
           zeroGyros();
           zeroAccelerometers();
           zeroIntegralError();
-          pulseMotors(3);
+          motors.pulseMotors(3);
         }   
         // Arm motors (left stick lower right corner)
         if (receiverData[YAW] > MAXCHECK && armed == OFF && safetyCheck == ON) {

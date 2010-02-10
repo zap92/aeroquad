@@ -23,9 +23,7 @@
 #define BAUD 115200
 #define MAXASSIGNEDSERIALPORTS 4
 
-class SerialComs: 
-public SubSystem
-{
+class SerialComs: public SubSystem{
 private:
   // Communication
   char queryType = 'X';
@@ -197,78 +195,73 @@ private:
         writeFloat(receiver.getTransmitterOffset(MODE), MODEOFFSET_ADR);
         writeFloat(receiver.getTransmitterSlope(AUX), AUXSCALE_ADR);
         writeFloat(receiver.getTransmitterOffset(AUX), AUXOFFSET_ADR);
-        writeFloat(attitude.getFilterSmoothFactor(), HEADINGSMOOTH_ADR);
-        zeroIntegralError();
-        // Complementary filter setup
- ******************** continue here
-        configureFilter(timeConstant);
+        writeFloat(attitude.getHeadingSmoothFactor(), HEADINGSMOOTH_ADR);
+        flightcontrol.zeroIntegralError();
         break;
       case 'Y': // Initialize EEPROM with default values
-        PID[ROLL].P = 3.75;
-        PID[ROLL].I = 0;
-        PID[ROLL].D = -10;
-        PID[PITCH].P = 3.75;
-        PID[PITCH].I = 0;
-        PID[PITCH].D = -10;
-        PID[YAW].P = 12.0;
-        PID[YAW].I = 0;
-        PID[YAW].D = 0;
-        PID[LEVELROLL].P = 2;
-        PID[LEVELROLL].I = 0;
-        PID[LEVELROLL].D = 0;
-        PID[LEVELPITCH].P = 2;
-        PID[LEVELPITCH].I = 0;
-        PID[LEVELPITCH].D = 0;
-        PID[HEADING].P = 3;
-        PID[HEADING].I = 0;
-        PID[HEADING].D = 0;
-        windupGuard = 2000.0;
-        xmitFactor = 0.20;  
-        levelLimit = 2000.0;
-        levelOff = 50;  
-        smoothFactor[GYRO] = 0.20;
-        smoothFactor[ACCEL] = 0.20;
-        timeConstant = 3.0;   
+        flightcontrol.setP(ROLL) = 3.75;
+        flightcontrol.setI(ROLL) = 0;
+        flightcontrol.setD(ROLL) = -10;
+        flightcontrol.setP(PITCH) = 3.75;
+        flightcontrol.setI(PITCH) = 0;
+        flightcontrol.setD(PITCH) = -10;
+        flightcontrol.setP(YAW) = 12.0;
+        flightcontrol.setI(YAW) = 0;
+        flightcontrol.setD(YAW) = 0;
+        flightcontrol.setP(LEVELROLL) = 2;
+        flightcontrol.setI(LEVELROLL) = 0;
+        flightcontrol.setD(LEVELROLL) = 0;
+        flightcontrol.setP(LEVELPITCH) = 2;
+        flightcontrol.setI(LEVELPITCH) = 0;
+        flightcontrol.setD(LEVELPITCH) = 0;
+        flightcontrol.setP(HEADING) = 3;
+        flightcontrol.setI(HEADING) = 0;
+        flightcontrol.setD(HEADING) = 0;
+        flightcontro.setWindupGuard() = 2000.0;
+        flightcontrol.setLevelLimit() = 2000.0;
+        flightcontrol.setLevelOff() = 50;  
+        sensors.setsGyroSmoothFactor() = 0.20;
+        sensors.setAccelSmoothFactor() = 0.20;
+        attitude.setTimeConstant() = 3.0;   
+        attitude.setHeadingSmoothFactor() = 1.0;
         for (channel = ROLL; channel < LASTCHANNEL; channel++) {
-          mTransmitter[channel] = 1.0;
-          bTransmitter[channel] = 0.0;
+          receiver.setTransmitterSlope(channel, 1.0);
+          receiver.setTransmitterOffset(channel, 0.0):
         }
-        smoothTransmitter[THROTTLE] = 1.0;
-        smoothTransmitter[ROLL] = 1.0;
-        smoothTransmitter[PITCH] = 1.0;
-        smoothTransmitter[YAW] = 0.5;  
-        smoothTransmitter[MODE] = 1.0;
-        smoothTransmitter[AUX] = 1.0;
-        smoothHeading = 1.0;
-
-        autoZeroGyros();
-        zeroGyros();
-        zeroAccelerometers();
-        zeroIntegralError();
+        receiver.setTransmitterSmoothing(THROTTLE, 1.0);
+        receiver.setTransmitterSmoothing(ROLL, 1.0);
+        receiver.setTransmitterSmoothing(PITCH, 1.0);
+        receiver.setTransmitterSmoothing(YAW, 0.5);  
+        receiver.setTransmitterSmoothing(MODE, 1.0);
+        receiver.setTransmitterSmoothing(AUX, 1.0);
+        receiver.setXmitFactor() = 0.20;  
+        sensors.zeroGyros();
+        sensors.zeroAccelerometers();
+        flightcontrol.zeroIntegralError();
         break;
       case '1': // Calibrate ESCS's by setting Throttle high on all channels
-        armed = 0;
-        calibrateESC = 1;
+        receiver.setArmStatus(OFF);
+        motors.setCalibrationESC(1);
         break;
       case '2': // Calibrate ESC's by setting Throttle low on all channels
-        armed = 0;
-        calibrateESC = 2;
+        receiver.setArmStatus(OFF);
+        motors.setCalibrationESC(2);
         break;
       case '3': // Test ESC calibration
-        armed = 0;
-        testCommand = _readFloatSerial(serialPort);
-        calibrateESC = 3;
+        receiver.setArmStatus(OFF);
+        motors.setTestCommand(_readFloatSerial(serialPort));
+        motors.setCalibrationESC(3);
         break;
       case '4': // Turn off ESC calibration
-        armed = 0;
-        calibrateESC = 0;
+        receiver.setArmStatus(OFF);
+        motors.setCalibrationESC(0);
         testCommand = 1000;
         break;        
       case '5': // Send individual motor commands (motor, command)
-        armed = 0;
-        calibrateESC = 5;
+        receiver.setArmStatus(OFF);
+        motors.setCalibrationESC();
         for (motor = FRONT; motor < LASTMOTOR; motor++)
-          remoteCommand[motor] = _readFloatSerial(serialPort);
+          motors.setRemoteCommand(motor, _readFloatSerial(serialPort));
         break;
 
       case 'a': // Enable/disable fast data transfer of sensor data
@@ -289,11 +282,10 @@ private:
         }
         break;
       case 'b': // calibrate gyros
-        autoZeroGyros();
-        zeroGyros();
+        sensors.zeroGyros();
         break;
       case 'c': // calibrate accels
-        zeroAccelerometers();
+        sensors.zeroAccelerometers();
         break;
       }
     }
@@ -306,105 +298,105 @@ private:
     switch (_lastTelemetryType[i]) 
     {
     case 'B': // Send roll and pitch gyro PID values
-      serialPort->print(PID[ROLL].P);
+      serialPort->print(flightcontrol.getP(ROLL));
       _comma(serialPort);
-      serialPort->print(PID[ROLL].I);
+      serialPort->print(flightcontrol.getI(ROLL));
       _comma(serialPort);
-      serialPort->print(PID[ROLL].D);
+      serialPort->print(flightcontrol.getD(ROLL));
       _comma(serialPort);
-      serialPort->print(PID[PITCH].P);
+      serialPort->print(flightcontrol.getP(PITCH));
       _comma(serialPort);
-      serialPort->print(PID[PITCH].I);
+      serialPort->print(flightcontrol.getI(PITCH));
       _comma(serialPort);
-      serialPort->println(PID[PITCH].D);            
+      serialPort->println(flightcontrol.getD(PITCH));            
 
       _lastTelemetryType[i] = 'X';
       break;
     case 'D': // Send yaw PID values
-      serialPort->print(PID[YAW].P);
+      serialPort->print(flightcontrol.getP(YAW));
       _comma(serialPort);
-      serialPort->print(PID[YAW].I);
+      serialPort->print(flightcontrol.getI(YAW));
       _comma(serialPort);
-      serialPort->print(PID[YAW].D);
+      serialPort->print(flightcontrol.getD(YAW));
       _comma(serialPort);
-      serialPort->print(PID[HEADING].P);
+      serialPort->print(flightcontrol.getP(HEADING));
       _comma(serialPort);
-      serialPort->print(PID[HEADING].I);
+      serialPort->print(flightcontrol.getI(HEADING));
       _comma(serialPort);
-      serialPort->println(PID[HEADING].D);
+      serialPort->println(flightcontrol.getD(HEADING));
 
       _lastTelemetryType[i] = 'X';
       break;
     case 'F': // Send roll and pitch auto level PID values
-      serialPort->print(PID[LEVELROLL].P);
+      serialPort->print(flightcontrol.getP(LEVELROLL));
       _comma(serialPort);
-      serialPort->print(PID[LEVELROLL].I);
+      serialPort->print(flightcontrol.getI(LEVELROLL));
       _comma(serialPort);
-      serialPort->print(PID[LEVELROLL].D);
+      serialPort->print(flightcontrol.getD(LEVELROLL));
       _comma(serialPort);
-      serialPort->print(PID[LEVELPITCH].P);
+      serialPort->print(flightcontrol.getP(LEVELPITCH));
       _comma(serialPort);
-      serialPort->print(PID[LEVELPITCH].I);
+      serialPort->print(flightcontrol.getI(LEVELPITCH));
       _comma(serialPort);
-      serialPort->println(PID[LEVELPITCH].D);
+      serialPort->println(flightcontrol.getD(LEVELPITCH));
       _lastTelemetryType[i] = 'X';
       break;
     case 'H': // Send auto level configuration values
-      serialPort->print(levelLimit);
+      serialPort->print(flightcontrol.getLevelLimit());
       _comma(serialPort);
-      serialPort->println(levelOff);
+      serialPort->println(flightcontrol.getLevelOff());
       _lastTelemetryType[i] = 'X';
       break;
     case 'J': // Send flight control configuration values
-      serialPort->print(windupGuard);
+      serialPort->print(flightcontrol.getWindupGuard());
       _comma(serialPort);
-      serialPort->println(xmitFactor);
+      serialPort->println(flightcontrol.getXmitFactor());
       _lastTelemetryType[i] = 'X';
       break;
     case 'L': // Send data filtering values
-      serialPort->print(smoothFactor[GYRO]);
+      serialPort->print(sensors.getGyroSmoothFactor());
       _comma(serialPort);
-      serialPort->print(smoothFactor[ACCEL]);
+      serialPort->print(sensors.getAccelSmoothFactor());
       _comma(serialPort);
-      serialPort->println(timeConstant);
+      serialPort->println(attitude.getTimeConstant());
       _lastTelemetryType[i] = 'X';
       break;
     case 'N': // Send motor smoothing values
       for (axis = ROLL; axis < AUX; axis++) {
-        serialPort->print(smoothTransmitter[axis]);
+        serialPort->print(receiver.getTransmitterSmoothing(axis));
         _comma(serialPort);
       }
-      serialPort->println(smoothTransmitter[AUX]);
+      serialPort->println(receiver.getTransmitterSmoothing(AUX));
       _lastTelemetryType[i] = 'X';
       break;
     case 'P': // Send transmitter calibration data
       for (axis = ROLL; axis < AUX; axis++) {
-        serialPort->print(mTransmitter[axis]);
+        serialPort->print(receiver.getTransmitterSlope(axis));
         _comma(serialPort);
-        serialPort->print(bTransmitter[axis]);
+        serialPort->print(receiver.getTransmitterOffset(axis));
         _comma(serialPort);
       }
-      serialPort->print(mTransmitter[AUX]);
+      serialPort->print(receiver.getTransmitterSlope(AUX));
       _comma(serialPort);
-      serialPort->println(bTransmitter[AUX]);
+      serialPort->println(receiver.getTransmitterOffset(AUX));
       _lastTelemetryType[i] = 'X';
       break;
     case 'Q': // Send sensor data
       for (axis = ROLL; axis < LASTAXIS; axis++) {
-        serialPort->print(gyroADC[axis]);
+        serialPort->print(sensors.getRawGyro(axis));
         _comma(serialPort);
       }
       for (axis = ROLL; axis < LASTAXIS; axis++) {
-        serialPort->print(accelADC[axis]);
+        serialPort->print(sensors.getRawAccel(axis));
         _comma(serialPort);
       }
       for (axis = ROLL; axis < YAW; axis++) {
-        serialPort->print(levelAdjust[axis]);
+        serialPort->print(flightcontrol.getLevelAdjust(axis));
         _comma(serialPort);
       }
-      serialPort->print(flightAngle[ROLL]);
+      serialPort->print(attitude.getFlightAngle(ROLL));
       _comma(serialPort);
-      serialPort->print(flightAngle[PITCH]);
+      serialPort->print(attitude.getFlightAngle(PITCH));
       serialPort->println();
       break;
     case 'R': // Send raw sensor data
@@ -424,28 +416,27 @@ private:
       serialPort->print(deltaTime);
       _comma(serialPort);
       for (axis = ROLL; axis < LASTAXIS; axis++) {
-        serialPort->print(gyroData[axis]);
+        serialPort->print(sensors.getGyro(axis));
         _comma(serialPort);
       }
-      serialPort->print(transmitterCommand[THROTTLE]);
+      serialPort->print(receiver.getPilotCommand(THROTTLE));
       _comma(serialPort);
       for (axis = ROLL; axis < LASTAXIS; axis++) {
-        serialPort->print(motorAxisCommand[axis]);
+        serialPort->print(flightcontrol.getMotorCommand(axis));
         _comma(serialPort);
       }
       for (motor = FRONT; motor < LASTMOTOR; motor++) {
-        serialPort->print(motorCommand[motor]);
+        serialPort->print(motors.getMotorCommand(motor));
         _comma(serialPort);
       }
       serialPort->print(armed, BIN);
       _comma(serialPort);
-#ifdef AutoLevel
-      serialPort->println(transmitterCommandSmooth[MODE]);
-#endif
-#ifndef AutoLevel
-      serialPort->println(1000);
-#endif
+      if (flightcontrol.getAutoLevelState() == ON)
+        serialPort->println(receiver.getPilotCommand(MODE));
+      else
+        serialPort->println(1000);
       break;
+////////////////////// continue here
     case 'T': // Send processed transmitter values
       serialPort->print(xmitFactor);
       _comma(serialPort);
