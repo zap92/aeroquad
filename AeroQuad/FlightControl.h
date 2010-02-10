@@ -186,6 +186,7 @@ public:
   int getMotorCommand(byte axis) return motorCommand[axis];
   void enableAutoLevel(void) autoLevel = ON;
   void disableAutoLevel(void) autoLevel = OFF;
+  byte getAutoLevelState(void) return autoLevel;
   void enableHeadingHold(void) headingHold = ON;
   void disableHeadingHold(void) headingHold = OFF;
   void setP(byte axis, float value) PID[axis].P = value;
@@ -196,7 +197,11 @@ public:
   float getD(byte axis) return PID[axis].D;
   void setInitPosError(byte axis) {
     PID[axis].lastPosition = 0;
-    PID[axis].integratedError 0;
+    PID[axis].integratedError = 0;
+  }
+  float zeroIntegralError(void) {
+    for (axis = ROLL; axis < HEADING + 1; axis++)
+     PID[axis].integratedError = 0;
   }
   void setLevelLimit(float value) levelLimit = value;
   float getLevelLimit(void) return levelLimit;
@@ -204,6 +209,7 @@ public:
   float getLevelOff(void) return levelOff;
   void setWindupGuard(float value) windupGuard = value;
   float getWindupGuard(void) return windupGuard;
+  float getLevelAdjust(byte axis) return levelAdjust[axis];
 };
 
 

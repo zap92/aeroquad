@@ -150,6 +150,8 @@ public:
   
   void setCalibrationESC(byte value) calibrateESC = value;
   void remoteMotorCommand(byte motor, int value) remoteCommand[motor] = value;
+  void setTestCommand(int value) testCommand = value;
+  int getMotorCommand(byte motor) return motorCommand[motor];
 };
 
 
