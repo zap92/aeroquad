@@ -148,10 +148,11 @@ public:
     }
   }
   
-  void setCalibrationESC(byte value) calibrateESC = value;
-  void remoteMotorCommand(byte motor, int value) remoteCommand[motor] = value;
-  void setTestCommand(int value) testCommand = value;
-  int getMotorCommand(byte motor) return motorCommand[motor];
+  void setCalibrationESC(byte value) {calibrateESC = value;}
+  void remoteMotorCommand(byte motor, int value) {remoteCommand[motor] = value;}
+  int getRemoteMotorCommand(byte motor) {return remoteCommand[motor];}
+  void setTestCommand(int value) {testCommand = value;}
+  int getMotorCommand(byte motor) {return motorCommand[motor];}
 };
 
 

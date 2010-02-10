@@ -219,21 +219,21 @@ public:
     eeprom.write(accelZero[ZAXIS], LEVELZCAL_ADR);
   }
   
-  int getRawGyro(byte axis) return gyroADC[axis];
-  int getRawAccel(byte axis) return accelADC[axis];
-  int getGyro(byte axis) return gyroData[axis];
-  int getAccel(byte axis) return accelData[axis];
-  float getGyroScaleFactor(void) return gyroScaleFactor;
-  float getRateDegPerSec(byte axis) return (gyroADC / 1024) * aref / gyroScaleFactor;
-  float getRateRadPerSec(byte axis) return radians(getRateRadPerSec(axis));
-  float getAngleDegrees(byte axis) return degrees(getAngleRadians(axis));    
+  int getRawGyro(byte axis) {return gyroADC[axis];}
+  int getRawAccel(byte axis) {return accelADC[axis];}
+  int getGyro(byte axis) {return gyroData[axis];}
+  int getAccel(byte axis) {return accelData[axis];}
+  float getGyroScaleFactor(void) {return gyroScaleFactor;}
+  float getRateDegPerSec(byte axis) {return (gyroADC / 1024) * aref / gyroScaleFactor;}
+  float getRateRadPerSec(byte axis) {return radians(getRateRadPerSec(axis));}
+  float getAngleDegrees(byte axis) {return degrees(getAngleRadians(axis));} 
   float getAngleRadians(byte axis) {
     if (axis == PITCH) return arctan2(accelADC[PITCH], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS]));
     if (axis == ROLL) return arctan2(accelADC[ROLL], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS]));
   }
-  void setGyroSmoothFactor(float value) gyroFilter.setSmoothFactor(value);
-  float getGyroSmoothFactor(void) return gyroFilter.getSmoothFactor();
-  void setAccelSmoothFactor(float value) accelFilter.setSmoothFactor(value);
-  float getAccelSmoothFactor(void) return accelFilter.getSmoothFactor();
+  void setGyroSmoothFactor(float value) {gyroFilter.setSmoothFactor(value);}
+  float getGyroSmoothFactor(void) {return gyroFilter.getSmoothFactor();}
+  void setAccelSmoothFactor(float value) {accelFilter.setSmoothFactor(value);}
+  float getAccelSmoothFactor(void) {return accelFilter.getSmoothFactor();}
 };
 

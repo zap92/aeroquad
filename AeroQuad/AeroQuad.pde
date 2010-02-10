@@ -20,6 +20,7 @@
 
 #include "AeroQuad.h"
 
+#include <EEPROM.h>
 #include "Eeprom.h"
 Eeprom eeprom;
 
