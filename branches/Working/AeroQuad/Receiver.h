@@ -269,17 +269,18 @@ public:
     }
   }
   
-  int getPilotCommand(byte axis) return transmitterCommand[axis];
-  void setArmStatus(byte value) armed = value;
-  byte getArmStatus(void) return armed;
-  void setXmitFactor(float value) xmitFactor = value;
-  float getXmitFactor(void) return xmitFactor;
-  void setTransmitterSmoothing(byte axis, float value) smoothTransmitter[axis] = value;
-  float getTransmitterSmoothing(byte axis) return smoothTransmitter[axis];
-  void setTransmitterSlope(byte axis, float value) mTransmitter[axis] = value;
-  float getTransmitterSlope(byte axis) return mTransmitter[axis];
-  void setTransmitterOffset(byte axis, float value) bTransmitter[axis] = value;
-  float getTransmitterOffset(byte axis) return bTransmitter[axis];
+  int getPilotCommand(byte axis) {return transmitterCommand[axis];}
+  void setArmStatus(byte value) {armed = value;}
+  byte getArmStatus(void) {return armed;}
+  void setXmitFactor(float value) {xmitFactor = value;}
+  float getXmitFactor(void) {return xmitFactor;}
+  void setTransmitterSmoothing(byte axis, float value) {smoothTransmitter[axis] = value;}
+  float getTransmitterSmoothing(byte axis) {return smoothTransmitter[axis];}
+  void setTransmitterSlope(byte axis, float value) {mTransmitter[axis] = value;}
+  float getTransmitterSlope(byte axis) {return mTransmitter[axis];}
+  void setTransmitterOffset(byte axis, float value) {bTransmitter[axis] = value;}
+  float getTransmitterOffset(byte axis) {return bTransmitter[axis];}
+  int getScaledReceiverData(byte axis) {return receiverData[axis];}
 };
 
 

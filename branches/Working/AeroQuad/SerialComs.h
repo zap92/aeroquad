@@ -436,87 +436,59 @@ private:
       else
         serialPort->println(1000);
       break;
-////////////////////// continue here
     case 'T': // Send processed transmitter values
-      serialPort->print(xmitFactor);
+      serialPort->print(receiver.getXmitFactor());
       _comma(serialPort);
       for (axis = ROLL; axis < LASTAXIS; axis++) {
-        serialPort->print(transmitterCommand[axis]);
+        serialPort->print(receiver.getPilotCommand(axis));
         _comma(serialPort);
       }
       for (axis = ROLL; axis < YAW; axis++) {
-        serialPort->print(levelAdjust[axis]);
+        serialPort->print(flightcontrol.getLevelAdjust(axis));
         _comma(serialPort);
       }
-      serialPort->print(motorAxisCommand[ROLL]);
+      serialPort->print(flightcontrol.getMotorCommand(ROLL));
       _comma(serialPort);
-      serialPort->print(motorAxisCommand[PITCH]);
+      serialPort->print(flightcontrol.getMotorCommand(PITCH));
       _comma(serialPort);
-      serialPort->println(motorAxisCommand[YAW]);
+      serialPort->println(flightcontrol.getMotorCommand(YAW));
       break;
     case 'U': // Send smoothed receiver values
       for (channel = ROLL; channel < AUX; channel++) {
-        serialPort->print(transmitterCommandSmooth[channel]);
+        serialPort->print(receiver.getPilotCommand(channel));
         _comma(serialPort);
       }
-      serialPort->println(transmitterCommandSmooth[AUX]);
+      serialPort->println(receiver.getPilotCommand(AUX));
       break;
     case 'V': // Send receiver status
       for (channel = ROLL; channel < AUX; channel++) {
-        serialPort->print(receiverData[channel]);
+        serialPort->print(receiver.getScaledReceiverData(channel));
         _comma(serialPort);
       }
-      serialPort->println(receiverData[AUX]);
+      serialPort->println(receiver.getScaledReceiverData(AUX));
       break;
     case 'X': // Stop sending messages
       break;
     case 'Z': // Send heading
-      serialPort->print(transmitterCommand[YAW]);
+      serialPort->print(receiver.getPilotCommand(YAW));
       _comma(serialPort);
-      serialPort->print(headingHold);
+      serialPort->print(flighcontrol.getHeadingCommand());
       _comma(serialPort);
-      serialPort->print(heading);
+      serialPort->print(flightcontrol.getHeading());
       _comma(serialPort);
-      serialPort->println(currentHeading);
+      serialPort->println(flightcontrol.getCurrentHeading());
       break;
     case '6': // Report remote commands
       for (motor = FRONT; motor < LEFT; motor++) {
-        serialPort->print(remoteCommand[motor]);
+        serialPort->print(motors.getRemoteMotorCommand(motor));
         _comma(serialPort);
       }
-      serialPort->println(remoteCommand[LEFT]);
+      serialPort->println(motors.getRemoteMotorCommand(LEFT));
       break;
     case '!': // Send flight software version
-      serialPort->println("1.5");
+      serialPort->println("1.6");
       _lastTelemetryType[i] = 'X';
       break;
-
-    case '^':
-      serialPort->print(analogRead(PROX1PIN));
-      _comma(serialPort);
-      serialPort->print(analogRead(VOLTSPIN));
-      _comma(serialPort);
-      serialPort->println(analogRead(CURRENTPIN));
-      break;
-
-    case '~':
-      long lat, lng, alt, speed;
-      unsigned long course, fix_age;
-      
-      gps.get_position(&lat, &lng, &alt, &course, &speed, &fix_age);
-      serialPort->print(lat);
-      _comma(serialPort);
-      serialPort->print(lng);
-      _comma(serialPort);
-      serialPort->print(alt);
-      _comma(serialPort);
-      serialPort->print(course);
-      _comma(serialPort);
-      serialPort->print(speed);
-      _comma(serialPort);
-      serialPort->println(fix_age);
-      break;
-    }
   }
 
   void _sendBinaryTelemetry(unsigned int i) 
@@ -524,11 +496,11 @@ private:
     _printInt(21845, _serialPorts[i]); // Start word of 0x5555
     for (axis = ROLL; axis < LASTAXIS; axis++) 
     {
-      _printInt(gyroADC[axis], _serialPorts[i]);
+      _printInt(sensors.getRawGyro(axis), _serialPorts[i]);
     }
     for (axis = ROLL; axis < LASTAXIS; axis++) 
     {
-      _printInt(accelADC[axis], _serialPorts[i]);
+      _printInt(sensors.getRawAccel(axis), _serialPorts[i]);
     }
     _printInt(32767, _serialPorts[i]); // Stop word of 0x7FFF
   }

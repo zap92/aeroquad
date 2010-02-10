@@ -203,13 +203,16 @@ public:
     for (axis = ROLL; axis < HEADING + 1; axis++)
      PID[axis].integratedError = 0;
   }
-  void setLevelLimit(float value) levelLimit = value;
-  float getLevelLimit(void) return levelLimit;
-  void setLevelOff(float value) levelOff = value;
-  float getLevelOff(void) return levelOff;
-  void setWindupGuard(float value) windupGuard = value;
-  float getWindupGuard(void) return windupGuard;
-  float getLevelAdjust(byte axis) return levelAdjust[axis];
+  void setLevelLimit(float value) {levelLimit = value;}
+  float getLevelLimit(void) {return levelLimit;}
+  void setLevelOff(float value) {levelOff = value;}
+  float getLevelOff(void) {return levelOff;}
+  void setWindupGuard(float value) {windupGuard = value;}
+  float getWindupGuard(void) {return windupGuard;}
+  float getLevelAdjust(byte axis) {return levelAdjust[axis];}
+  float getHeadingCommand(void) {return headingCommand;}
+  float getHeading(void) {return heading;}
+  float getCurrentHeading(void) {return currentHeading;}
 };
 
 
