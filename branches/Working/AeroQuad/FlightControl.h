@@ -27,17 +27,17 @@ class FlightControl_PID: public SubSystem {
 private:
   // Auto level setup
   byte autoLevel;
-  int levelAdjust[2] = {0,0};
+  int levelAdjust[2];
   int levelLimit; // Read in from EEPROM
   int levelOff; // Read in from EEPROM
   
   // Heading hold
   byte headingHold;
   float controldT;
-  float headingScaleFactor = (aref / 1024.0) / sensors.getGyroScaleFactor() * (PI/2.0);
-  float heading = 0; // measured heading from yaw gyro (process variable)
-  float headingCommand = 0; // calculated adjustment for quad to go to heading (PID output)
-  float currentHeading = 0; // current heading the quad is set to (set point)
+  float headingScaleFactor;
+  float heading; // measured heading from yaw gyro (process variable)
+  float headingCommand; // calculated adjustment for quad to go to heading (PID output)
+  float currentHeading; // current heading the quad is set to (set point)
 
   int motorCommand[3];
   int axis;
@@ -70,8 +70,12 @@ public:
   //Required methods to impliment for a SubSystem
   FlightControl_PID(): SubSystem() {
     //Perform any initalization of variables you need in the constructor of this SubSystem
-    autoLevel = OFF
-    headingHold = OFF
+    const float headingScaleFactor = (sensors.getAnalogReference() / 1024.0) / sensors.getGyroScaleFactor() * (PI/2.0);
+    heading = 0; // measured heading from yaw gyro (process variable)
+    headingCommand = 0; // calculated adjustment for quad to go to heading (PID output)
+    currentHeading = 0; // current heading the quad is set to (set point)
+    autoLevel = OFF;
+    headingHold = OFF;
     levelAdjust[ROLL] = 0;
     levelAdjust[PITCH] = 0;
     for (axis = ROLL; axis < LASTAXIS; axis++) motorCommand[axis] = 0;
@@ -141,9 +145,9 @@ public:
         else {
           // Stable Mode
           for (axis = ROLL; axis < YAW; axis++)
-            levelAdjust[axis] = constrain(updatePID(0, attitude.getFlightAngle[axis], &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
+            levelAdjust[axis] = constrain(updatePID(0, attitude.getFlightAngle(axis), &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
           // Turn off Stable Mode if transmitter stick applied
-          if (receiver.getPilotCommand(ROLL) > levelOff)) {
+          if (receiver.getPilotCommand(ROLL) > levelOff) {
             levelAdjust[ROLL] = 0;
             PID[axis].integratedError = 0;
           }
@@ -156,8 +160,8 @@ public:
       // ************************** Update Roll/Pitch ***********************
       // updatedPID(target, measured, PIDsettings);
       // measured = rate data from gyros scaled to PWM (1000-2000), since PID settings are found experimentally
-      motorCommand[ROLL] = updatePID(receiver.getPilotCommand(ROLL) + levelAdjust[ROLL], (sensors.getGyro(ROLL) * mMotorRate) + bMotorRate, &PID[ROLL]);
-      motorCommand[PITCH] = updatePID(receiver.getPilotCommand(PITCH) - levelAdjust[PITCH], (sensors.getGyro(PITCH) * mMotorRate) + bMotorRate, &PID[PITCH]);
+      motorCommand[ROLL] = updatePID(receiver.getPilotCommand(ROLL) + levelAdjust[ROLL], (sensors.getGyro(ROLL) * motors.getMotorSlope()) + motors.getMotorOffset(), &PID[ROLL]);
+      motorCommand[PITCH] = updatePID(receiver.getPilotCommand(PITCH) - levelAdjust[PITCH], (sensors.getGyro(PITCH) * motors.getMotorSlope()) + motors.getMotorOffset(), &PID[PITCH]);
   
       // ***************************** Update Yaw ***************************
       // Note: gyro tends to drift over time, this will be better implemented when determining heading with magnetometer
@@ -178,23 +182,23 @@ public:
           PID[HEADING].integratedError = 0;
         }
       }
-      motorCommand[YAW] = updatePID(receiver.getPilotCommand(YAW) + headingCommand, (attitude.getHeading() * mMotorRate) + bMotorRate, &PID[YAW]);
+      motorCommand[YAW] = updatePID(receiver.getPilotCommand(YAW) + headingCommand, (attitude.getHeading() * motors.getMotorSlope()) + motors.getMotorOffset(), &PID[YAW]);
     }
   }
 
   //Any number of optional methods can be configured as needed by the SubSystem to expose functionaly externally
-  int getMotorCommand(byte axis) return motorCommand[axis];
-  void enableAutoLevel(void) autoLevel = ON;
-  void disableAutoLevel(void) autoLevel = OFF;
-  byte getAutoLevelState(void) return autoLevel;
-  void enableHeadingHold(void) headingHold = ON;
-  void disableHeadingHold(void) headingHold = OFF;
-  void setP(byte axis, float value) PID[axis].P = value;
-  float getP(byte axis) return PID[axis].P;
-  void setI(byte axis, float value) PID[axis].I = value;
-  float getI(byte axis) return PID[axis].I;
-  void setD(byte axis, float value) PID[axis].D = value;
-  float getD(byte axis) return PID[axis].D;
+  int getMotorCommand(byte axis) {return motorCommand[axis];}
+  void enableAutoLevel(void) {autoLevel = ON;}
+  void disableAutoLevel(void) {autoLevel = OFF;}
+  byte getAutoLevelState(void) {return autoLevel;}
+  void enableHeadingHold(void) {headingHold = ON;}
+  void disableHeadingHold(void) {headingHold = OFF;}
+  void setP(byte axis, float value) {PID[axis].P = value;}
+  float getP(byte axis) {return PID[axis].P;}
+  void setI(byte axis, float value) {PID[axis].I = value;}
+  float getI(byte axis) {return PID[axis].I;}
+  void setD(byte axis, float value) {PID[axis].D = value;}
+  float getD(byte axis) {return PID[axis].D;}
   void setInitPosError(byte axis) {
     PID[axis].lastPosition = 0;
     PID[axis].integratedError = 0;

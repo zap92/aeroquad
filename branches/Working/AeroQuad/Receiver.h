@@ -73,15 +73,15 @@ private:
   byte channel;
   
   // Arm motor safety check 
-  byte armed = 0;
-  byte safetyCheck = 0;
+  byte armed;
+  byte safetyCheck;
 
   // Controls the strength of the commands sent from the transmitter
   // xmitFactor ranges from 0.01 - 1.0 (0.01 = weakest, 1.0 - strongest)
   float xmitFactor; // Read in from EEPROM
-  float mTransmitter[6] = {1,1,1,1,1,1};
-  float bTransmitter[6] = {0,0,0,0,0,0};
-  int minCommand = MINCOMMAND;
+  float mTransmitter[6];
+  float bTransmitter[6];
+  int minCommand;
 
   // Attaches PCINT to Arduino Pin
   void attachPinChangeInterrupt(uint8_t pin) {
@@ -194,7 +194,9 @@ public:
     smoothTransmitter[MODE] = eeprom.read(MODESMOOTH_ADR);
     smoothTransmitter[AUX] = eeprom.read(AUXSMOOTH_ADR);
     xmitFactor = eeprom.read(XMITFACTOR_ADR);
-    safetyCheck = 0;
+    safetyCheck = OFF;
+    armed = OFF;
+    minCommand = MINCOMMAND;
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0)
@@ -281,6 +283,8 @@ public:
   void setTransmitterOffset(byte axis, float value) {bTransmitter[axis] = value;}
   float getTransmitterOffset(byte axis) {return bTransmitter[axis];}
   int getScaledReceiverData(byte axis) {return receiverData[axis];}
+  int getSafetyCheck(void) {return safetyCheck;}
+  void setSafetyCheck(byte value) {safetyCheck = value;}
 };
 
 

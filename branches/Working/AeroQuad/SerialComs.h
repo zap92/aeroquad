@@ -23,12 +23,15 @@
 #define BAUD 115200
 #define MAXASSIGNEDSERIALPORTS 4
 
-class SerialComs: public SubSystem{
+class SerialComs: public SubSystem {
 private:
   // Communication
-  char queryType = 'X';
-  byte tlmType = 0;
+  char queryType;
+  byte tlmType;
   char string[32];
+  byte axis;
+  byte channel;
+  byte motor;
 
   unsigned int _serialPortCount;
   HardwareSerial *_serialPorts[MAXASSIGNEDSERIALPORTS];
@@ -60,7 +63,7 @@ private:
         index++;
       }
     }  
-    while ((data[limitRange(index-1, 0, 128)] != ';') && (timeout < 5) && (index < 128));
+    while ((data[constrain(index-1, 0, 128)] != ';') && (timeout < 5) && (index < 128));
     return atof(data);
   }
 
@@ -125,8 +128,12 @@ private:
         receiver.setXmitFactor(_readFloatSerial(serialPort));
         break;
       case 'K': // Receive data filtering values
-        sensors.setGyroSmoothFactor(_readFloatSerial(serialPort));
-        sensors.setAccelSmoothFactor(_readFloatSerial(serialPort));
+        sensors.setGyroSmoothFactor(ROLL, _readFloatSerial(serialPort));
+        sensors.setGyroSmoothFactor(PITCH, sensors.getGyroSmoothFactor(ROLL));
+        sensors.setGyroSmoothFactor(YAW, sensors.getGyroSmoothFactor(ROLL));
+        sensors.setAccelSmoothFactor(ROLL, _readFloatSerial(serialPort));
+        sensors.setAccelSmoothFactor(PITCH, sensors.getAccelSmoothFactor(ROLL));
+        sensors.setAccelSmoothFactor(YAW, sensors.getAccelSmoothFactor(ROLL));
         attitude.setTimeConstant(_readFloatSerial(serialPort));
         break;
       case 'M': // Receive motor smoothing values
@@ -152,81 +159,85 @@ private:
         receiver.setTransmitterOffset(AUX, _readFloatSerial(serialPort));
         break;
       case 'W': // Write all user configurable values to EEPROM
-        writeFloat(flightcontrol.getP(ROLL), PGAIN_ADR);
-        writeFloat(flightcontrol.getI(ROLL), IGAIN_ADR);
-        writeFloat(flightcontrol.getD(ROLL), DGAIN_ADR);
-        writeFloat(flightcontrol.getP(PITCH), PITCH_PGAIN_ADR);
-        writeFloat(flightcontrol.getI(PITCH), PITCH_IGAIN_ADR);
-        writeFloat(flightcontrol.getD(PITCH), PITCH_DGAIN_ADR);
-        writeFloat(flightcontrol.getP(LEVELROLL), LEVEL_PGAIN_ADR);
-        writeFloat(flightcontrol.getI(LEVELROLL), LEVEL_IGAIN_ADR);
-        writeFloat(flightcontrol.getD(LEVELROLL), LEVEL_DGAIN_ADR);
-        writeFloat(flightcontrol.getP(LEVELPITCH), LEVEL_PITCH_PGAIN_ADR);
-        writeFloat(flightcontrol.getI(LEVELPITCH), LEVEL_PITCH_IGAIN_ADR);
-        writeFloat(flightcontrol.getD(LEVELPITCH), LEVEL_PITCH_DGAIN_ADR);
-        writeFloat(flightcontrol.getP(YAW), YAW_PGAIN_ADR);
-        writeFloat(flightcontrol.getI(YAW), YAW_IGAIN_ADR);
-        writeFloat(flightcontrol.getD(YAW), YAW_DGAIN_ADR);
-        writeFloat(flightcontrol.getP(HEADING), HEADING_PGAIN_ADR);
-        writeFloat(flightcontrol.getI(HEADING), HEADING_IGAIN_ADR);
-        writeFloat(flightcontrol.getD(HEADING), HEADING_DGAIN_ADR);
-        writeFloat(flightcontrol.getWindupGuard(), WINDUPGUARD_ADR);  
-        writeFloat(flightcontrol.getLevelLimit(), LEVELLIMIT_ADR);   
-        writeFloat(flightcontrol.getLevelOff(), LEVELOFF_ADR); 
-        writeFloat(receiver.getXmitFactor(), XMITFACTOR_ADR);
-        writeFloat(sensors.getGyroSmoothFactor(), GYROSMOOTH_ADR);
-        writeFloat(sensors.getAccelSmoothFactor(), ACCSMOOTH_ADR);
-        writeFloat(receiver.getTransmitterSmoothing(THROTTLE), THROTTLESMOOTH_ADR);
-        writeFloat(receiver.getTransmitterSmoothing(ROLL), ROLLSMOOTH_ADR);
-        writeFloat(receiver.getTransmitterSmoothing(PITCH), PITCHSMOOTH_ADR);
-        writeFloat(receiver.getTransmitterSmoothing(YAW), YAWSMOOTH_ADR);
-        writeFloat(receiver.getTransmitterSmoothing(MODE), MODESMOOTH_ADR);
-        writeFloat(receiver.getTransmitterSmoothing(AUX), AUXSMOOTH_ADR);
-        writeFloat(attitude.getTimeConstant(), FILTERTERM_ADR);
-        writeFloat(receiver.getTransmitterSlope(THROTTLE), THROTTLESCALE_ADR);
-        writeFloat(receiver.getTransmitterOffset(THROTTLE), THROTTLEOFFSET_ADR);
-        writeFloat(receiver.getTransmitterSlope(ROLL), ROLLSCALE_ADR);
-        writeFloat(receiver.getTransmitterOffset(ROLL), ROLLOFFSET_ADR);
-        writeFloat(receiver.getTransmitterSlope(PITCH), PITCHSCALE_ADR);
-        writeFloat(receiver.getTransmitterOffset(PITCH), PITCHOFFSET_ADR);
-        writeFloat(receiver.getTransmitterSlope(YAW), YAWSCALE_ADR);
-        writeFloat(receiver.getTransmitterOffset(YAW), YAWOFFSET_ADR);
-        writeFloat(receiver.getTransmitterSlope(MODE), MODESCALE_ADR);
-        writeFloat(receiver.getTransmitterOffset(MODE), MODEOFFSET_ADR);
-        writeFloat(receiver.getTransmitterSlope(AUX), AUXSCALE_ADR);
-        writeFloat(receiver.getTransmitterOffset(AUX), AUXOFFSET_ADR);
-        writeFloat(attitude.getHeadingSmoothFactor(), HEADINGSMOOTH_ADR);
+        eeprom.write(flightcontrol.getP(ROLL), PGAIN_ADR);
+        eeprom.write(flightcontrol.getI(ROLL), IGAIN_ADR);
+        eeprom.write(flightcontrol.getD(ROLL), DGAIN_ADR);
+        eeprom.write(flightcontrol.getP(PITCH), PITCH_PGAIN_ADR);
+        eeprom.write(flightcontrol.getI(PITCH), PITCH_IGAIN_ADR);
+        eeprom.write(flightcontrol.getD(PITCH), PITCH_DGAIN_ADR);
+        eeprom.write(flightcontrol.getP(LEVELROLL), LEVEL_PGAIN_ADR);
+        eeprom.write(flightcontrol.getI(LEVELROLL), LEVEL_IGAIN_ADR);
+        eeprom.write(flightcontrol.getD(LEVELROLL), LEVEL_DGAIN_ADR);
+        eeprom.write(flightcontrol.getP(LEVELPITCH), LEVEL_PITCH_PGAIN_ADR);
+        eeprom.write(flightcontrol.getI(LEVELPITCH), LEVEL_PITCH_IGAIN_ADR);
+        eeprom.write(flightcontrol.getD(LEVELPITCH), LEVEL_PITCH_DGAIN_ADR);
+        eeprom.write(flightcontrol.getP(YAW), YAW_PGAIN_ADR);
+        eeprom.write(flightcontrol.getI(YAW), YAW_IGAIN_ADR);
+        eeprom.write(flightcontrol.getD(YAW), YAW_DGAIN_ADR);
+        eeprom.write(flightcontrol.getP(HEADING), HEADING_PGAIN_ADR);
+        eeprom.write(flightcontrol.getI(HEADING), HEADING_IGAIN_ADR);
+        eeprom.write(flightcontrol.getD(HEADING), HEADING_DGAIN_ADR);
+        eeprom.write(flightcontrol.getWindupGuard(), WINDUPGUARD_ADR);  
+        eeprom.write(flightcontrol.getLevelLimit(), LEVELLIMIT_ADR);   
+        eeprom.write(flightcontrol.getLevelOff(), LEVELOFF_ADR); 
+        eeprom.write(receiver.getXmitFactor(), XMITFACTOR_ADR);
+        for (axis = ROLL; axis < LASTAXIS; axis++) {
+          eeprom.write(sensors.getGyroSmoothFactor(axis), GYROSMOOTH_ADR);
+          eeprom.write(sensors.getAccelSmoothFactor(axis), ACCSMOOTH_ADR);
+        }
+        eeprom.write(receiver.getTransmitterSmoothing(THROTTLE), THROTTLESMOOTH_ADR);
+        eeprom.write(receiver.getTransmitterSmoothing(ROLL), ROLLSMOOTH_ADR);
+        eeprom.write(receiver.getTransmitterSmoothing(PITCH), PITCHSMOOTH_ADR);
+        eeprom.write(receiver.getTransmitterSmoothing(YAW), YAWSMOOTH_ADR);
+        eeprom.write(receiver.getTransmitterSmoothing(MODE), MODESMOOTH_ADR);
+        eeprom.write(receiver.getTransmitterSmoothing(AUX), AUXSMOOTH_ADR);
+        eeprom.write(attitude.getTimeConstant(), FILTERTERM_ADR);
+        eeprom.write(receiver.getTransmitterSlope(THROTTLE), THROTTLESCALE_ADR);
+        eeprom.write(receiver.getTransmitterOffset(THROTTLE), THROTTLEOFFSET_ADR);
+        eeprom.write(receiver.getTransmitterSlope(ROLL), ROLLSCALE_ADR);
+        eeprom.write(receiver.getTransmitterOffset(ROLL), ROLLOFFSET_ADR);
+        eeprom.write(receiver.getTransmitterSlope(PITCH), PITCHSCALE_ADR);
+        eeprom.write(receiver.getTransmitterOffset(PITCH), PITCHOFFSET_ADR);
+        eeprom.write(receiver.getTransmitterSlope(YAW), YAWSCALE_ADR);
+        eeprom.write(receiver.getTransmitterOffset(YAW), YAWOFFSET_ADR);
+        eeprom.write(receiver.getTransmitterSlope(MODE), MODESCALE_ADR);
+        eeprom.write(receiver.getTransmitterOffset(MODE), MODEOFFSET_ADR);
+        eeprom.write(receiver.getTransmitterSlope(AUX), AUXSCALE_ADR);
+        eeprom.write(receiver.getTransmitterOffset(AUX), AUXOFFSET_ADR);
+        eeprom.write(attitude.getHeadingSmoothFactor(), HEADINGSMOOTH_ADR);
         flightcontrol.zeroIntegralError();
         break;
       case 'Y': // Initialize EEPROM with default values
-        flightcontrol.setP(ROLL) = 3.75;
-        flightcontrol.setI(ROLL) = 0;
-        flightcontrol.setD(ROLL) = -10;
-        flightcontrol.setP(PITCH) = 3.75;
-        flightcontrol.setI(PITCH) = 0;
-        flightcontrol.setD(PITCH) = -10;
-        flightcontrol.setP(YAW) = 12.0;
-        flightcontrol.setI(YAW) = 0;
-        flightcontrol.setD(YAW) = 0;
-        flightcontrol.setP(LEVELROLL) = 2;
-        flightcontrol.setI(LEVELROLL) = 0;
-        flightcontrol.setD(LEVELROLL) = 0;
-        flightcontrol.setP(LEVELPITCH) = 2;
-        flightcontrol.setI(LEVELPITCH) = 0;
-        flightcontrol.setD(LEVELPITCH) = 0;
-        flightcontrol.setP(HEADING) = 3;
-        flightcontrol.setI(HEADING) = 0;
-        flightcontrol.setD(HEADING) = 0;
-        flightcontro.setWindupGuard() = 2000.0;
-        flightcontrol.setLevelLimit() = 2000.0;
-        flightcontrol.setLevelOff() = 50;  
-        sensors.setsGyroSmoothFactor() = 0.20;
-        sensors.setAccelSmoothFactor() = 0.20;
-        attitude.setTimeConstant() = 3.0;   
-        attitude.setHeadingSmoothFactor() = 1.0;
+        flightcontrol.setP(ROLL, 3.75);
+        flightcontrol.setI(ROLL, 0);
+        flightcontrol.setD(ROLL, -10);
+        flightcontrol.setP(PITCH, 3.75);
+        flightcontrol.setI(PITCH, 0);
+        flightcontrol.setD(PITCH, -10);
+        flightcontrol.setP(YAW, 12.0);
+        flightcontrol.setI(YAW, 0);
+        flightcontrol.setD(YAW, 0);
+        flightcontrol.setP(LEVELROLL, 2);
+        flightcontrol.setI(LEVELROLL, 0);
+        flightcontrol.setD(LEVELROLL, 0);
+        flightcontrol.setP(LEVELPITCH, 2);
+        flightcontrol.setI(LEVELPITCH, 0);
+        flightcontrol.setD(LEVELPITCH, 0);
+        flightcontrol.setP(HEADING, 3);
+        flightcontrol.setI(HEADING, 0);
+        flightcontrol.setD(HEADING, 0);
+        flightcontrol.setWindupGuard(2000);
+        flightcontrol.setLevelLimit(2000);
+        flightcontrol.setLevelOff(50);
+        for (axis = ROLL; axis < LASTAXIS; axis++) {  
+          sensors.setGyroSmoothFactor(axis, 0.50);
+          sensors.setAccelSmoothFactor(axis, 0.50);
+        }
+        attitude.setTimeConstant(3.0);   
+        attitude.setHeadingSmoothFactor(1.0);
         for (channel = ROLL; channel < LASTCHANNEL; channel++) {
           receiver.setTransmitterSlope(channel, 1.0);
-          receiver.setTransmitterOffset(channel, 0.0):
+          receiver.setTransmitterOffset(channel, 0.0);
         }
         receiver.setTransmitterSmoothing(THROTTLE, 1.0);
         receiver.setTransmitterSmoothing(ROLL, 1.0);
@@ -234,7 +245,7 @@ private:
         receiver.setTransmitterSmoothing(YAW, 0.5);  
         receiver.setTransmitterSmoothing(MODE, 1.0);
         receiver.setTransmitterSmoothing(AUX, 1.0);
-        receiver.setXmitFactor() = 0.20;  
+        receiver.setXmitFactor(0.20);  
         sensors.zeroGyros();
         sensors.zeroAccelerometers();
         flightcontrol.zeroIntegralError();
@@ -255,11 +266,11 @@ private:
       case '4': // Turn off ESC calibration
         receiver.setArmStatus(OFF);
         motors.setCalibrationESC(0);
-        testCommand = 1000;
+        motors.setTestCommand(1000);
         break;        
       case '5': // Send individual motor commands (motor, command)
         receiver.setArmStatus(OFF);
-        motors.setCalibrationESC();
+        motors.setCalibrationESC(5);
         for (motor = FRONT; motor < LASTMOTOR; motor++)
           motors.setRemoteCommand(motor, _readFloatSerial(serialPort));
         break;
@@ -350,13 +361,13 @@ private:
     case 'J': // Send flight control configuration values
       serialPort->print(flightcontrol.getWindupGuard());
       _comma(serialPort);
-      serialPort->println(flightcontrol.getXmitFactor());
+      serialPort->println(receiver.getXmitFactor());
       _lastTelemetryType[i] = 'X';
       break;
     case 'L': // Send data filtering values
-      serialPort->print(sensors.getGyroSmoothFactor());
+      serialPort->print(sensors.getGyroSmoothFactor(ROLL));
       _comma(serialPort);
-      serialPort->print(sensors.getAccelSmoothFactor());
+      serialPort->print(sensors.getAccelSmoothFactor(ROLL));
       _comma(serialPort);
       serialPort->println(attitude.getTimeConstant());
       _lastTelemetryType[i] = 'X';
@@ -413,7 +424,7 @@ private:
       serialPort->println(analogRead(ZACCELPIN));
       break;
     case 'S': // Send all flight data
-      serialPort->print(deltaTime);
+      serialPort->print(0); // *** remove this in Configurator
       _comma(serialPort);
       for (axis = ROLL; axis < LASTAXIS; axis++) {
         serialPort->print(sensors.getGyro(axis));
@@ -429,7 +440,7 @@ private:
         serialPort->print(motors.getMotorCommand(motor));
         _comma(serialPort);
       }
-      serialPort->print(armed, BIN);
+      serialPort->print(receiver.getArmStatus(), BIN);
       _comma(serialPort);
       if (flightcontrol.getAutoLevelState() == ON)
         serialPort->println(receiver.getPilotCommand(MODE));
@@ -472,7 +483,7 @@ private:
     case 'Z': // Send heading
       serialPort->print(receiver.getPilotCommand(YAW));
       _comma(serialPort);
-      serialPort->print(flighcontrol.getHeadingCommand());
+      serialPort->print(flightcontrol.getHeadingCommand());
       _comma(serialPort);
       serialPort->print(flightcontrol.getHeading());
       _comma(serialPort);
@@ -489,6 +500,7 @@ private:
       serialPort->println("1.6");
       _lastTelemetryType[i] = 'X';
       break;
+    }
   }
 
   void _sendBinaryTelemetry(unsigned int i) 
@@ -510,6 +522,8 @@ public:
   SubSystem()
   {
     _serialPortCount = 0;
+    queryType = 'X';
+    tlmType = 0;
   }
 
   void assignSerialPort(HardwareSerial *serialPort)
@@ -546,8 +560,7 @@ public:
     }
   }
 
-  void process(unsigned long currentTime)
-  {
+  void process(unsigned long currentTime) {
     //since we are doing customized timing we need to make sure we are enabled
     if (this->enabled())
     {
