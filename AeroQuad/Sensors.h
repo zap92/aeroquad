@@ -39,29 +39,26 @@
 #define ZMIN 454
 #define ZMAX 687
 #define ZAXIS 2
+#define FINDZERO 50
 
-
-class Sensors:
-public SubSystem
-{
+class Sensors: public SubSystem {
 private:
-  const float aref = 2.725; // Analog Reference Value measured with a DMM
-  const float gyroScaleFactor = 0.002; // Gyro scale factor from datasheet
-  
-  const int numZeroValues 50; // Defines number of measurements to use for finding zero ADC value
-  int findZero[numZeroValues];
+  float aref; // Analog Reference Value measured with a DMM
+  float gyroScaleFactor; // Gyro scale factor from datasheet
+
+  int findZero[FINDZERO];
   
   int axis; // Use as an index
 
   // Accelerometer setup
-  filter gyroFilter[3];
+  Filter gyroFilter[3];
   int accelChannel[3];
   int accelData[3];
   int accelZero[3];
   int accelADC[3];
   int accelInvert[3];
   // Gyro setup
-  filter accelFilter[3];
+  Filter accelFilter[3];
   int gyroChannel[3];
   int gyroData[3];
   int gyroZero[3];
@@ -108,7 +105,7 @@ private:
     // Taken from: http://www.dspguru.com/comp.dsp/tricks/alg/fxdatan2.htm
     float coeff_1 = PI/4;
     float coeff_2 = 3*coeff_1;
-    float abs_y = abs(y)+1e-10;      // kludge to prevent 0/0 condition
+    float abs_y = abs(y) + 0.0000000001;      // kludge to prevent 0/0 condition
     float r, angle;
 
     if (x >= 0) {
@@ -127,20 +124,29 @@ private:
 
 public:
   // Required methods to implement a SubSystem
-  Sensors(): SubSystem() {
+  Sensors(): SubSystem() {  
+    const float aref = 2.725; // Analog Reference Value measured with a DMM
+    const float gyroScaleFactor = 0.002; // Gyro scale factor from datasheet
+  
     // Perform any initalization of variables you need in the constructor of this SubSystem
-    gyroChannel[3] = {ROLLRATEPIN, PITCHRATEPIN, YAWRATEPIN};
-    accelChannel[3] = {ROLLACCELPIN, PITCHACCELPIN, ZACCELPIN};
-    // Accelerometer setup
-    accelData[3] = {0,0,0};
-    accelZero[3] = {0,0,0};
-    accelADC[3] = {0,0,0};
-    accelInvert[3] = {0,0,0};
-    // Gyro setup
-    gyroData[3] = {0,0,0};
-    gyroZero[3] = {0,0,0};
-    gyroADC[3] = {0,0,0};
-    gyroInvert[3] = {0,0,0};
+    gyroChannel[ROLL] = ROLLRATEPIN;
+    gyroChannel[PITCH] = PITCHRATEPIN;
+    gyroChannel[YAW] = YAWRATEPIN;
+    accelChannel[ROLL] = ROLLACCELPIN;
+    accelChannel[PITCH] = PITCHACCELPIN;
+    accelChannel[YAW] = ZACCELPIN;
+    for (axis = ROLL; axis < LASTAXIS; axis++) {
+      // Accelerometer setup
+      accelData[axis] = 0;
+      accelZero[axis] = 0;
+      accelADC[axis] = 0;
+      accelInvert[axis] = 0;
+      // Gyro setup
+      gyroData[axis] = 0;
+      gyroZero[axis] = 0;
+      gyroADC[axis] = 0;
+      gyroInvert[axis] = 0;
+    }
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0) {
@@ -161,9 +167,8 @@ public:
     gyroZero[ROLL] = eeprom.read(GYRO_ROLL_ZERO_ADR);
     gyroZero[PITCH] = eeprom.read(GYRO_PITCH_ZERO_ADR);
     gyroZero[YAW] = eeprom.read(GYRO_YAW_ZERO_ADR);
-    for (axis = ROLL; axis < LASTAXIS; i++) gyroFilter[axis].initalize(eeprom.read(GYROSMOOTH_ADR));
-    for (int axis = ROLL; axis < LASTAXIS; i++) accelFilter[axis].initalize(eeprom.read(ACCSMOOTH_ADR));
-    smoothHeading = eeprom.read(HEADINGSMOOTH_ADR);
+    for (axis = ROLL; axis < LASTAXIS; axis++) gyroFilter[axis].initialize(eeprom.read(GYROSMOOTH_ADR));
+    for (int axis = ROLL; axis < LASTAXIS; axis++) accelFilter[axis].initialize(eeprom.read(ACCSMOOTH_ADR));
   }
 
   void process(unsigned long currentTime) {
@@ -209,7 +214,7 @@ public:
   }
 
   void zeroAccelerometers() { // Finds ADC value which represents zero acceleration
-    for (_axis = ROLL; _axis < YAW; _axis++) {
+    for (axis = ROLL; axis < YAW; axis++) {
       for (int i=0; i<FINDZERO; i++) findZero[i] = analogRead(accelChannel[axis]);
       accelZero[axis] = findMode(findZero, FINDZERO);
     }
@@ -224,16 +229,17 @@ public:
   int getGyro(byte axis) {return gyroData[axis];}
   int getAccel(byte axis) {return accelData[axis];}
   float getGyroScaleFactor(void) {return gyroScaleFactor;}
-  float getRateDegPerSec(byte axis) {return (gyroADC / 1024) * aref / gyroScaleFactor;}
+  float getRateDegPerSec(byte axis) {return (gyroADC[axis] / 1024) * aref / gyroScaleFactor;}
   float getRateRadPerSec(byte axis) {return radians(getRateRadPerSec(axis));}
   float getAngleDegrees(byte axis) {return degrees(getAngleRadians(axis));} 
   float getAngleRadians(byte axis) {
-    if (axis == PITCH) return arctan2(accelADC[PITCH], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS]));
-    if (axis == ROLL) return arctan2(accelADC[ROLL], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS]));
+    if (axis == PITCH) return arctan2(accelADC[PITCH], sqrt((accelADC[ROLL] * accelADC[ROLL]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
+    if (axis == ROLL) return arctan2(accelADC[ROLL], sqrt((accelADC[PITCH] * accelADC[PITCH]) + (accelADC[ZAXIS] * accelADC[ZAXIS])));
   }
-  void setGyroSmoothFactor(float value) {gyroFilter.setSmoothFactor(value);}
-  float getGyroSmoothFactor(void) {return gyroFilter.getSmoothFactor();}
-  void setAccelSmoothFactor(float value) {accelFilter.setSmoothFactor(value);}
-  float getAccelSmoothFactor(void) {return accelFilter.getSmoothFactor();}
+  void setGyroSmoothFactor(byte axis, float value) {gyroFilter[axis].setSmoothFactor(value);}
+  float getGyroSmoothFactor(byte axis) {return gyroFilter[axis].getSmoothFactor();}
+  void setAccelSmoothFactor(byte axis, float value) {accelFilter[axis].setSmoothFactor(value);}
+  float getAccelSmoothFactor(byte axis) {return accelFilter[axis].getSmoothFactor();}
+  float getAnalogReference(void) {return aref;}
 };
 

@@ -52,19 +52,16 @@ Blinkie blinkie;
 // ********************** Setup AeroQuad **********************
 // ************************************************************
 void setup() {
-  // Read user values from EEPROM
-  eeprom.initialize();
-
   sensors.initialize(2, 0);// Setup and calibrate sensors, read every 2ms (500Hz)
-  attitude.intialize(2,0); // Calculate vehicle attitude in same time slot after reading sensors
+  attitude.initialize(2,0); // Calculate vehicle attitude in same time slot after reading sensors
 
   flightcontrol.initialize(2,1); // Calculate motor commands every 2ms (500Hz), but offset by 1 ms
   flightcontrol.disableAutoLevel();
-  flightControl.disableheadingHold();
+  flightcontrol.disableHeadingHold();
   
   motors.initialize(2,1); // Configure motors and command motors every 2ms (500Hz)
 
-  receiver.intialize(100,25); // Setup receiver pins for pin change interrupts and read every 100ms (10Hz) starting
+  receiver.initialize(100,25); // Setup receiver pins for pin change interrupts and read every 100ms (10Hz) starting
 
   serialcoms.assignSerialPort(&Serial); // Configure the serial port 1
   serialcoms.initialize(100, 50); // Read commands/telemetry every 100ms (10Hz) starting

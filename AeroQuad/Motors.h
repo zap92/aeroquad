@@ -31,7 +31,7 @@
 #define LEFT 3
 #define LASTMOTOR 4
 
-class Motors: public SubSystem {
+class Motors_PWM: public SubSystem {
 private:
   float mMotorCommand;		
   float bMotorCommand;
@@ -42,11 +42,11 @@ private:
   float bMotorRate;
   
   // ESC Calibration
-  byte calibrateESC = 0;
-  int testCommand = 1000;
+  byte calibrateESC;
+  int testCommand;
 
   // Ground station control (experimental)
-  int remoteCommand[4] = {1000,1000,1000,1000};
+  int remoteCommand[4];
 
 public:
   //Required methods to impliment for a SubSystem
@@ -60,14 +60,20 @@ public:
     mMotorCommand = 0.124;		
     bMotorCommand = 2;
 
-    motorCommand[4] = {1000,1000,1000,1000};
-    motorAxisCommand[3] = {0,0,0};
+    for (motor = FRONT; motor < LASTMOTOR; motor++) {
+      motorCommand[motor] = 1000;
+      remoteCommand[motor] = 1000;
+    }
+    for (axis = ROLL; axis < LASTAXIS; axis++)
+      motorAxisCommand[axis] = 0;
     motor = 0;
     // If AREF = 3.3V, then A/D is 931 at 3V and 465 = 1.5V 
     // Scale gyro output (-465 to +465) to motor commands (1000 to 2000) 
     // use y = mx + b 
     mMotorRate = 1.0753; // m = (y2 - y1) / (x2 - x1) = (2000 - 1000) / (465 - (-465)) 
     bMotorRate = 1500;   // b = y1 - m * x1
+    calibrateESC = 0;
+    testCommand = 1000;
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0)
@@ -91,7 +97,7 @@ public:
       //If the code reaches this point the SubSystem is allowed to run.
 
       // ****************** Calculate Motor Commands *****************
-      if (armed && safetyCheck) {
+      if (receiver.getArmStatus()&& receiver.getSafetyCheck()) {
         motorCommand[FRONT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.motorCommand(PITCH) - flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
         motorCommand[REAR] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.motorCommand(PITCH) - flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
         motorCommand[RIGHT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.motorCommand(ROLL) + flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
@@ -112,12 +118,12 @@ public:
           break;
         case 3:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motorCommand[motor] = limitRange(testCommand, 1000, 1200);
+            motorCommand[motor] = constrain(testCommand, 1000, 1200);
           break;
         case 5:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motorCommand[motor] = limitRange(remoteCommand[motor], 1000, 1200);
-          safetyCheck = 1;
+            motorCommand[motor] = constrain(remoteCommand[motor], 1000, 1200);
+          receiver.setSafetyCheck(ON);
           break;
         default:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
@@ -149,10 +155,12 @@ public:
   }
   
   void setCalibrationESC(byte value) {calibrateESC = value;}
-  void remoteMotorCommand(byte motor, int value) {remoteCommand[motor] = value;}
+  void setRemoteCommand(byte motor, int value) {remoteCommand[motor] = value;}
   int getRemoteMotorCommand(byte motor) {return remoteCommand[motor];}
   void setTestCommand(int value) {testCommand = value;}
   int getMotorCommand(byte motor) {return motorCommand[motor];}
+  float getMotorSlope(void) {return mMotorRate;}
+  float getMotorOffset(void) {return bMotorRate;}
 };
 
 

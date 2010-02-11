@@ -29,19 +29,19 @@ private:
   float dt;
   
   // Sensor Filter
-  float flightAngle[2] = {0,0};
+  float flightAngle[2];
   float timeConstant; // Read in from EEPROM
 
   // Complementary roll/pitch angle
-  float filterTermRoll[4] = {0,0,0,0};
-  float filterTermPitch[4] = {0,0,0,0};
+  float filterTermRoll[4];
+  float filterTermPitch[4];
   
   // Heading
   float heading;
   float headingScaleFactor;
   Filter filterHeading;
 
-  float CompFilter(float previousAngle, float newAngle, float newRate, float filterTerm, float dt) {
+  float CompFilter(float previousAngle, float newAngle, float newRate, float *filterTerm, float dt) {
     // Written by RoyLB at http://www.rcgroups.com/forums/showpost.php?p=12082524&postcount=1286    
     filterTerm[0] = (newAngle - previousAngle) * timeConstant * timeConstant;
     filterTerm[2] += filterTerm[0] * dt;
@@ -55,6 +55,14 @@ public:
     //Perform any initalization of variables you need in the constructor of this SubSystem
     timeConstant = eeprom.read(FILTERTERM_ADR);
     filterHeading.initialize(eeprom.read(HEADINGSMOOTH_ADR));
+    flightAngle[0] = 0;
+    flightAngle[1] = 1;
+  
+    // Complementary roll/pitch angle
+    for (int i; i < 4; i++) {
+      filterTermRoll[i] = 0;
+      filterTermPitch[i] = 0;
+    }
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0) {
@@ -77,16 +85,16 @@ public:
     if (this->_canProcess(currentTime)) {
       // Calculate absolute angle of vehicle
       flightAngle[ROLL] = CompFilter(flightAngle[ROLL], sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL), filterTermRoll, dt);
-      flightAngle[PITCH] = CompFilter(flightAngle[PITCH], sensors.getAngelDegrees(PITCH), sensors.getRateDegPerSec(PITCH), filterTermPitch, dt);
+      flightAngle[PITCH] = CompFilter(flightAngle[PITCH], sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH), filterTermPitch, dt);
       // Calculate heading from yaw gyro
-      heading = filterHeading.smooth(sensors.getGyro(YAW) * headingScaleFactor * dT);
+      heading = filterHeading.smooth(sensors.getGyro(YAW) * headingScaleFactor * dt);
     }
   }
   
-  float getFlightAngle(byte axis) return flightAngle[axis];
-  float getHeading(void) return heading;
-  void setTimeConstant(float value) timeConstant = value;
-  float getTimeConstant(void) return timeConstant;
-  float getHeadingSmoothFactor(void) return filterHeading.getSmoothFactor();
-  void setHeadingSmoothFactor(float value) filterHeading.setSmoothFactor(value);
+  float getFlightAngle(byte axis) {return flightAngle[axis];}
+  float getHeading(void) {return heading;}
+  void setTimeConstant(float value) {timeConstant = value;}
+  float getTimeConstant(void) {return timeConstant;}
+  float getHeadingSmoothFactor(void) {return filterHeading.getSmoothFactor();}
+  void setHeadingSmoothFactor(float value) {filterHeading.setSmoothFactor(value);}
 };
