@@ -43,17 +43,12 @@ private:
   int minCommand;
   byte axis;
   
-  // ESC Calibration
-  byte calibrateESC;
-  int testCommand;
-
   // Ground station control (experimental)
   int remoteCommand[4];
 
 public:
   //Required methods to impliment for a SubSystem
-  Motors_PWM():
-  SubSystem()
+  Motors_PWM(): SubSystem()
   {
     //Perform any initalization of variables you need in the constructor of this SubSystem
     for (motor = FRONT; motor < LASTMOTOR; motor++) {
@@ -90,16 +85,7 @@ public:
     //The code in _canProcess checks to see if this SubSystem is enabled and its been long enough since the last time it ran
     //_canProcess also records the time that this SubSystem ran to use in future timing checks.
     if (this->_canProcess(currentTime)) {
-      //If the code reaches this point the SubSystem is allowed to run.
-
-      // ****************** Calculate Motor Commands *****************
-      if (receiver.getArmStatus() && receiver.getSafetyCheck()) {
-        motorCommand[FRONT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.getMotorCommand(PITCH) - flightcontrol.getMotorCommand(YAW), minCommand, MAXCOMMAND);
-        motorCommand[REAR] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.getMotorCommand(PITCH) - flightcontrol.getMotorCommand(YAW), minCommand, MAXCOMMAND);
-        motorCommand[RIGHT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.getMotorCommand(ROLL) + flightcontrol.getMotorCommand(YAW), minCommand, MAXCOMMAND);
-        motorCommand[LEFT] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.getMotorCommand(ROLL) + flightcontrol.getMotorCommand(YAW), minCommand, MAXCOMMAND);
-      }
-  
+      //If the code reaches this point the SubSystem is allowed to run.  
       analogWrite(FRONTMOTORPIN, motorCommand[FRONT]);		
       analogWrite(REARMOTORPIN, motorCommand[REAR]);		
       analogWrite(RIGHTMOTORPIN, motorCommand[RIGHT]);		
@@ -124,7 +110,7 @@ public:
     }
   }
   
-  void setRemoteCommand(byte motor, int value) {remoteCommand[motor] = value;}
+  void write(byte motor, int value) {remoteCommand[motor] = value;}
   int getRemoteMotorCommand(byte motor) {return remoteCommand[motor];}
   void setTestCommand(int value) {testCommand = value;}
   void setMotorCommand(byte motor, int value) {motorCommand[motor] = value;}

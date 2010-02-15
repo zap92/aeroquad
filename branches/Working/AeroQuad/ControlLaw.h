@@ -18,8 +18,9 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-// This class is responsible for generating motor commands using PID
-// It takes data from the Sensor, Attitude and Receiver classes
+// This class is responsible for generating motor commands using the defined control algorithm
+// This class will take data from Sensor, Attitude and FlightCommand
+// FlightCommand data is used to reduce ControlLaw calculations (ie. auto level)
 
 #include "SubSystem.h"
 
@@ -44,6 +45,8 @@ private:
   float currentHeading; // current heading the quad is set to (set point)
 
   int motorCommand[3];
+  float command[3];
+  float measured[3];
   int axis;
   float mMotorCommand;		
   float bMotorCommand;
@@ -81,8 +84,8 @@ public:
     // b = y1 - (m * x1) = 126 - (0.124 * 1000) = 2		
     // mMotorCommand = 0.124;		
     // bMotorCommand = 2;
-    mMotorCommand = flightcontrol.getMotorSlope();
-    bMotorCommand = flightcontrol.getMotorOffset();
+    mMotorCommand = flightControl.getMotorSlope();
+    bMotorCommand = flightControl.getMotorOffset();
     
     heading = 0; // measured heading from yaw gyro (process variable)
     headingCommand = 0; // calculated adjustment for quad to go to heading (PID output)
@@ -91,7 +94,11 @@ public:
     headingHold = OFF;
     levelAdjust[ROLL] = 0;
     levelAdjust[PITCH] = 0;
-    for (axis = ROLL; axis < LASTAXIS; axis++) motorCommand[axis] = 0;
+    for (axis = ROLL; axis < LASTAXIS; axis++) {
+      motorCommand[axis] = 0;
+      command[axis] = 0;
+      measuredpaxis] = 0
+    }
     headingCommand = 0;
     windupGuard = 0;
     controldT = frequency / 1000.0;
@@ -142,8 +149,10 @@ public:
     //_canProcess also records the time that this SubSystem ran to use in future timing checks.
 
     attitude.process();
-    if (autoLevel == ON) {
-      if (flightcommand.getCommand(MODE) < 1500) {
+    
+    // ************************** Update Auto Level ***********************
+    if (flightControl.getAutoLevel() == ON) {
+      if (flightCommand.read(MODE) < 1500) {
       // Acrobatic Mode
       levelAdjust[ROLL] = 0;
       levelAdjust[PITCH] = 0;
@@ -153,23 +162,18 @@ public:
         for (axis = ROLL; axis < YAW; axis++)
           levelAdjust[axis] = constrain(updatePID(0, attitude.getFlightAngle(axis), &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
         // Turn off Stable Mode if transmitter stick applied
-        if (flightcommand.getCommand(ROLL) > levelOff) {
+        if (flightCommand.read(ROLL) > levelOff) {
           levelAdjust[ROLL] = 0;
           PID[axis].integratedError = 0;
         }
-        if (flightcommand.getCommand(PITCH) > levelOff) {
+        if (flightCommand.read(PITCH) > levelOff) {
           levelAdjust[PITCH] = 0;
           PID[PITCH].integratedError = 0;
         }
       }
     }
-    // ************************** Update Roll/Pitch ***********************
-    // updatedPID(target, measured, PIDsettings);
-    // measured = rate data from gyros scaled to PWM (1000-2000), since PID settings are found experimentally
-    motorCommand[ROLL] = updatePID(flightcommand.getCommand(ROLL) + levelAdjust[ROLL], (sensors.getGyro(ROLL) * mMotorCommand) + bMotorCommand, &PID[ROLL]);
-    motorCommand[PITCH] = updatePID(flightcommand.getCommand(PITCH) - levelAdjust[PITCH], (sensors.getGyro(PITCH) * mMotorCommand) + bMotorCommand, &PID[PITCH]);
 
-    // ***************************** Update Yaw ***************************
+    // ***************************** Update Heading Hold ***************************
     // Note: gyro tends to drift over time, this will be better implemented when determining heading with magnetometer
     // Current method of calculating heading with gyro does not give an absolute heading, but rather is just used relatively to get a number to lock heading when no yaw input applied
     if (headingHold == ON) {
@@ -187,12 +191,20 @@ public:
         headingCommand = 0;
         PID[HEADING].integratedError = 0;
       }
-    motorCommand[YAW] = updatePID(flightcommand.getCommand(YAW) + headingCommand, (attitude.getHeading() * mMotorCommand + bMotorCommand, &PID[YAW]);
+    }
+    
+    // ************************ Update Roll, Pitch and Yaw *************************
+    for (axis = ROLL; axis < LASTAXIS; axis++) {
+      command[axis] = flightCommand.read(axis) + levelAdjust[ROLL];
+    // measured = rate data from gyros scaled to PWM (1000-2000), since PID settings are found experimentally
+      measured[axis] = (sensors.getGyro(ROLL) * mMotorCommand) + bMotorCommand;
+    // updatePID(command, measured, PIDsettings);
+      motorCommand[axis] = updatePID(command[axis], measured[axis], &PID[axis]);
     }
   }
 
   //Any number of optional methods can be configured as needed by the SubSystem to expose functionaly externally
-  int getMotorCommand(byte axis) {return motorCommand[axis];}
+  int read(byte axis) {return motorCommand[axis];}
   void enableAutoLevel(void) {autoLevel = ON;}
   void disableAutoLevel(void) {autoLevel = OFF;}
   byte getAutoLevelState(void) {return autoLevel;}

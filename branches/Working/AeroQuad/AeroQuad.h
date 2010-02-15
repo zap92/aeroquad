@@ -24,6 +24,35 @@
 #include <stdlib.h>
 #include <math.h>
 #include "WProgram.h"
+#define uint8_t byte
+
+///// Includes for classes to use /////
+#include "Eeprom.h"
+Eeprom eeprom;
+
+#include "Sensors.h"
+Sensors sensors;
+
+#include "FlightCommand.h"
+FlightCommand_Duemilanove flightCommand;
+//Receiver_Mega receiver;
+//SIGNAL(PCINT0_vect) {receiver.measurePulseWidthISR(0);}
+//SIGNAL(PCINT1_vect) {receiver.measurePulseWidthISR(1);}
+//SIGNAL(PCINT2_vect) {receiver.measurePulseWidthISR(2);}
+
+#include "Motors.h"
+Motors_PWM motors;
+//Motors_I2C motors;
+
+#include "FlightControl.h"
+FlightControl flightControl;
+
+#include "SerialComs.h"
+SerialComs serialcoms;
+
+#include "Blinkie.h"
+Blinkie blinkie;
+////////////////////////////////////////
 
 #define byte uint8_t
 #define LEDPIN 13
