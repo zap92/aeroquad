@@ -18,7 +18,7 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
  
-// This class is responsible for reading pilot commands from a receiver using PCINT 
+// This class is responsible for reading external pilot commands
 
 #include "SubSystem.h"
 #include "pins_arduino.h"
@@ -32,14 +32,6 @@
 #define AUXPIN 8
 
 // Receiver variables
-#define TIMEOUT 25000
-#define MINCOMMAND 1000
-#define MIDCOMMAND 1500
-#define MAXCOMMAND 2000
-#define MINDELTA 200
-#define MINCHECK MINCOMMAND + 100
-#define MAXCHECK MAXCOMMAND - 100
-#define MINTHROTTLE MINCOMMAND + 100
 #define LEVELOFF 100
 #define RISING_EDGE 1
 #define FALLING_EDGE 0
@@ -49,7 +41,7 @@
 #define MAXOFFWIDTH 24000
 
 
-class FlightCommand_2009: public SubSystem {
+class FlightCommand_Duemilanove: public SubSystem {
 private:
   int receiverPin[6];
   int receiverChannel[6];
@@ -73,19 +65,12 @@ private:
   int transmitterCenter[3];
   float smoothTransmitter[6];
   byte channel;
-  byte motor;
-  byte calibrateESC;
   
-  // Arm motor safety check 
-  byte armed;
-  byte safetyCheck;
-
   // Controls the strength of the commands sent from the transmitter
   // xmitFactor ranges from 0.01 - 1.0 (0.01 = weakest, 1.0 - strongest)
   float xmitFactor; // Read in from EEPROM
   float mTransmitter[6];
   float bTransmitter[6];
-  int minCommand;
   
   // Attaches PCINT to Arduino Pin
   void attachPinChangeInterrupt(uint8_t pin) {
@@ -167,7 +152,7 @@ private:
 
 public:
   //Required methods to impliment for a SubSystem
-  FlightCommand_2009(): SubSystem() {
+  FlightCommand_Duemilanove(): SubSystem() {
     //Perform any initalization of variables you need in the constructor of this SubSystem
     receiverPin[ROLL] = 18;
     receiverPin[PITCH] = 21;
@@ -218,10 +203,6 @@ public:
     filter[MODE].setSmoothFactor(eeprom.read(MODESMOOTH_ADR));
     filter[AUX].setSmoothFactor(eeprom.read(AUXSMOOTH_ADR));
     xmitFactor = eeprom.read(XMITFACTOR_ADR);
-    safetyCheck = OFF;
-    armed = OFF;
-    minCommand = MINCOMMAND;
-    calibrateESC = 0;
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0)
@@ -255,14 +236,10 @@ public:
       // No xmitFactor reduction applied for throttle, mode and AUX
       for (channel = THROTTLE; channel < LASTCHANNEL; channel++)
         transmitterCommand[channel] = transmitterCommandSmooth[channel];
-
+    }
   }
   
-  int getCommand(byte axis) {return transmitterCommand[axis];}
-  void setArmStatus(byte value) {armed = value;}
-  byte getArmStatus(void) {return armed;}
-  void setCalibrationESC(byte value) {calibrateESC = value;}
-  byte getCalibrationESC(void) {return calibrateESC;}
+  int read(byte axis) {return transmitterCommand[axis];}
   void setXmitFactor(float value) {xmitFactor = value;}
   float getXmitFactor(void) {return xmitFactor;}
   void setTransmitterSmoothing(byte axis, float value) {filter[axis].setSmoothFactor(value);}
@@ -272,6 +249,5 @@ public:
   void setTransmitterOffset(byte axis, float value) {bTransmitter[axis] = value;}
   float getTransmitterOffset(byte axis) {return bTransmitter[axis];}
   int getScaledReceiverData(byte axis) {return receiverData[axis];}
-  byte getSafetyCheck(void) {return safetyCheck;}
 };
 

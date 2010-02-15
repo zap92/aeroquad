@@ -18,13 +18,21 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-// This class is responsible for generating motor commands using PID
-// It takes data from the Sensor, Attitude and Receiver classes
+// This class is responsible interpreting pilot commands from the FlightCommand class
+// and to send motor commands to the Motor class as calculated from the ControlLaw class
 
 #include "SubSystem.h"
 
 #include "ControlLaw.h"
 ControlLaw_PID controlLaw;
+
+#define MINCOMMAND 1000
+#define MIDCOMMAND 1500
+#define MAXCOMMAND 2000
+#define MINDELTA 200
+#define MINCHECK MINCOMMAND + 100
+#define MAXCHECK MAXCOMMAND - 100
+#define MINTHROTTLE MINCOMMAND + 100
 
 class FlightControl: public SubSystem {
 private:
@@ -42,11 +50,22 @@ private:
   float headingCommand; // calculated adjustment for quad to go to heading (PID output)
   float currentHeading; // current heading the quad is set to (set point)
 
-  int motorCommand[3];
-  int axis;
+  int motorCommand[4];
+  byte axis;
+  byte motor;
   float mMotorCommand;		
   float bMotorCommand;
+  int minCommand;
+  int maxCommand;
   
+  // ESC Calibration
+  byte calibrateESC;
+  int testCommand;
+
+  // Arm motor safety check 
+  byte armed;
+  byte safetyCheck;
+ 
 public:
   //Required methods to impliment for a SubSystem
   FlightControl(): SubSystem() {
@@ -60,15 +79,20 @@ public:
     heading = 0; // measured heading from yaw gyro (process variable)
     headingCommand = 0; // calculated adjustment for quad to go to heading (PID output)
     currentHeading = 0; // current heading the quad is set to (set point)
-    for (axis = ROLL; axis < LASTAXIS; axis++) motorCommand[axis] = 0;
+    for (motor = FRONT; motor < LASTMOTOR; motor++) motorCommand[motor] = 0;
     headingCommand = 0;
+    
+    safetyCheck = OFF;
+    armed = OFF;
+    minCommand = MINCOMMAND;
+    calibrateESC = 0;
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0) {
     //Call the parent class' _initialize to setup all the frequency and offset related settings
     this->_initialize(frequency, offset);
-      mMotorCommand = motors.getMotorSlope();
-      bMotorCommand = motors.getMotorOffset();
+    mMotorCommand = motors.getMotorSlope();
+    bMotorCommand = motors.getMotorOffset();
   }
 
   void process(unsigned long currentTime) {
@@ -79,12 +103,49 @@ public:
       //If the code reaches this point the SubSystem is allowed to run.
       controlLaw.process();
 
-      // Set motor commands based on receiver input
-      // If throttle in minimum position, don't apply yaw
-      if (flightCommand.getCommand[THROTTLE] < MINCHECK) {
-        for (motor = FRONT; motor < LASTMOTOR; motor++)
-          motors.setMotorCommand(motor, minCommand);
+      // Read quad configuration commands from transmitter when throttle down
+      if (flightCommand.read(THROTTLE) < MINCHECK) {
+        controlLaw.zeroIntegralError();
+        // Disarm motors (left stick lower left corner)
+        if (flightCommand.read(YAW) < MINCHECK && armed == ON) {
+          armed = OFF;
+          motors.commandAllMotors(MINCOMMAND);
+        }    
+        // Zero/Calibrate sensors (left stick lower left, right stick lower right corner)
+        if ((flightCommand.read(YAW) < MINCHECK) && (flightCommand.read(ROLL) > MAXCHECK) && (flightCommand.read(PITCH) < MINCHECK)) {
+          sensors.zeroGyros();
+          sensors.zeroAccelerometers();
+          controlLaw.zeroIntegralError();
+          motors.pulseMotors(3);
+        }   
+        // Arm motors (left stick lower right corner)
+        if (flightCommand.read(YAW) > MAXCHECK && armed == OFF && safetyCheck == ON) {
+          armed = ON;
+          controlLaw.zeroIntegralError();
+          minCommand = MINTHROTTLE;
+          transmitterCenter[PITCH] = flightCommand.read(PITCH);
+          transmitterCenter[ROLL] = flightCommand.read(ROLL);
+        }
+        // Prevents accidental arming of motor output if no transmitter command received
+        if (flightCommand.read(YAW) > MINCHECK) safetyCheck = ON; 
       }
+      
+      // Prevents too little power applied to motors during hard manuevers
+      // Also even motor power on high side if low side is limited
+      if (flightCommand.read(THROTTLE) < MINTHROTTLE){
+        minCommand = MINTHROTTLE;
+        maxCommand = flightCommand.read(THROTTLE) - MINTHROTTLE?????
+      }
+      // Allows quad to do acrobatics by turning off opposite motors during hard manuevers
+      //if ((receiverData[ROLL] < MINCHECK) || (receiverData[ROLL] > MAXCHECK) || (receiverData[PITCH] < MINCHECK) || (receiverData[PITCH] > MAXCHECK))
+      //minCommand = MINTHROTTLE;
+    
+      // If throttle in minimum position, don't apply yaw
+      if (flightCommand.read[THROTTLE] < MINCHECK) {
+        for (motor = FRONT; motor < LASTMOTOR; motor++)
+          motorCommand[motor] = minCommand;
+      }
+      
       // If motor output disarmed, force motor output to minimum
       if (armed == ON) {
         switch (calibrateESC) { // used for calibrating ESC's
@@ -107,47 +168,22 @@ public:
         }
       }
 
-      // Read quad configuration commands from transmitter when throttle down
-      if (flightCommand.getCommand[THROTTLE] < MINCHECK) {
-        controlLaw.zeroIntegralError();
-        // Disarm motors (left stick lower left corner)
-        if (receiverData[YAW] < MINCHECK && armed == ON) {
-          armed = OFF;
-          motors.commandAllMotors(MINCOMMAND);
-        }    
-        // Zero sensors (left stick lower left, right stick lower right corner)
-        if ((receiverData[YAW] < MINCHECK) && (receiverData[ROLL] > MAXCHECK) && (receiverData[PITCH] < MINCHECK)) {
-          flight.zeroGyros();
-          sensors.zeroAccelerometers();
-          controlLaw.zeroIntegralError();
-          motors.pulseMotors(3);
-        }   
-        // Arm motors (left stick lower right corner)
-        if (receiverData[YAW] > MAXCHECK && armed == OFF && safetyCheck == ON) {
-          armed = ON;
-          controlLaw.zeroIntegralError();
-          minCommand = MINTHROTTLE;
-          transmitterCenter[PITCH] = receiverData[PITCH];
-          transmitterCenter[ROLL] = receiverData[ROLL];
-        }
-        // Prevents accidental arming of motor output if no transmitter command received
-        if (receiverData[YAW] > MINCHECK) safetyCheck = ON; 
+      // ****************** Calculate Motor Commands *****************
+      if (armed = ON && safetyCheck = ON) {
+        motors.write(FRONT, constrain(flightCommand.read(THROTTLE) - controlLaw.read(PITCH) - controlLaw.read(YAW), minCommand, maxCommand));
+        motors.write(REAR, constrain(flightCommand.read(THROTTLE) + controlLaw.read(PITCH) - controlLaw.read(YAW), minCommand, maxCommand));
+        motors.write(RIGHT, constrain(flightCommand.read(THROTTLE) - controlLaw.read(ROLL) + controlLaw.read(YAW), minCommand, maxCommand));
+        motors.write(LEFT, constrain(flightCommand.read(THROTTLE) + controlLaw.read(ROLL) + controlLaw.read(YAW), minCommand, maxCommand));
       }
-      // Prevents too little power applied to motors during hard manuevers
-      if (receiverData[THROTTLE] > (MIDCOMMAND - MINDELTA)) minCommand = receiverData[THROTTLE] - MINDELTA;
-      if (receiverData[THROTTLE] < MINTHROTTLE) minCommand = MINTHROTTLE;
-      // Allows quad to do acrobatics by turning off opposite motors during hard manuevers
-      //if ((receiverData[ROLL] < MINCHECK) || (receiverData[ROLL] > MAXCHECK) || (receiverData[PITCH] < MINCHECK) || (receiverData[PITCH] > MAXCHECK))
-	  //minCommand = MINTHROTTLE;
-    }	
+
+    }    
   }
 
   //Any number of optional methods can be configured as needed by the SubSystem to expose functionaly externally
   int getMotorCommand(byte axis) {return motorCommand[axis];}
-  void enableAutoLevel(void) {autoLevel = ON;}
-  void disableAutoLevel(void) {autoLevel = OFF;}
-  byte getAutoLevelState(void) {return autoLevel;}
-  void enableHeadingHold(void) {headingHold = ON;}
+  void setAutoLevel(byte value) {autoLevel = value;}
+  byte getAutoLevel(void) {return autoLevel;}
+  void setHeadingHold(byte value) {headingHold = value;}
   void disableHeadingHold(void) {headingHold = OFF;}
   void setP(byte axis, float value) {PID[axis].P = value;}
   float getP(byte axis) {return PID[axis].P;}
@@ -169,6 +205,10 @@ public:
   float getLevelOff(void) {return levelOff;}
   void setWindupGuard(float value) {windupGuard = value;}
   float getWindupGuard(void) {return windupGuard;}
+  void setAutoLevel(byte value) {autoLevel = value;}
+  byte getAutoLevel(void) {return autoLevel;}
+  void setHeadingHold(byte value) {headingHold = value;}
+  byte getHeadingHold(void) {return headingHold;}
   float getLevelAdjust(byte axis) {return levelAdjust[axis];}
   float getHeadingCommand(void) {return headingCommand;}
   float getHeading(void) {return heading;}

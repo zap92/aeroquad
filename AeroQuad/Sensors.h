@@ -45,9 +45,7 @@ class Sensors: public SubSystem {
 private:
   float aref; // Analog Reference Value measured with a DMM
   float gyroScaleFactor; // Gyro scale factor from datasheet
-
   int findZero[FINDZERO];
-  
   int axis; // Use as an index
 
   // Accelerometer setup
@@ -140,12 +138,12 @@ public:
       accelData[axis] = 0;
       accelZero[axis] = 0;
       accelADC[axis] = 0;
-      accelInvert[axis] = 0;
+      accelInvert[axis] = 1;
       // Gyro setup
       gyroData[axis] = 0;
       gyroZero[axis] = 0;
       gyroADC[axis] = 0;
-      gyroInvert[axis] = 0;
+      gyroInvert[axis] = 1;
     }
   }
 
@@ -182,8 +180,8 @@ public:
       // Apply low pass filter to sensor values and center around zero
       // Did not convert to engineering units, since will experiment to find P gain anyway
       for (axis = ROLL; axis < LASTAXIS; axis++) {
-        gyroADC[axis] =  analogRead(gyroChannel[axis]) - gyroZero[axis];
-        accelADC[axis] = analogRead(accelChannel[axis]) - accelZero[axis];
+        gyroADC[axis] =  (analogRead(gyroChannel[axis]) - gyroZero[axis]) * gyroInvert[axis];
+        accelADC[axis] = (analogRead(accelChannel[axis]) - accelZero[axis]) * accelInvert[axis];
       }
     
       // Compiler seems to like calculating this in separate loop better
