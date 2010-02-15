@@ -24,7 +24,7 @@
 #include "Filter.h"
 #include <math.h>
 
-class Attitude_CompFilter: public SubSystem {
+class Attitude_CompFilter {
 private:
   float dt;
   
@@ -51,44 +51,32 @@ private:
 
 public:
   //Required methods to impliment for a SubSystem
-  Attitude_CompFilter():SubSystem() {
+  Attitude_CompFilter() {
     //Perform any initalization of variables you need in the constructor of this SubSystem
     timeConstant = eeprom.read(FILTERTERM_ADR);
     filterHeading.initialize(eeprom.read(HEADINGSMOOTH_ADR));
-    flightAngle[0] = 0;
-    flightAngle[1] = 1;
   
     // Complementary roll/pitch angle
     for (int i; i < 4; i++) {
       filterTermRoll[i] = 0;
       filterTermPitch[i] = 0;
     }
-  }
-
-  void initialize(unsigned int frequency, unsigned int offset = 0) {
-    //Call the parent class' _initialize to setup all the frequency and offset related settings
-    this->_initialize(frequency, offset);
-
-    //Perform any custom initalization you need for this SubSystem
+	
     dt = frequency / 1000.0; 
     flightAngle[ROLL] = sensors.getAngleDegrees(ROLL);
     flightAngle[PITCH] = sensors.getAngleDegrees(PITCH);
     filterTermRoll[2] = -sensors.getRateDegPerSec(ROLL);
     filterTermPitch[2] = -sensors.getRateDegPerSec(PITCH);
     headingScaleFactor = sensors.getGyroScaleFactor();
+
   }
   
   void process(unsigned long currentTime) {
-    //Check to see if this SubSystem is allowed to run
-    //The code in _canProcess checks to see if this SubSystem is enabled and its been long enough since the last time it ran
-    //_canProcess also records the time that this SubSystem ran to use in future timing checks.
-    if (this->_canProcess(currentTime)) {
-      // Calculate absolute angle of vehicle
-      flightAngle[ROLL] = CompFilter(flightAngle[ROLL], sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL), filterTermRoll, dt);
-      flightAngle[PITCH] = CompFilter(flightAngle[PITCH], sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH), filterTermPitch, dt);
-      // Calculate heading from yaw gyro
-      heading = filterHeading.smooth(sensors.getGyro(YAW) * headingScaleFactor * dt);
-    }
+    // Calculate absolute angle of vehicle
+    flightAngle[ROLL] = CompFilter(flightAngle[ROLL], sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL), filterTermRoll, dt);
+    flightAngle[PITCH] = CompFilter(flightAngle[PITCH], sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH), filterTermPitch, dt);
+    // Calculate heading from yaw gyro
+    heading = filterHeading.smooth(sensors.getGyro(YAW) * headingScaleFactor * dt);
   }
   
   float getFlightAngle(byte axis) {return flightAngle[axis];}

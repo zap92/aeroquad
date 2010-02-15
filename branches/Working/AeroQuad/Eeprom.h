@@ -23,6 +23,8 @@
 #ifndef EEPROM_H
 #define EEPROM_H
 
+#include <EEPROM.h>
+
 // EEPROM storage address map
 #define PGAIN_ADR 0
 #define IGAIN_ADR 4
