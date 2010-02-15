@@ -20,48 +20,45 @@
 
 #include "AeroQuad.h"
 
-#include <EEPROM.h>
 #include "Eeprom.h"
 Eeprom eeprom;
 
 #include "Sensors.h"
 Sensors sensors;
 
-#include "Attitude.h"
-Attitude_CompFilter attitude;
-//Attitude_KalmanFilter attitude;
-
-#include "Receiver.h"
-Receiver_Duemilanove receiver;
+#include "FlightCommand.h"
+FlightCommand_2009 flightcommand;
 //Receiver_Mega receiver;
+//SIGNAL(PCINT0_vect) {receiver.measurePulseWidthISR(0);}
+//SIGNAL(PCINT1_vect) {receiver.measurePulseWidthISR(1);}
+//SIGNAL(PCINT2_vect) {receiver.measurePulseWidthISR(2);}
+
+#include "FlightControl.h"
+FlightControl flightcontrol;
 
 #include "Motors.h"
 Motors_PWM motors;
 //Motors_I2C motors;
 
-#include "FlightControl.h"
-FlightControl_PID flightcontrol;
-
 #include "SerialComs.h"
 SerialComs serialcoms;
 
-#include "Blinkie.h"
-Blinkie blinkie;
+//#include "Blinkie.h"
+//Blinkie blinkie;
 
 // ************************************************************
 // ********************** Setup AeroQuad **********************
 // ************************************************************
 void setup() {
   sensors.initialize(2, 0);// Setup and calibrate sensors, read every 2ms (500Hz)
-  attitude.initialize(2,0); // Calculate vehicle attitude in same time slot after reading sensors
 
   flightcontrol.initialize(2,1); // Calculate motor commands every 2ms (500Hz), but offset by 1 ms
   flightcontrol.disableAutoLevel();
   flightcontrol.disableHeadingHold();
   
-  motors.initialize(2,1); // Configure motors and command motors every 2ms (500Hz)
+  flightcommand.initialize(100,25); // Setup receiver pins for pin change interrupts and read every 100ms (10Hz) starting
 
-  receiver.initialize(100,25); // Setup receiver pins for pin change interrupts and read every 100ms (10Hz) starting
+  motors.initialize(2,1); // Configure motors and command motors every 2ms (500Hz)
 
   serialcoms.assignSerialPort(&Serial); // Configure the serial port 1
   serialcoms.initialize(100, 50); // Read commands/telemetry every 100ms (10Hz) starting

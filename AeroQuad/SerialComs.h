@@ -252,25 +252,25 @@ private:
         break;
       case '1': // Calibrate ESCS's by setting Throttle high on all channels
         receiver.setArmStatus(OFF);
-        motors.setCalibrationESC(1);
+        receiver.setCalibrationESC(1);
         break;
       case '2': // Calibrate ESC's by setting Throttle low on all channels
         receiver.setArmStatus(OFF);
-        motors.setCalibrationESC(2);
+        receiver.setCalibrationESC(2);
         break;
       case '3': // Test ESC calibration
         receiver.setArmStatus(OFF);
         motors.setTestCommand(_readFloatSerial(serialPort));
-        motors.setCalibrationESC(3);
+        receiver.setCalibrationESC(3);
         break;
       case '4': // Turn off ESC calibration
         receiver.setArmStatus(OFF);
-        motors.setCalibrationESC(0);
+        receiver.setCalibrationESC(0);
         motors.setTestCommand(1000);
         break;        
       case '5': // Send individual motor commands (motor, command)
         receiver.setArmStatus(OFF);
-        motors.setCalibrationESC(5);
+        receiver.setCalibrationESC(5);
         for (motor = FRONT; motor < LASTMOTOR; motor++)
           motors.setRemoteCommand(motor, _readFloatSerial(serialPort));
         break;

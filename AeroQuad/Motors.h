@@ -30,16 +30,18 @@
 #define RIGHT 2
 #define LEFT 3
 #define LASTMOTOR 4
+#define MINCOMMAND 1000
+#define MAXCOMMAND 2000
 
 class Motors_PWM: public SubSystem {
 private:
-  float mMotorCommand;		
-  float bMotorCommand;
   int motorCommand[4];
   int motorAxisCommand[3];
   int motor;
   float mMotorRate;
   float bMotorRate;
+  int minCommand;
+  byte axis;
   
   // ESC Calibration
   byte calibrateESC;
@@ -50,16 +52,10 @@ private:
 
 public:
   //Required methods to impliment for a SubSystem
-  Motors():
+  Motors_PWM():
   SubSystem()
   {
     //Perform any initalization of variables you need in the constructor of this SubSystem
-    // Scale motor commands to analogWrite		
-    // m = (250-126)/(2000-1000) = 0.124		
-    // b = y1 - (m * x1) = 126 - (0.124 * 1000) = 2		
-    mMotorCommand = 0.124;		
-    bMotorCommand = 2;
-
     for (motor = FRONT; motor < LASTMOTOR; motor++) {
       motorCommand[motor] = 1000;
       remoteCommand[motor] = 1000;
@@ -72,8 +68,8 @@ public:
     // use y = mx + b 
     mMotorRate = 1.0753; // m = (y2 - y1) / (x2 - x1) = (2000 - 1000) / (465 - (-465)) 
     bMotorRate = 1500;   // b = y1 - m * x1
-    calibrateESC = 0;
     testCommand = 1000;
+    minCommand = 1200;
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0)
@@ -97,52 +93,26 @@ public:
       //If the code reaches this point the SubSystem is allowed to run.
 
       // ****************** Calculate Motor Commands *****************
-      if (receiver.getArmStatus()&& receiver.getSafetyCheck()) {
-        motorCommand[FRONT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.motorCommand(PITCH) - flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
-        motorCommand[REAR] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.motorCommand(PITCH) - flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
-        motorCommand[RIGHT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.motorCommand(ROLL) + flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
-        motorCommand[LEFT] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.motorCommand(ROLL) + flightcontrol.motorCommand(YAW), minCommand, MAXCOMMAND);
+      if (receiver.getArmStatus() && receiver.getSafetyCheck()) {
+        motorCommand[FRONT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.getMotorCommand(PITCH) - flightcontrol.getMotorCommand(YAW), minCommand, MAXCOMMAND);
+        motorCommand[REAR] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.getMotorCommand(PITCH) - flightcontrol.getMotorCommand(YAW), minCommand, MAXCOMMAND);
+        motorCommand[RIGHT] = constrain(receiver.getPilotCommand(THROTTLE) - flightcontrol.getMotorCommand(ROLL) + flightcontrol.getMotorCommand(YAW), minCommand, MAXCOMMAND);
+        motorCommand[LEFT] = constrain(receiver.getPilotCommand(THROTTLE) + flightcontrol.getMotorCommand(ROLL) + flightcontrol.getMotorCommand(YAW), minCommand, MAXCOMMAND);
       }
   
-      // If throttle in minimum position, don't apply yaw
-      if receiver.getPilotCommand(THROTTLE) < MINCHECK) {
-        for (motor = FRONT; motor < LASTMOTOR; motor++)
-          motorCommand[motor] = minCommand;
-      }
-      // If motor output disarmed, force motor output to minimum
-      if (receiver.getArmStatus == ON) {
-        switch (calibrateESC) { // used for calibrating ESC's
-        case 1:
-          for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motorCommand[motor] = MAXCOMMAND;
-          break;
-        case 3:
-          for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motorCommand[motor] = constrain(testCommand, 1000, 1200);
-          break;
-        case 5:
-          for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motorCommand[motor] = constrain(remoteCommand[motor], 1000, 1200);
-          receiver.setSafetyCheck(ON);
-          break;
-        default:
-          for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motorCommand[motor] = MINCOMMAND;
-        }
-      }
-      analogWrite(FRONTMOTORPIN, (motorCommand[FRONT] * mMotorCommand) + bMotorCommand);		
-      analogWrite(REARMOTORPIN, (motorCommand[REAR] * mMotorCommand) + bMotorCommand);		
-      analogWrite(RIGHTMOTORPIN, (motorCommand[RIGHT] * mMotorCommand) + bMotorCommand);		
-      analogWrite(LEFTMOTORPIN, (motorCommand[LEFT] * mMotorCommand) + bMotorCommand);		
+      analogWrite(FRONTMOTORPIN, motorCommand[FRONT]);		
+      analogWrite(REARMOTORPIN, motorCommand[REAR]);		
+      analogWrite(RIGHTMOTORPIN, motorCommand[RIGHT]);		
+      analogWrite(LEFTMOTORPIN, motorCommand[LEFT]);		
     }
   }
 
   //Any number of optional methods can be configured as needed by the SubSystem to expose functionality externally
   void commandAllMotors(int motorCommand) {   // Sends commands to all motors
-    analogWrite(FRONTMOTORPIN, (motorCommand * mMotorCommand) + bMotorCommand);		
-    analogWrite(REARMOTORPIN, (motorCommand * mMotorCommand) + bMotorCommand);		
-    analogWrite(RIGHTMOTORPIN, (motorCommand * mMotorCommand) + bMotorCommand);		
-    analogWrite(LEFTMOTORPIN, (motorCommand * mMotorCommand) + bMotorCommand);		
+    analogWrite(FRONTMOTORPIN, motorCommand);		
+    analogWrite(REARMOTORPIN, motorCommand);		
+    analogWrite(RIGHTMOTORPIN, motorCommand);		
+    analogWrite(LEFTMOTORPIN, motorCommand);		
   }
 
   void pulseMotors(byte quantity) {
@@ -154,10 +124,10 @@ public:
     }
   }
   
-  void setCalibrationESC(byte value) {calibrateESC = value;}
   void setRemoteCommand(byte motor, int value) {remoteCommand[motor] = value;}
   int getRemoteMotorCommand(byte motor) {return remoteCommand[motor];}
   void setTestCommand(int value) {testCommand = value;}
+  void setMotorCommand(byte motor, int value) {motorCommand[motor] = value;}
   int getMotorCommand(byte motor) {return motorCommand[motor];}
   float getMotorSlope(void) {return mMotorRate;}
   float getMotorOffset(void) {return bMotorRate;}

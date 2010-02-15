@@ -23,7 +23,10 @@
 
 #include "SubSystem.h"
 
-class FlightControl_PID: public SubSystem {
+#include "ControlLaw.h"
+ControlLaw_PID controlLaw;
+
+class FlightControl: public SubSystem {
 private:
   // Auto level setup
   byte autoLevel;
@@ -41,93 +44,31 @@ private:
 
   int motorCommand[3];
   int axis;
-
-  struct PIDdata {
-    float P, I, D;
-    float lastPosition;
-    float integratedError;
-  } PID[6];
-  float windupGuard; // Read in from EEPROM
-
-  // Modified from http://www.arduino.cc/playground/Main/BarebonesPIDForEspresso
-  float updatePID(float targetPosition, float currentPosition, struct PIDdata *PIDparameters)
-  {
-    float error;
-    float dTerm;
-
-    error = targetPosition - currentPosition;
-  
-    PIDparameters->integratedError += error;
-    if (PIDparameters->integratedError < -windupGuard) PIDparameters->integratedError = -windupGuard;
-    else if (PIDparameters->integratedError > windupGuard) PIDparameters->integratedError = windupGuard;
-  
-    dTerm = PIDparameters->D * (currentPosition - PIDparameters->lastPosition);
-    PIDparameters->lastPosition = currentPosition;
-    return (PIDparameters->P * error) + (PIDparameters->I * (PIDparameters->integratedError)) + dTerm;
-  }
+  float mMotorCommand;		
+  float bMotorCommand;
   
 public:
   //Required methods to impliment for a SubSystem
-  FlightControl_PID(): SubSystem() {
+  FlightControl(): SubSystem() {
     //Perform any initalization of variables you need in the constructor of this SubSystem
-    const float headingScaleFactor = (sensors.getAnalogReference() / 1024.0) / sensors.getGyroScaleFactor() * (PI/2.0);
+    // Scale motor commands to analogWrite		
+    // m = (250-126)/(2000-1000) = 0.124		
+    // b = y1 - (m * x1) = 126 - (0.124 * 1000) = 2		
+    // mMotorCommand = 0.124;		
+    // bMotorCommand = 2;
+    
     heading = 0; // measured heading from yaw gyro (process variable)
     headingCommand = 0; // calculated adjustment for quad to go to heading (PID output)
     currentHeading = 0; // current heading the quad is set to (set point)
-    autoLevel = OFF;
-    headingHold = OFF;
-    levelAdjust[ROLL] = 0;
-    levelAdjust[PITCH] = 0;
     for (axis = ROLL; axis < LASTAXIS; axis++) motorCommand[axis] = 0;
     headingCommand = 0;
-    windupGuard = 0;
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0) {
     //Call the parent class' _initialize to setup all the frequency and offset related settings
     this->_initialize(frequency, offset);
-
-    //Perform any custom initalization you need for this SubSystem
-    controldT = frequency / 1000.0;
-    PID[ROLL].P = eeprom.read(PGAIN_ADR);
-    PID[ROLL].I = eeprom.read(IGAIN_ADR);
-    PID[ROLL].D = eeprom.read(DGAIN_ADR);
-    PID[ROLL].lastPosition = 0;
-    PID[ROLL].integratedError = 0;
-
-    PID[PITCH].P = eeprom.read(PITCH_PGAIN_ADR);
-    PID[PITCH].I = eeprom.read(PITCH_IGAIN_ADR);
-    PID[PITCH].D = eeprom.read(PITCH_DGAIN_ADR);
-    PID[PITCH].lastPosition = 0;
-    PID[PITCH].integratedError = 0;
-
-    PID[YAW].P = eeprom.read(YAW_PGAIN_ADR);
-    PID[YAW].I = eeprom.read(YAW_IGAIN_ADR);
-    PID[YAW].D = eeprom.read(YAW_DGAIN_ADR);
-    PID[YAW].lastPosition = 0;
-    PID[YAW].integratedError = 0;
-
-    PID[LEVELROLL].P = eeprom.read(LEVEL_PGAIN_ADR);
-    PID[LEVELROLL].I = eeprom.read(LEVEL_IGAIN_ADR);
-    PID[LEVELROLL].D = eeprom.read(LEVEL_DGAIN_ADR);
-    PID[LEVELROLL].lastPosition = 0;
-    PID[LEVELROLL].integratedError = 0;  
-
-    PID[LEVELPITCH].P = eeprom.read(LEVEL_PITCH_PGAIN_ADR);
-    PID[LEVELPITCH].I = eeprom.read(LEVEL_PITCH_IGAIN_ADR);
-    PID[LEVELPITCH].D = eeprom.read(LEVEL_PITCH_DGAIN_ADR);
-    PID[LEVELPITCH].lastPosition = 0;
-    PID[LEVELPITCH].integratedError = 0;
-
-    PID[HEADING].P = eeprom.read(HEADING_PGAIN_ADR);
-    PID[HEADING].I = eeprom.read(HEADING_IGAIN_ADR);
-    PID[HEADING].D = eeprom.read(HEADING_DGAIN_ADR);
-    PID[HEADING].lastPosition = 0;
-    PID[HEADING].integratedError = 0;  
-          
-    windupGuard = eeprom.read(WINDUPGUARD_ADR);
-    levelLimit = eeprom.read(LEVELLIMIT_ADR);
-    levelOff = eeprom.read(LEVELOFF_ADR);
+      mMotorCommand = motors.getMotorSlope();
+      bMotorCommand = motors.getMotorOffset();
   }
 
   void process(unsigned long currentTime) {
@@ -136,54 +77,69 @@ public:
     //_canProcess also records the time that this SubSystem ran to use in future timing checks.
     if (this->_canProcess(currentTime)) {
       //If the code reaches this point the SubSystem is allowed to run.
-      if (autoLevel == ON) {
-        if (receiver.getPilotCommand(MODE) < 1500) {
-          // Acrobatic Mode
-          levelAdjust[ROLL] = 0;
-          levelAdjust[PITCH] = 0;
-        }
-        else {
-          // Stable Mode
-          for (axis = ROLL; axis < YAW; axis++)
-            levelAdjust[axis] = constrain(updatePID(0, attitude.getFlightAngle(axis), &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
-          // Turn off Stable Mode if transmitter stick applied
-          if (receiver.getPilotCommand(ROLL) > levelOff) {
-            levelAdjust[ROLL] = 0;
-            PID[axis].integratedError = 0;
-          }
-          if (receiver.getPilotCommand(PITCH) > levelOff) {
-            levelAdjust[PITCH] = 0;
-            PID[PITCH].integratedError = 0;
-          }
+      controlLaw.process();
+
+      // Set motor commands based on receiver input
+      // If throttle in minimum position, don't apply yaw
+      if (flightCommand.getCommand[THROTTLE] < MINCHECK) {
+        for (motor = FRONT; motor < LASTMOTOR; motor++)
+          motors.setMotorCommand(motor, minCommand);
+      }
+      // If motor output disarmed, force motor output to minimum
+      if (armed == ON) {
+        switch (calibrateESC) { // used for calibrating ESC's
+        case 1:
+          for (motor = FRONT; motor < LASTMOTOR; motor++)
+            motors.setMotorCommand(motor, MAXCOMMAND);
+          break;
+        case 3:
+          for (motor = FRONT; motor < LASTMOTOR; motor++)
+            motors.setMotorCommand(motor, constrain(testCommand, 1000, 1200));
+          break;
+        case 5:
+          for (motor = FRONT; motor < LASTMOTOR; motor++)
+            motors.setMotorCommand(motor, constrain(remoteCommand[motor], 1000, 1200));
+          safetyCheck = ON;
+          break;
+        default:
+          for (motor = FRONT; motor < LASTMOTOR; motor++)
+            motors.setMotorCommand(motor, MINCOMMAND);
         }
       }
-      // ************************** Update Roll/Pitch ***********************
-      // updatedPID(target, measured, PIDsettings);
-      // measured = rate data from gyros scaled to PWM (1000-2000), since PID settings are found experimentally
-      motorCommand[ROLL] = updatePID(receiver.getPilotCommand(ROLL) + levelAdjust[ROLL], (sensors.getGyro(ROLL) * motors.getMotorSlope()) + motors.getMotorOffset(), &PID[ROLL]);
-      motorCommand[PITCH] = updatePID(receiver.getPilotCommand(PITCH) - levelAdjust[PITCH], (sensors.getGyro(PITCH) * motors.getMotorSlope()) + motors.getMotorOffset(), &PID[PITCH]);
-  
-      // ***************************** Update Yaw ***************************
-      // Note: gyro tends to drift over time, this will be better implemented when determining heading with magnetometer
-      // Current method of calculating heading with gyro does not give an absolute heading, but rather is just used relatively to get a number to lock heading when no yaw input applied
-      if (headingHold == ON) {
-        if (receiver.getPilotCommand(THROTTLE) > MINCHECK ) { // apply heading hold only when throttle high enough to start flight
-          if ((receiver.getPilotCommand(YAW) > (MIDCOMMAND + 25)) || (receiver.getPilotCommand(YAW) < (MIDCOMMAND - 25))) { // if commanding yaw, turn off heading hold
-            headingCommand = 0;
-            heading = attitude.getHeading();
-          }
-          else // no yaw input, calculate current heading vs. desired heading heading hold
-            headingCommand = updatePID(heading, currentHeading, &PID[HEADING]);
+
+      // Read quad configuration commands from transmitter when throttle down
+      if (flightCommand.getCommand[THROTTLE] < MINCHECK) {
+        controlLaw.zeroIntegralError();
+        // Disarm motors (left stick lower left corner)
+        if (receiverData[YAW] < MINCHECK && armed == ON) {
+          armed = OFF;
+          motors.commandAllMotors(MINCOMMAND);
+        }    
+        // Zero sensors (left stick lower left, right stick lower right corner)
+        if ((receiverData[YAW] < MINCHECK) && (receiverData[ROLL] > MAXCHECK) && (receiverData[PITCH] < MINCHECK)) {
+          flight.zeroGyros();
+          sensors.zeroAccelerometers();
+          controlLaw.zeroIntegralError();
+          motors.pulseMotors(3);
+        }   
+        // Arm motors (left stick lower right corner)
+        if (receiverData[YAW] > MAXCHECK && armed == OFF && safetyCheck == ON) {
+          armed = ON;
+          controlLaw.zeroIntegralError();
+          minCommand = MINTHROTTLE;
+          transmitterCenter[PITCH] = receiverData[PITCH];
+          transmitterCenter[ROLL] = receiverData[ROLL];
         }
-        else {
-          heading = 0;
-          currentHeading = 0;
-          headingCommand = 0;
-          PID[HEADING].integratedError = 0;
-        }
+        // Prevents accidental arming of motor output if no transmitter command received
+        if (receiverData[YAW] > MINCHECK) safetyCheck = ON; 
       }
-      motorCommand[YAW] = updatePID(receiver.getPilotCommand(YAW) + headingCommand, (attitude.getHeading() * motors.getMotorSlope()) + motors.getMotorOffset(), &PID[YAW]);
-    }
+      // Prevents too little power applied to motors during hard manuevers
+      if (receiverData[THROTTLE] > (MIDCOMMAND - MINDELTA)) minCommand = receiverData[THROTTLE] - MINDELTA;
+      if (receiverData[THROTTLE] < MINTHROTTLE) minCommand = MINTHROTTLE;
+      // Allows quad to do acrobatics by turning off opposite motors during hard manuevers
+      //if ((receiverData[ROLL] < MINCHECK) || (receiverData[ROLL] > MAXCHECK) || (receiverData[PITCH] < MINCHECK) || (receiverData[PITCH] > MAXCHECK))
+	  //minCommand = MINTHROTTLE;
+    }	
   }
 
   //Any number of optional methods can be configured as needed by the SubSystem to expose functionaly externally
