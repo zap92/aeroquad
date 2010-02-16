@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "WProgram.h"
+#include "CheckMemory.h"
 
 #define byte uint8_t
 #define LEDPIN 13
