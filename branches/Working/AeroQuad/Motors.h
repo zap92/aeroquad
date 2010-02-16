@@ -63,8 +63,6 @@ public:
     // use y = mx + b 
     mMotorRate = 1.0753; // m = (y2 - y1) / (x2 - x1) = (2000 - 1000) / (465 - (-465)) 
     bMotorRate = 1500;   // b = y1 - m * x1
-    testCommand = 1000;
-    minCommand = 1200;
   }
 
   void initialize(unsigned int frequency, unsigned int offset = 0)
@@ -112,8 +110,6 @@ public:
   
   void write(byte motor, int value) {remoteCommand[motor] = value;}
   int getRemoteMotorCommand(byte motor) {return remoteCommand[motor];}
-  void setTestCommand(int value) {testCommand = value;}
-  void setMotorCommand(byte motor, int value) {motorCommand[motor] = value;}
   int getMotorCommand(byte motor) {return motorCommand[motor];}
   float getMotorSlope(void) {return mMotorRate;}
   float getMotorOffset(void) {return bMotorRate;}

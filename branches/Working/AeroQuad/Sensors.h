@@ -47,6 +47,7 @@ private:
   float gyroScaleFactor; // Gyro scale factor from datasheet
   int findZero[FINDZERO];
   int axis; // Use as an index
+  unsigned int updateRate;
 
   // Accelerometer setup
   Filter gyroFilter[3];
@@ -167,6 +168,7 @@ public:
     gyroZero[YAW] = eeprom.read(GYRO_YAW_ZERO_ADR);
     for (axis = ROLL; axis < LASTAXIS; axis++) gyroFilter[axis].initialize(eeprom.read(GYROSMOOTH_ADR));
     for (int axis = ROLL; axis < LASTAXIS; axis++) accelFilter[axis].initialize(eeprom.read(ACCSMOOTH_ADR));
+    updateRate = frequency;
   }
 
   void process(unsigned long currentTime) {
@@ -239,5 +241,6 @@ public:
   void setAccelSmoothFactor(byte axis, float value) {accelFilter[axis].setSmoothFactor(value);}
   float getAccelSmoothFactor(byte axis) {return accelFilter[axis].getSmoothFactor();}
   float getAnalogReference(void) {return aref;}
+  unsigned int getUpdateRate(void) {return updateRate;}
 };
 

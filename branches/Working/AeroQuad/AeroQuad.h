@@ -21,57 +21,6 @@
 #ifndef AEROQUAD_H
 #define AEROQUAD_H
 
-#include <stdlib.h>
-#include <math.h>
-#include "WProgram.h"
-#define uint8_t byte
 
-///// Includes for classes to use /////
-#include "Eeprom.h"
-Eeprom eeprom;
-
-#include "Sensors.h"
-Sensors sensors;
-
-#include "FlightCommand.h"
-FlightCommand_Duemilanove flightCommand;
-//Receiver_Mega receiver;
-//SIGNAL(PCINT0_vect) {receiver.measurePulseWidthISR(0);}
-//SIGNAL(PCINT1_vect) {receiver.measurePulseWidthISR(1);}
-//SIGNAL(PCINT2_vect) {receiver.measurePulseWidthISR(2);}
-
-#include "Motors.h"
-Motors_PWM motors;
-//Motors_I2C motors;
-
-#include "FlightControl.h"
-FlightControl flightControl;
-
-#include "SerialComs.h"
-SerialComs serialcoms;
-
-#include "Blinkie.h"
-Blinkie blinkie;
-////////////////////////////////////////
-
-#define byte uint8_t
-#define LEDPIN 13
-#define ROLL 0
-#define PITCH 1
-#define YAW 2
-#define THROTTLE 3
-#define MODE 4
-#define AUX 5
-#define LASTCHANNEL 6
-#define LEVELROLL 3
-#define LEVELPITCH 4
-#define LASTLEVELAXIS 5
-#define HEADING 5
-#define ZAXIS 2
-#define LASTAXIS 3
-#define ON 1
-#define OFF 0
-
-static unsigned long currentTime = 0;
 
 #endif

@@ -84,8 +84,8 @@ public:
     // b = y1 - (m * x1) = 126 - (0.124 * 1000) = 2		
     // mMotorCommand = 0.124;		
     // bMotorCommand = 2;
-    mMotorCommand = flightControl.getMotorSlope();
-    bMotorCommand = flightControl.getMotorOffset();
+    // mMotorCommand = flightControl.getMotorSlope();
+    // bMotorCommand = flightControl.getMotorOffset();
     
     heading = 0; // measured heading from yaw gyro (process variable)
     headingCommand = 0; // calculated adjustment for quad to go to heading (PID output)
@@ -97,11 +97,11 @@ public:
     for (axis = ROLL; axis < LASTAXIS; axis++) {
       motorCommand[axis] = 0;
       command[axis] = 0;
-      measuredpaxis] = 0
+      measured[axis] = 0;
     }
     headingCommand = 0;
     windupGuard = 0;
-    controldT = frequency / 1000.0;
+    controldT = sensors.getUpdateRate() / 1000.0;
     PID[ROLL].P = eeprom.read(PGAIN_ADR);
     PID[ROLL].I = eeprom.read(IGAIN_ADR);
     PID[ROLL].D = eeprom.read(DGAIN_ADR);
@@ -177,8 +177,8 @@ public:
     // Note: gyro tends to drift over time, this will be better implemented when determining heading with magnetometer
     // Current method of calculating heading with gyro does not give an absolute heading, but rather is just used relatively to get a number to lock heading when no yaw input applied
     if (headingHold == ON) {
-      if (flightcommand.getCommand(THROTTLE) > MINCHECK ) { // apply heading hold only when throttle high enough to start flight
-        if ((flightcommand.getCommand(YAW) > (MIDCOMMAND + 25)) || (flightcommand.getCommand(YAW) < (MIDCOMMAND - 25))) { // if commanding yaw, turn off heading hold
+      if (flightCommand.read(THROTTLE) > MINCHECK ) { // apply heading hold only when throttle high enough to start flight
+        if ((flightCommand.read(YAW) > (MIDCOMMAND + 25)) || (flightCommand.read(YAW) < (MIDCOMMAND - 25))) { // if commanding yaw, turn off heading hold
           headingCommand = 0;
           heading = attitude.getHeading();
         }
@@ -205,11 +205,10 @@ public:
 
   //Any number of optional methods can be configured as needed by the SubSystem to expose functionaly externally
   int read(byte axis) {return motorCommand[axis];}
-  void enableAutoLevel(void) {autoLevel = ON;}
-  void disableAutoLevel(void) {autoLevel = OFF;}
-  byte getAutoLevelState(void) {return autoLevel;}
-  void enableHeadingHold(void) {headingHold = ON;}
-  void disableHeadingHold(void) {headingHold = OFF;}
+  void setAutoLevel(byte value) {autoLevel = value;}
+  byte getAutoLevel(void) {return autoLevel;}
+  void setHeadingHold(byte value) {headingHold = value;}
+  byte getHeadingHold(void) {return headingHold;}
   void setP(byte axis, float value) {PID[axis].P = value;}
   float getP(byte axis) {return PID[axis].P;}
   void setI(byte axis, float value) {PID[axis].I = value;}
@@ -235,7 +234,3 @@ public:
   float getHeading(void) {return heading;}
   float getCurrentHeading(void) {return currentHeading;}
 };
-
-
-
-
