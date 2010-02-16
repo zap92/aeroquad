@@ -30,6 +30,7 @@ private:
   
   // Sensor Filter
   float flightAngle[2];
+  float previousAngle[2];
   float timeConstant; // Read in from EEPROM
 
   // Complementary roll/pitch angle
@@ -41,12 +42,13 @@ private:
   float headingScaleFactor;
   Filter filterHeading;
 
-  float CompFilter(float previousAngle, float newAngle, float newRate, float *filterTerm, float dt) {
+  float CompFilter(byte axis, float *previousAngle, float newAngle, float newRate, float *filterTerm, float dt) {
     // Written by RoyLB at http://www.rcgroups.com/forums/showpost.php?p=12082524&postcount=1286    
-    filterTerm[0] = (newAngle - previousAngle) * timeConstant * timeConstant;
+    filterTerm[0] = (newAngle - previousAngle[axis]) * timeConstant * timeConstant;
     filterTerm[2] += filterTerm[0] * dt;
-    filterTerm[1] = filterTerm[2] + (newAngle - previousAngle) * 2 * timeConstant + newRate;
-    return (filterTerm[1] * dt) + previousAngle;
+    filterTerm[1] = filterTerm[2] + (newAngle - previousAngle[axis]) * 2 * timeConstant + newRate;
+    Serial.println(filterTerm[2]);
+    return (filterTerm[1] * dt) + previousAngle[axis];
   }
 
 public:
@@ -62,7 +64,8 @@ public:
       filterTermPitch[i] = 0;
     }
 	
-    dt = sensors.getUpdateRate() / 1000.0; 
+    //dt = sensors.getUpdateRate() / 1000.0;
+    dt = 0.002; 
     flightAngle[ROLL] = sensors.getAngleDegrees(ROLL);
     flightAngle[PITCH] = sensors.getAngleDegrees(PITCH);
     filterTermRoll[2] = -sensors.getRateDegPerSec(ROLL);
@@ -73,8 +76,9 @@ public:
   
   void process() {
     // Calculate absolute angle of vehicle
-    flightAngle[ROLL] = CompFilter(flightAngle[ROLL], sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL), filterTermRoll, dt);
-    flightAngle[PITCH] = CompFilter(flightAngle[PITCH], sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH), filterTermPitch, dt);
+    flightAngle[ROLL] = CompFilter(ROLL, previousAngle, sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL), filterTermRoll, dt);
+    //Serial.println(flightAngle[ROLL]);
+    //flightAngle[PITCH] = CompFilter(PITCH, flightAngle[PITCH], sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH), filterTermPitch, dt);
     // Calculate heading from yaw gyro
     heading = filterHeading.smooth(sensors.getGyro(YAW) * headingScaleFactor * dt);
   }
