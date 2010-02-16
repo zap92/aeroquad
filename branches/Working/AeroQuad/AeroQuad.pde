@@ -24,7 +24,6 @@
 #include <math.h>
 #include "WProgram.h"
 
-#define uint8_t byte
 #define byte uint8_t
 #define LEDPIN 13
 #define ROLL 0
