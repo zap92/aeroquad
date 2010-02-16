@@ -80,8 +80,8 @@ static unsigned long currentTime = 0;
 // ************************************************************
 void setup() {
   sensors.initialize(2, 0);// Setup and calibrate sensors, read every 2ms (500Hz)
-  sensors.setGyroInvert(ROLL, OFF);
-  sensors.setGyroInvert(PITCH, OFF);
+  sensors.setGyroInvert(ROLL, ON);
+  sensors.setGyroInvert(PITCH, ON);
   sensors.setGyroInvert(YAW, ON);
   sensors.setAccelInvert(ROLL, OFF);
   sensors.setAccelInvert(PITCH, OFF);
