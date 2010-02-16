@@ -151,7 +151,7 @@ public:
     attitude.process();
     
     // ************************** Update Auto Level ***********************
-    if (flightControl.getAutoLevel() == ON) {
+    if (autoLevel == ON) {
       if (flightCommand.read(MODE) < 1500) {
       // Acrobatic Mode
       levelAdjust[ROLL] = 0;

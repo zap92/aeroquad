@@ -47,13 +47,12 @@
 #define MAXCHECK MAXCOMMAND - 100
 #define MINTHROTTLE MINCOMMAND + 100
 
-
 class FlightCommand_Duemilanove: public SubSystem {
 private:
   int receiverPin[6];
   int receiverChannel[6];
   volatile uint8_t *port_to_pcmask[3];
-  volatile static uint8_t PCintLast[3];
+  volatile uint8_t PCintLast[3];
   Filter filter[6];
 
   // Channel data 
@@ -63,7 +62,7 @@ private:
     unsigned long fallTime; 
     unsigned long lastGoodWidth;
   } pinTimingData;  
-  volatile static pinTimingData pinData[24]; 
+  pinTimingData pinData[24]; 
   
   int receiverData[6];
   int transmitterCommand[6];
@@ -98,50 +97,6 @@ private:
     *pcmask |= bit;
     // enable the interrupt
     PCICR |= 0x01 << port;
-  }
-  
-  // ISR which records time of rising or falling edge of signal
-  void measurePulseWidthISR(uint8_t port) {
-    uint8_t bit;
-    uint8_t curr;
-    uint8_t mask;
-    uint8_t pin;
-    uint32_t currentTime;
-    uint32_t time;
-  
-    // get the pin states for the indicated port.
-    curr = *portInputRegister(port+2);
-    mask = curr ^ PCintLast[port];
-    PCintLast[port] = curr;
-    // mask is pins that have changed. screen out non pcint pins.
-    if ((mask &= *port_to_pcmask[port]) == 0) {
-      return;
-    }
-    currentTime = micros();
-    // mask is pcint pins that have changed.
-    for (uint8_t i=0; i < 8; i++) {
-      bit = 0x01 << i;
-      if (bit & mask) {
-        pin = port * 8 + i;
-        // for each pin changed, record time of change
-        if (bit & PCintLast[port]) {
-          time = currentTime - pinData[pin].fallTime;
-          pinData[pin].riseTime = currentTime;        
-          if ((time >= MINOFFWIDTH) && (time <= MAXOFFWIDTH))
-            pinData[pin].edge = RISING_EDGE;
-          else
-            pinData[pin].edge == FALLING_EDGE; // invalid rising edge detected
-        }
-        else {
-          time = currentTime - pinData[pin].riseTime;
-          pinData[pin].fallTime = currentTime;
-          if ((time >= MINONWIDTH) && (time <= MAXONWIDTH) && (pinData[pin].edge == RISING_EDGE)) {
-            pinData[pin].lastGoodWidth = time;
-            pinData[pin].edge = FALLING_EDGE;
-          } 
-        }
-      }
-    }
   }
   
   // Calculate PWM pulse width of receiver data
@@ -246,6 +201,50 @@ public:
     }
   }
   
+    // ISR which records time of rising or falling edge of signal
+  void measurePulseWidthISR(uint8_t port) {
+    uint8_t bit;
+    uint8_t curr;
+    uint8_t mask;
+    uint8_t pin;
+    uint32_t currentTime;
+    uint32_t time;
+  
+    // get the pin states for the indicated port.
+    curr = *portInputRegister(port+2);
+    mask = curr ^ PCintLast[port];
+    PCintLast[port] = curr;
+    // mask is pins that have changed. screen out non pcint pins.
+    if ((mask &= *port_to_pcmask[port]) == 0) {
+      return;
+    }
+    currentTime = micros();
+    // mask is pcint pins that have changed.
+    for (uint8_t i=0; i < 8; i++) {
+      bit = 0x01 << i;
+      if (bit & mask) {
+        pin = port * 8 + i;
+        // for each pin changed, record time of change
+        if (bit & PCintLast[port]) {
+          time = currentTime - pinData[pin].fallTime;
+          pinData[pin].riseTime = currentTime;        
+          if ((time >= MINOFFWIDTH) && (time <= MAXOFFWIDTH))
+            pinData[pin].edge = RISING_EDGE;
+          else
+            pinData[pin].edge == FALLING_EDGE; // invalid rising edge detected
+        }
+        else {
+          time = currentTime - pinData[pin].riseTime;
+          pinData[pin].fallTime = currentTime;
+          if ((time >= MINONWIDTH) && (time <= MAXONWIDTH) && (pinData[pin].edge == RISING_EDGE)) {
+            pinData[pin].lastGoodWidth = time;
+            pinData[pin].edge = FALLING_EDGE;
+          } 
+        }
+      }
+    }
+  }
+
   int read(byte axis) {return transmitterCommand[axis];}
   void setXmitFactor(float value) {xmitFactor = value;}
   float getXmitFactor(void) {return xmitFactor;}
