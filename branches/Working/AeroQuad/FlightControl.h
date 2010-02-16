@@ -89,6 +89,7 @@ public:
     this->_initialize(frequency, offset);
     mMotorCommand = motors.getMotorSlope();
     bMotorCommand = motors.getMotorOffset();
+    controlLaw.initialize();
   }
 
   void process(unsigned long currentTime) {
