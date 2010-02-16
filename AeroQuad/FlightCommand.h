@@ -31,7 +31,7 @@
 #define MODEPIN 7
 #define AUXPIN 8
 
-// Receiver variables
+// Remote Command Variables
 #define LEVELOFF 100
 #define RISING_EDGE 1
 #define FALLING_EDGE 0
@@ -39,6 +39,13 @@
 #define MAXONWIDTH 2075
 #define MINOFFWIDTH 12000
 #define MAXOFFWIDTH 24000
+#define MINCOMMAND 1000
+#define MIDCOMMAND 1500
+#define MAXCOMMAND 2000
+#define MINDELTA 200
+#define MINCHECK MINCOMMAND + 100
+#define MAXCHECK MAXCOMMAND - 100
+#define MINTHROTTLE MINCOMMAND + 100
 
 
 class FlightCommand_Duemilanove: public SubSystem {
@@ -94,7 +101,7 @@ private:
   }
   
   // ISR which records time of rising or falling edge of signal
-  static void measurePulseWidthISR(uint8_t port) {
+  void measurePulseWidthISR(uint8_t port) {
     uint8_t bit;
     uint8_t curr;
     uint8_t mask;
@@ -139,7 +146,7 @@ private:
   
   // Calculate PWM pulse width of receiver data
   // If invalid PWM measured, use last known good time
-  unsigned int read(byte receiverPin) {
+  unsigned int readPWM(byte receiverPin) {
     uint16_t data;
     uint8_t oldSREG;
       
@@ -178,9 +185,9 @@ public:
       transmitterZero[channel] = 1500;
       transmitterCenter[channel] = 1500;
     }
-    *port_to_pcmask[0] = &PCMSK0;
-    *port_to_pcmask[1] = &PCMSK1;
-    *port_to_pcmask[2] = &PCMSK2;
+    port_to_pcmask[0] = &PCMSK0;
+    port_to_pcmask[1] = &PCMSK1;
+    port_to_pcmask[2] = &PCMSK2;
     for (channel = ROLL; channel < LASTCHANNEL; channel++)
       pinData[receiverChannel[channel]].edge == FALLING_EDGE;
 
@@ -226,7 +233,7 @@ public:
     if (this->_canProcess(currentTime)) {
       //If the code reaches this point the SubSystem is allowed to run.
       for (channel = ROLL; channel < LASTCHANNEL; channel++)
-        receiverData[channel] = (mTransmitter[channel] * read(receiverPin[channel])) + bTransmitter[channel];
+        receiverData[channel] = (mTransmitter[channel] * readPWM(receiverPin[channel])) + bTransmitter[channel];
       // Smooth the flight control transmitter inputs (roll, pitch, yaw, throttle)
       for (channel = ROLL; channel < LASTCHANNEL; channel++)
         transmitterCommandSmooth[channel] = filter[channel].smooth(receiverData[channel]);

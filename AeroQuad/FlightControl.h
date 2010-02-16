@@ -26,14 +26,6 @@
 #include "ControlLaw.h"
 ControlLaw_PID controlLaw;
 
-#define MINCOMMAND 1000
-#define MIDCOMMAND 1500
-#define MAXCOMMAND 2000
-#define MINDELTA 200
-#define MINCHECK MINCOMMAND + 100
-#define MAXCHECK MAXCOMMAND - 100
-#define MINTHROTTLE MINCOMMAND + 100
-
 class FlightControl: public SubSystem {
 private:
   // Auto level setup
@@ -51,6 +43,7 @@ private:
   float currentHeading; // current heading the quad is set to (set point)
 
   int motorCommand[4];
+  int remoteCommand[4];
   byte axis;
   byte motor;
   float mMotorCommand;		
@@ -79,7 +72,10 @@ public:
     heading = 0; // measured heading from yaw gyro (process variable)
     headingCommand = 0; // calculated adjustment for quad to go to heading (PID output)
     currentHeading = 0; // current heading the quad is set to (set point)
-    for (motor = FRONT; motor < LASTMOTOR; motor++) motorCommand[motor] = 0;
+    for (motor = FRONT; motor < LASTMOTOR; motor++) {
+      motorCommand[motor] = 0;
+      remoteCommand[motor] = 0;
+    }
     headingCommand = 0;
     
     safetyCheck = OFF;
@@ -123,27 +119,21 @@ public:
           armed = ON;
           controlLaw.zeroIntegralError();
           minCommand = MINTHROTTLE;
-          transmitterCenter[PITCH] = flightCommand.read(PITCH);
-          transmitterCenter[ROLL] = flightCommand.read(ROLL);
+          //transmitterCenter[PITCH] = flightCommand.read(PITCH);
+          //transmitterCenter[ROLL] = flightCommand.read(ROLL);
         }
         // Prevents accidental arming of motor output if no transmitter command received
         if (flightCommand.read(YAW) > MINCHECK) safetyCheck = ON; 
       }
       
-      // Prevents too little power applied to motors during hard manuevers
-      // Also even motor power on high side if low side is limited
-      if (flightCommand.read(THROTTLE) < MINTHROTTLE){
-        minCommand = MINTHROTTLE;
-        maxCommand = flightCommand.read(THROTTLE) - MINTHROTTLE?????
-      }
       // Allows quad to do acrobatics by turning off opposite motors during hard manuevers
       //if ((receiverData[ROLL] < MINCHECK) || (receiverData[ROLL] > MAXCHECK) || (receiverData[PITCH] < MINCHECK) || (receiverData[PITCH] > MAXCHECK))
       //minCommand = MINTHROTTLE;
     
       // If throttle in minimum position, don't apply yaw
-      if (flightCommand.read[THROTTLE] < MINCHECK) {
+      if (flightCommand.read(THROTTLE) < MINCHECK) {
         for (motor = FRONT; motor < LASTMOTOR; motor++)
-          motorCommand[motor] = minCommand;
+          motorCommand[motor] = MINTHROTTLE;
       }
       
       // If motor output disarmed, force motor output to minimum
@@ -151,65 +141,70 @@ public:
         switch (calibrateESC) { // used for calibrating ESC's
         case 1:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motors.setMotorCommand(motor, MAXCOMMAND);
+            motors.write(motor, MAXCOMMAND);
           break;
         case 3:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motors.setMotorCommand(motor, constrain(testCommand, 1000, 1200));
+            motors.write(motor, constrain(testCommand, 1000, 1200));
           break;
         case 5:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motors.setMotorCommand(motor, constrain(remoteCommand[motor], 1000, 1200));
+            motors.write(motor, constrain(remoteCommand[motor], 1000, 1200));
           safetyCheck = ON;
           break;
         default:
           for (motor = FRONT; motor < LASTMOTOR; motor++)
-            motors.setMotorCommand(motor, MINCOMMAND);
+            motors.write(motor, MINCOMMAND);
         }
       }
 
       // ****************** Calculate Motor Commands *****************
-      if (armed = ON && safetyCheck = ON) {
-        motors.write(FRONT, constrain(flightCommand.read(THROTTLE) - controlLaw.read(PITCH) - controlLaw.read(YAW), minCommand, maxCommand));
-        motors.write(REAR, constrain(flightCommand.read(THROTTLE) + controlLaw.read(PITCH) - controlLaw.read(YAW), minCommand, maxCommand));
-        motors.write(RIGHT, constrain(flightCommand.read(THROTTLE) - controlLaw.read(ROLL) + controlLaw.read(YAW), minCommand, maxCommand));
-        motors.write(LEFT, constrain(flightCommand.read(THROTTLE) + controlLaw.read(ROLL) + controlLaw.read(YAW), minCommand, maxCommand));
+      if (armed == ON && safetyCheck == ON) {
+        motorCommand[FRONT] = flightCommand.read(THROTTLE) - controlLaw.read(PITCH) - controlLaw.read(YAW);
+        motorCommand[REAR] = flightCommand.read(THROTTLE) + controlLaw.read(PITCH) - controlLaw.read(YAW);
+        motorCommand[RIGHT] = flightCommand.read(THROTTLE) - controlLaw.read(ROLL) + controlLaw.read(YAW);
+        motorCommand[LEFT] = flightCommand.read(THROTTLE) + controlLaw.read(ROLL) + controlLaw.read(YAW);
+        
+        // Prevents too little power applied to motors during hard manuevers
+        // Also even motor power on high side if low side is limited
+        if (motorCommand[FRONT] < MINTHROTTLE) {
+          motorCommand[FRONT] = MINTHROTTLE;
+          motorCommand[REAR] -= MINTHROTTLE - motorCommand[FRONT];
+        }
+        if (motorCommand[REAR] < MINTHROTTLE) {
+          motorCommand[REAR] = MINTHROTTLE;
+          motorCommand[FRONT] -= MINTHROTTLE - motorCommand[REAR];
+        }
+        if (motorCommand[RIGHT] < MINTHROTTLE) {
+          motorCommand[RIGHT] = MINTHROTTLE;
+          motorCommand[LEFT] -= MINTHROTTLE - motorCommand[RIGHT];
+        }
+        if (motorCommand[LEFT] < MINTHROTTLE) {
+          motorCommand[LEFT] = MINTHROTTLE;
+          motorCommand[RIGHT] -= MINTHROTTLE - motorCommand[LEFT];
+        }
+        
+        for (motor = FRONT; motor < LASTMOTOR; motor++)
+          motors.write(motor, constrain(motorCommand[motor], MINCOMMAND, MAXCOMMAND));
       }
-
-    }    
+    }
   }
 
   //Any number of optional methods can be configured as needed by the SubSystem to expose functionaly externally
-  int getMotorCommand(byte axis) {return motorCommand[axis];}
-  void setAutoLevel(byte value) {autoLevel = value;}
-  byte getAutoLevel(void) {return autoLevel;}
-  void setHeadingHold(byte value) {headingHold = value;}
-  void disableHeadingHold(void) {headingHold = OFF;}
-  void setP(byte axis, float value) {PID[axis].P = value;}
-  float getP(byte axis) {return PID[axis].P;}
-  void setI(byte axis, float value) {PID[axis].I = value;}
-  float getI(byte axis) {return PID[axis].I;}
-  void setD(byte axis, float value) {PID[axis].D = value;}
-  float getD(byte axis) {return PID[axis].D;}
-  void setInitPosError(byte axis) {
-    PID[axis].lastPosition = 0;
-    PID[axis].integratedError = 0;
-  }
-  float zeroIntegralError(void) {
-    for (axis = ROLL; axis < HEADING + 1; axis++)
-     PID[axis].integratedError = 0;
-  }
-  void setLevelLimit(float value) {levelLimit = value;}
-  float getLevelLimit(void) {return levelLimit;}
-  void setLevelOff(float value) {levelOff = value;}
-  float getLevelOff(void) {return levelOff;}
-  void setWindupGuard(float value) {windupGuard = value;}
-  float getWindupGuard(void) {return windupGuard;}
-  void setAutoLevel(byte value) {autoLevel = value;}
-  byte getAutoLevel(void) {return autoLevel;}
-  void setHeadingHold(byte value) {headingHold = value;}
-  byte getHeadingHold(void) {return headingHold;}
+  int read(byte axis) {return motorCommand[axis];}
+  void setRemoteCommand(byte motor, int value) {remoteCommand[motor] = value;}
+  void setAutoLevel(byte value) {controlLaw.setAutoLevel(value);}
+  byte getAutoLevel(void) {return controlLaw.getAutoLevel();}
+
+  void setArmStatus(byte value) {armed = value;}
+  byte getArmStatus(void) {return armed;}
+  void setCalibrationESC(byte value) {calibrateESC = value;}
+  byte getCalibrationESC(void) {return calibrateESC;}
+
   float getLevelAdjust(byte axis) {return levelAdjust[axis];}
+
+  void setHeadingHold(byte value) {controlLaw.setHeadingHold(value);}
+  byte getHeadingHold(void) {return controlLaw.getHeadingHold();}
   float getHeadingCommand(void) {return headingCommand;}
   float getHeading(void) {return heading;}
   float getCurrentHeading(void) {return currentHeading;}

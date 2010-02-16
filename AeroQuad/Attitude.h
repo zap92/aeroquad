@@ -62,7 +62,7 @@ public:
       filterTermPitch[i] = 0;
     }
 	
-    dt = frequency / 1000.0; 
+    dt = sensors.getUpdateRate() / 1000.0; 
     flightAngle[ROLL] = sensors.getAngleDegrees(ROLL);
     flightAngle[PITCH] = sensors.getAngleDegrees(PITCH);
     filterTermRoll[2] = -sensors.getRateDegPerSec(ROLL);
@@ -71,7 +71,7 @@ public:
 
   }
   
-  void process(unsigned long currentTime) {
+  void process() {
     // Calculate absolute angle of vehicle
     flightAngle[ROLL] = CompFilter(flightAngle[ROLL], sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL), filterTermRoll, dt);
     flightAngle[PITCH] = CompFilter(flightAngle[PITCH], sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH), filterTermPitch, dt);
