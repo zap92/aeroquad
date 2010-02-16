@@ -194,7 +194,7 @@ private:
         eeprom.write(flightCommand.getTransmitterSmoothing(MODE), MODESMOOTH_ADR);
         eeprom.write(flightCommand.getTransmitterSmoothing(AUX), AUXSMOOTH_ADR);
         //eeprom.write(attitude.getTimeConstant(), FILTERTERM_ADR);
-        eepromt.write(flightAngle[ROLL].getTimeConstant(), FILTERTERM_ADR);
+        eeprom.write(flightAngle[ROLL].getTimeConstant(), FILTERTERM_ADR);
         eeprom.write(flightCommand.getTransmitterSlope(THROTTLE), THROTTLESCALE_ADR);
         eeprom.write(flightCommand.getTransmitterOffset(THROTTLE), THROTTLEOFFSET_ADR);
         eeprom.write(flightCommand.getTransmitterSlope(ROLL), ROLLSCALE_ADR);
@@ -414,10 +414,10 @@ private:
         _comma(serialPort);
       }
       //serialPort->print(attitude.getFlightAngle(ROLL));
-      serialPort->print(flightAngle(ROLL).read());
+      serialPort->print(flightAngle[ROLL].readCurrentAngle());
       _comma(serialPort);
       //serialPort->print(attitude.getFlightAngle(PITCH));
-      serialPort->print(flightAngle(PITCH).read());
+      serialPort->print(flightAngle[PITCH].readCurrentAngle());
       serialPort->println();
       break;
     case 'R': // Send raw sensor data

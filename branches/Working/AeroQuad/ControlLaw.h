@@ -24,7 +24,7 @@
 
 #include "SubSystem.h"
 
-#include "Attitude.h"
+#include "FlightAngle.h"
 FlightAngle_CompFilter flightAngle[2];
 
 class ControlLaw_PID {
@@ -34,6 +34,7 @@ private:
   int levelAdjust[2];
   int levelLimit; // Read in from EEPROM
   int levelOff; // Read in from EEPROM
+  float angle[2];
   
   // Heading hold
   byte headingHold;
@@ -142,17 +143,20 @@ public:
     levelOff = eeprom.read(LEVELOFF_ADR);
   }
   
-  void intialize (void) {
+  void initialize (void) {
     flightAngle[ROLL].initialize(sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL), sensors.getUpdateRate());
     flightAngle[PITCH].initialize(sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH), sensors.getUpdateRate());
   }
 
   void process(void) {
-    //Check to see if this SubSystem is allowed to run
-    //The code in _canProcess checks to see if this SubSystem is enabled and its been long enough since the last time it ran
-    //_canProcess also records the time that this SubSystem ran to use in future timing checks.
-
-    attitude.process();
+    //for (axis = ROLL; axis > YAW; axis++) {angle[axis] =  flightAngle[axis].calculate(sensors.getAngleDegrees(axis), sensors.getRateDegPerSec(axis));}
+    angle[ROLL] =  flightAngle[ROLL].calculate(sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL));
+    angle[PITCH] =  flightAngle[PITCH].calculate(sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH));
+      
+    //Serial.print(flightAngle[ROLL].readCurrentAngle());
+    //Serial.print(',');
+    //Serial.println(angle[ROLL]);
+    //Serial.println(availableMemory());
     
     // ************************** Update Auto Level ***********************
     if (autoLevel == ON) {
@@ -164,7 +168,7 @@ public:
       else {
         // Stable Mode
         for (axis = ROLL; axis < YAW; axis++)
-          levelAdjust[axis] = constrain(updatePID(0, flightAngle[axis].read(sensors.getAngleDegrees(axis), sensors.getRateDegPerSec(axis)), &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
+          levelAdjust[axis] = constrain(updatePID(0, angle[axis], &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
         // Turn off Stable Mode if transmitter stick applied
         if (flightCommand.read(ROLL) > levelOff) {
           levelAdjust[ROLL] = 0;
@@ -184,7 +188,7 @@ public:
       if (flightCommand.read(THROTTLE) > MINCHECK ) { // apply heading hold only when throttle high enough to start flight
         if ((flightCommand.read(YAW) > (MIDCOMMAND + 25)) || (flightCommand.read(YAW) < (MIDCOMMAND - 25))) { // if commanding yaw, turn off heading hold
           headingCommand = 0;
-          heading = attitude.getHeading();
+          //heading = attitude.getHeading();
         }
         else // no yaw input, calculate current heading vs. desired heading heading hold
           headingCommand = updatePID(heading, currentHeading, &PID[HEADING]);

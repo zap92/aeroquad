@@ -41,22 +41,25 @@ public:
     filterTerm1 = 0;
   }
   
-  void intialize(float angle, float rate, float ms) {
+  void initialize(float angle, float rate, float ms) {
     previousAngle = angle;
     filterTerm2 = rate;
     dt = ms / 1000.0;
   }
   
-  float read(float newAngle, float newRate) {
+  float calculate(float newAngle, float newRate) {
     // Written by RoyLB at http://www.rcgroups.com/forums/showpost.php?p=12082524&postcount=1286    
     filterTerm0 = (newAngle - previousAngle) * timeConstant * timeConstant;
     filterTerm2 += filterTerm0 * dt;
     filterTerm1 = filterTerm2 + (newAngle - previousAngle) * 2 * timeConstant + newRate;
     previousAngle = (filterTerm1 * dt) + previousAngle;
+    //Serial.println(availableMemory());
+    //Serial.println(filterTerm0);
     return previousAngle; // This is actually the current angle, but is stored for the next iteration
   }
 
   void setTimeConstant(float value) {timeConstant = value;}
   float getTimeConstant(void) {return timeConstant;}
   void setDeltaT(float ms) {dt = ms / 1000.0;}
+  float readCurrentAngle(void) {return previousAngle;}
 };
