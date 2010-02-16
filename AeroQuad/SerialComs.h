@@ -134,7 +134,9 @@ private:
         sensors.setAccelSmoothFactor(ROLL, _readFloatSerial(serialPort));
         sensors.setAccelSmoothFactor(PITCH, sensors.getAccelSmoothFactor(ROLL));
         sensors.setAccelSmoothFactor(YAW, sensors.getAccelSmoothFactor(ROLL));
-        attitude.setTimeConstant(_readFloatSerial(serialPort));
+        //attitude.setTimeConstant(_readFloatSerial(serialPort));
+        flightAngle[ROLL].setTimeConstant(_readFloatSerial(serialPort));
+        flightAngle[PITCH].setTimeConstant(flightAngle[ROLL].getTimeConstant());
         break;
       case 'M': // Receive motor smoothing values
         flightCommand.setTransmitterSmoothing(ROLL, _readFloatSerial(serialPort));
@@ -191,7 +193,8 @@ private:
         eeprom.write(flightCommand.getTransmitterSmoothing(YAW), YAWSMOOTH_ADR);
         eeprom.write(flightCommand.getTransmitterSmoothing(MODE), MODESMOOTH_ADR);
         eeprom.write(flightCommand.getTransmitterSmoothing(AUX), AUXSMOOTH_ADR);
-        eeprom.write(attitude.getTimeConstant(), FILTERTERM_ADR);
+        //eeprom.write(attitude.getTimeConstant(), FILTERTERM_ADR);
+        eepromt.write(flightAngle[ROLL].getTimeConstant(), FILTERTERM_ADR);
         eeprom.write(flightCommand.getTransmitterSlope(THROTTLE), THROTTLESCALE_ADR);
         eeprom.write(flightCommand.getTransmitterOffset(THROTTLE), THROTTLEOFFSET_ADR);
         eeprom.write(flightCommand.getTransmitterSlope(ROLL), ROLLSCALE_ADR);
@@ -204,7 +207,7 @@ private:
         eeprom.write(flightCommand.getTransmitterOffset(MODE), MODEOFFSET_ADR);
         eeprom.write(flightCommand.getTransmitterSlope(AUX), AUXSCALE_ADR);
         eeprom.write(flightCommand.getTransmitterOffset(AUX), AUXOFFSET_ADR);
-        eeprom.write(attitude.getHeadingSmoothFactor(), HEADINGSMOOTH_ADR);
+        //eeprom.write(attitude.getHeadingSmoothFactor(), HEADINGSMOOTH_ADR);
         controlLaw.zeroIntegralError();
         break;
       case 'Y': // Initialize EEPROM with default values
@@ -233,8 +236,10 @@ private:
           sensors.setGyroSmoothFactor(axis, 0.50);
           sensors.setAccelSmoothFactor(axis, 0.50);
         }
-        attitude.setTimeConstant(3.0);   
-        attitude.setHeadingSmoothFactor(1.0);
+        //attitude.setTimeConstant(3.0);
+        flightAngle[ROLL].setTimeConstant(3.0);
+        flightAngle[PITCH].setTimeConstant(3.0);
+        //attitude.setHeadingSmoothFactor(1.0);
         for (channel = ROLL; channel < LASTCHANNEL; channel++) {
           flightCommand.setTransmitterSlope(channel, 1.0);
           flightCommand.setTransmitterOffset(channel, 0.0);
@@ -371,7 +376,8 @@ private:
       _comma(serialPort);
       serialPort->print(sensors.getAccelSmoothFactor(ROLL));
       _comma(serialPort);
-      serialPort->println(attitude.getTimeConstant());
+      //serialPort->println(attitude.getTimeConstant());
+      serialPort->println(flightAngle[ROLL].getTimeConstant());
       _lastTelemetryType[i] = 'X';
       break;
     case 'N': // Send motor smoothing values
@@ -407,9 +413,11 @@ private:
         serialPort->print(controlLaw.getLevelAdjust(axis));
         _comma(serialPort);
       }
-      serialPort->print(attitude.getFlightAngle(ROLL));
+      //serialPort->print(attitude.getFlightAngle(ROLL));
+      serialPort->print(flightAngle(ROLL).read());
       _comma(serialPort);
-      serialPort->print(attitude.getFlightAngle(PITCH));
+      //serialPort->print(attitude.getFlightAngle(PITCH));
+      serialPort->print(flightAngle(PITCH).read());
       serialPort->println();
       break;
     case 'R': // Send raw sensor data

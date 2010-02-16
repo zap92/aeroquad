@@ -25,8 +25,7 @@
 #include "SubSystem.h"
 
 #include "Attitude.h"
-Attitude_CompFilter attitude;
-//Attitude_KalmanFilter attitude;
+FlightAngle_CompFilter flightAngle[2];
 
 class ControlLaw_PID {
 private:
@@ -142,6 +141,11 @@ public:
     levelLimit = eeprom.read(LEVELLIMIT_ADR);
     levelOff = eeprom.read(LEVELOFF_ADR);
   }
+  
+  void intialize (void) {
+    flightAngle[ROLL].initialize(sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL), sensors.getUpdateRate());
+    flightAngle[PITCH].initialize(sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH), sensors.getUpdateRate());
+  }
 
   void process(void) {
     //Check to see if this SubSystem is allowed to run
@@ -160,7 +164,7 @@ public:
       else {
         // Stable Mode
         for (axis = ROLL; axis < YAW; axis++)
-          levelAdjust[axis] = constrain(updatePID(0, attitude.getFlightAngle(axis), &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
+          levelAdjust[axis] = constrain(updatePID(0, flightAngle[axis].read(sensors.getAngleDegrees(axis), sensors.getRateDegPerSec(axis)), &PID[LEVELROLL + axis]), -levelLimit, levelLimit);
         // Turn off Stable Mode if transmitter stick applied
         if (flightCommand.read(ROLL) > levelOff) {
           levelAdjust[ROLL] = 0;
