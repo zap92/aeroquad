@@ -27,11 +27,10 @@
 #define PITCHACCELPIN 0
 #define ROLLACCELPIN 1
 #define ZACCELPIN 2
-#define PITCHRATEPIN 4
-#define ROLLRATEPIN 3
+#define PITCHRATEPIN 3
+#define ROLLRATEPIN 4
 #define YAWRATEPIN 5
-#define AZPIN 22
-#define AZYAWPIN 23
+#define AZPIN 12
 
 // Need to write a calibration routine for accelerometers (including Z axis)
 // These A/D values depend on how well the sensors are mounted
@@ -156,9 +155,8 @@ public:
     // Configure gyro auto zero pins
     analogReference(EXTERNAL); // Current external ref is connected to 3.3V
     pinMode (AZPIN, OUTPUT);
-    pinMode (AZYAWPIN, OUTPUT);
     digitalWrite(AZPIN, LOW);
-    digitalWrite(AZYAWPIN, LOW);
+
     
     accelZero[ROLL] = eeprom.read(LEVELROLLCAL_ADR);
     accelZero[PITCH] = eeprom.read(LEVELPITCHCAL_ADR);
@@ -198,10 +196,8 @@ public:
   void zeroGyros() {
     // Pulse AZ pins on gyros to perform autozero
     digitalWrite(AZPIN, HIGH);
-    digitalWrite(AZYAWPIN, HIGH);
     delayMicroseconds(750);
     digitalWrite(AZPIN, LOW);
-    digitalWrite(AZYAWPIN, LOW);
     delay(8);
     // Due to gyro drift, finds ADC value which represents zero rate
     for (axis = ROLL; axis < LASTAXIS; axis++) {
