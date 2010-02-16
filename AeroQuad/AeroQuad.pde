@@ -53,9 +53,9 @@ Sensors sensors;
 #include "FlightCommand.h"
 FlightCommand_Duemilanove flightCommand;
 //Receiver_Mega receiver;
-//SIGNAL(PCINT0_vect) {receiver.measurePulseWidthISR(0);}
-//SIGNAL(PCINT1_vect) {receiver.measurePulseWidthISR(1);}
-//SIGNAL(PCINT2_vect) {receiver.measurePulseWidthISR(2);}
+SIGNAL(PCINT0_vect) {flightCommand.measurePulseWidthISR(0);}
+SIGNAL(PCINT1_vect) {flightCommand.measurePulseWidthISR(1);}
+SIGNAL(PCINT2_vect) {flightCommand.measurePulseWidthISR(2);}
 
 #include "Motors.h"
 Motors_PWM motors;

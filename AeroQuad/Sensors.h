@@ -242,5 +242,13 @@ public:
   float getAccelSmoothFactor(byte axis) {return accelFilter[axis].getSmoothFactor();}
   float getAnalogReference(void) {return aref;}
   unsigned int getUpdateRate(void) {return updateRate;}
+  void setGyroInvert(byte axis, byte value) {
+    if (value == ON) gyroInvert[axis] = -1;
+    else gyroInvert[axis] = 1;
+  }
+  void setAccelInvert(byte axis, byte value) {
+    if (value == ON) accelInvert[axis] = -1;
+    else accelInvert[axis] = 1;
+  }    
 };
 
