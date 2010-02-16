@@ -120,5 +120,7 @@ void loop () {
   motors.process(currentTime);
   
   // Process serial command and telemetry at 10Hz rate
-  serialcoms.process(currentTime); 
+  serialcoms.process(currentTime);
+  
+  blinkie.process(currentTime);
 }
