@@ -1,8 +1,8 @@
 /*
- AeroQuad v1.6 - March 2010
- www.AeroQuad.info
- Copyright (c) 2010 Ted Carancho, Chris Whiteford.  All rights reserved.
- An Open Source Arduino based quadrocopter.
+  AeroQuad v1.7 - March 2010
+  www.AeroQuad.com
+  Copyright (c) 2010 Ted Carancho.  All rights reserved.
+  An Open Source Arduino based quadrocopter.
  
  This program is free software: you can redistribute it and/or modify 
  it under the terms of the GNU General Public License as published by 
@@ -54,6 +54,8 @@ private:
   volatile uint8_t *port_to_pcmask[3];
   volatile uint8_t PCintLast[3];
   Filter filter[6];
+  uint16_t data;
+  uint8_t oldSREG;
 
   // Channel data 
   typedef struct {
@@ -71,6 +73,10 @@ private:
   int transmitterCenter[3];
   float smoothTransmitter[6];
   byte channel;
+  uint8_t bit;
+  uint8_t port;
+  uint8_t slot;
+  volatile uint8_t *pcmask;
   
   // Controls the strength of the commands sent from the transmitter
   // xmitFactor ranges from 0.01 - 1.0 (0.01 = weakest, 1.0 - strongest)
@@ -80,11 +86,8 @@ private:
   
   // Attaches PCINT to Arduino Pin
   void attachPinChangeInterrupt(uint8_t pin) {
-    uint8_t bit = digitalPinToBitMask(pin);
-    uint8_t port = digitalPinToPort(pin);
-    uint8_t slot;
-    volatile uint8_t *pcmask;
-  
+    bit = digitalPinToBitMask(pin);
+    port = digitalPinToPort(pin);
     // map pin to PCIR register
     if (port == NOT_A_PORT) {
       return;
@@ -102,9 +105,6 @@ private:
   // Calculate PWM pulse width of receiver data
   // If invalid PWM measured, use last known good time
   unsigned int readPWM(byte receiverPin) {
-    uint16_t data;
-    uint8_t oldSREG;
-      
     oldSREG = SREG;
     cli();
     data = pinData[receiverPin].lastGoodWidth;
@@ -140,9 +140,11 @@ public:
       transmitterZero[channel] = 1500;
       transmitterCenter[channel] = 1500;
     }
+    
     port_to_pcmask[0] = &PCMSK0;
     port_to_pcmask[1] = &PCMSK1;
     port_to_pcmask[2] = &PCMSK2;
+    
     for (channel = ROLL; channel < LASTCHANNEL; channel++)
       pinData[receiverChannel[channel]].edge == FALLING_EDGE;
 
@@ -178,7 +180,11 @@ public:
     pinMode(PITCHPIN, INPUT);
     pinMode(YAWPIN, INPUT);
     pinMode(MODEPIN, INPUT);
-    pinMode(AUXPIN, INPUT);  
+    pinMode(AUXPIN, INPUT);
+    for (channel = ROLL; channel < LASTCHANNEL; channel++) {
+      attachPinChangeInterrupt(receiverChannel[channel]);
+      pinData[receiverChannel[channel]].edge == FALLING_EDGE;
+    }
   }
 
   void process(unsigned long currentTime) {
@@ -187,21 +193,25 @@ public:
     //_canProcess also records the time that this SubSystem ran to use in future timing checks.
     if (this->_canProcess(currentTime)) {
       //If the code reaches this point the SubSystem is allowed to run.
-      for (channel = ROLL; channel < LASTCHANNEL; channel++)
+      for (channel = ROLL; channel < LASTCHANNEL; channel++) {
         receiverData[channel] = (mTransmitter[channel] * readPWM(receiverPin[channel])) + bTransmitter[channel];
+        //Serial.print(receiverData[channel]); Serial.print(' ');
+      } //Serial.println();
       // Smooth the flight control transmitter inputs (roll, pitch, yaw, throttle)
       for (channel = ROLL; channel < LASTCHANNEL; channel++)
         transmitterCommandSmooth[channel] = filter[channel].smooth(receiverData[channel]);
       // Reduce transmitter commands using xmitFactor and center around 1500
-      for (channel = ROLL; channel < LASTAXIS; channel++)
+      for (channel = ROLL; channel < LASTAXIS; channel++) {
         transmitterCommand[channel] = ((transmitterCommandSmooth[channel] - transmitterZero[channel]) * xmitFactor) + transmitterZero[channel];
+        //Serial.print(transmitterCommandSmooth[channel]);Serial.print(' ');
+      } //Serial.println();
       // No xmitFactor reduction applied for throttle, mode and AUX
       for (channel = THROTTLE; channel < LASTCHANNEL; channel++)
         transmitterCommand[channel] = transmitterCommandSmooth[channel];
     }
   }
   
-    // ISR which records time of rising or falling edge of signal
+  // ISR which records time of rising or falling edge of signal
   void measurePulseWidthISR(uint8_t port) {
     uint8_t bit;
     uint8_t curr;

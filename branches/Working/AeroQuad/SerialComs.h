@@ -1,5 +1,5 @@
 /*
- AeroQuad v1.6 - March 2010
+  AeroQuad v1.7 - March 2010
  www.AeroQuad.info
  Copyright (c) 2009 Ted Carancho, Chris Whiteford.  All rights reserved.
  An Open Source Arduino based quadrocopter.
@@ -507,7 +507,7 @@ private:
       serialPort->println(motors.getRemoteMotorCommand(LEFT));
       break;
     case '!': // Send flight software version
-      serialPort->println("1.6");
+      serialPort->println("1.7");
       _lastTelemetryType[i] = 'X';
       break;
     }

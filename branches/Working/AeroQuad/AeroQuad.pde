@@ -1,5 +1,5 @@
- /*
-  AeroQuad v1.6 - March 2010
+/*
+  AeroQuad v1.7 - March 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "WProgram.h"
-#include "CheckMemory.h"
+//#include "CheckMemory.h"
 
 #define byte uint8_t
 #define LEDPIN 13
@@ -69,9 +69,8 @@ SerialComs serialcoms;
 
 #include "Blinkie.h"
 Blinkie blinkie;
-////////////////////////////////////////
 
-
+///////////////////////////////////////////////////////////////
 
 static unsigned long currentTime = 0;
 
