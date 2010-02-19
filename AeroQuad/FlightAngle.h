@@ -1,5 +1,5 @@
 /*
-  AeroQuad v1.6 - March 2010
+  AeroQuad v1.7 - March 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -36,7 +36,6 @@ public:
   FlightAngle_CompFilter() {
     //Perform any initalization of variables you need in the constructor of this SubSystem
     timeConstant = eeprom.read(FILTERTERM_ADR);
-    dt = 0;
     filterTerm0 = 0;
     filterTerm1 = 0;
   }
@@ -54,7 +53,7 @@ public:
     filterTerm1 = filterTerm2 + (newAngle - previousAngle) * 2 * timeConstant + newRate;
     previousAngle = (filterTerm1 * dt) + previousAngle;
     //Serial.println(availableMemory());
-    //Serial.println(filterTerm0);
+    //Serial.print(newAngle);Serial.print(',');Serial.println(previousAngle);
     return previousAngle; // This is actually the current angle, but is stored for the next iteration
   }
 

@@ -1,5 +1,5 @@
 /*
-  AeroQuad v1.6 - March 2010
+  AeroQuad v1.7 - March 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho, Chris Whiteford.  All rights reserved.
   An Open Source Arduino based quadrocopter.
@@ -38,7 +38,7 @@
 #define ZMIN 454
 #define ZMAX 687
 #define ZAXIS 2
-#define FINDZERO 50
+#define FINDZERO 10
 
 class Sensors: public SubSystem {
 private:
@@ -123,8 +123,8 @@ private:
 public:
   // Required methods to implement a SubSystem
   Sensors(): SubSystem() {  
-    const float aref = 2.725; // Analog Reference Value measured with a DMM
-    const float gyroScaleFactor = 0.002; // Gyro scale factor from datasheet
+    aref = 2.725; // Analog Reference Value measured with a DMM
+    gyroScaleFactor = 0.002; // Gyro scale factor from datasheet
   
     // Perform any initalization of variables you need in the constructor of this SubSystem
     gyroChannel[ROLL] = ROLLRATEPIN;
@@ -201,7 +201,10 @@ public:
     delay(8);
     // Due to gyro drift, finds ADC value which represents zero rate
     for (axis = ROLL; axis < LASTAXIS; axis++) {
-      for (int i=0; i<FINDZERO; i++) findZero[i] = analogRead(gyroChannel[axis]);
+      for (int i=0; i<FINDZERO; i++) {
+        findZero[i] = analogRead(gyroChannel[axis]);
+        delay(25);
+      }
       gyroZero[axis] = findMode(findZero, FINDZERO);
     }
     eeprom.write(gyroZero[ROLL], GYRO_ROLL_ZERO_ADR);
@@ -211,7 +214,10 @@ public:
 
   void zeroAccelerometers() { // Finds ADC value which represents zero acceleration
     for (axis = ROLL; axis < YAW; axis++) {
-      for (int i=0; i<FINDZERO; i++) findZero[i] = analogRead(accelChannel[axis]);
+      for (int i=0; i<FINDZERO; i++) {
+        findZero[i] = analogRead(accelChannel[axis]);
+        delay(25);
+      }
       accelZero[axis] = findMode(findZero, FINDZERO);
     }
     accelZero[ZAXIS] = ZMAX - ((ZMAX - ZMIN)/2);

@@ -1,7 +1,7 @@
- /*
-  AeroQuad v1.6 - March 2010
+/*
+  AeroQuad v1.7 - March 2010
   www.AeroQuad.com
-  Copyright (c) 2010 Ted Carancho, Chris Whiteford.  All rights reserved.
+  Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based quadrocopter.
  
   This program is free software: you can redistribute it and/or modify 
