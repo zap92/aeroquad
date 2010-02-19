@@ -153,11 +153,6 @@ public:
     angle[ROLL] =  flightAngle[ROLL].calculate(sensors.getAngleDegrees(ROLL), sensors.getRateDegPerSec(ROLL));
     angle[PITCH] =  flightAngle[PITCH].calculate(sensors.getAngleDegrees(PITCH), sensors.getRateDegPerSec(PITCH));
       
-    //Serial.print(flightAngle[ROLL].readCurrentAngle());
-    //Serial.print(',');
-    //Serial.println(angle[ROLL]);
-    //Serial.println(availableMemory());
-    
     // ************************** Update Auto Level ***********************
     if (autoLevel == ON) {
       if (flightCommand.read(MODE) < 1500) {
@@ -241,4 +236,5 @@ public:
   float getHeadingCommand(void) {return headingCommand;}
   float getHeading(void) {return heading;}
   float getCurrentHeading(void) {return currentHeading;}
+  int getMotorCommand(byte axis) {return motorCommand[axis];}
 };

@@ -203,7 +203,7 @@ public:
       // Reduce transmitter commands using xmitFactor and center around 1500
       for (channel = ROLL; channel < LASTAXIS; channel++) {
         transmitterCommand[channel] = ((transmitterCommandSmooth[channel] - transmitterZero[channel]) * xmitFactor) + transmitterZero[channel];
-        //Serial.print(transmitterCommandSmooth[channel]);Serial.print(' ');
+        //Serial.print(transmitterCommandSmooth[channel]);Serial.print(' ');Serial.print(transmitterCommand[channel]);Serial.print(' ');
       } //Serial.println();
       // No xmitFactor reduction applied for throttle, mode and AUX
       for (channel = THROTTLE; channel < LASTCHANNEL; channel++)
@@ -256,6 +256,7 @@ public:
   }
 
   int read(byte axis) {return transmitterCommand[axis];}
+  int readSmooth(byte axis) {return transmitterCommandSmooth[axis];}
   void setXmitFactor(float value) {xmitFactor = value;}
   float getXmitFactor(void) {return xmitFactor;}
   void setTransmitterSmoothing(byte axis, float value) {filter[axis].setSmoothFactor(value);}
