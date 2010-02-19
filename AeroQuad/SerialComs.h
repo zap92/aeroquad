@@ -468,18 +468,18 @@ private:
         serialPort->print(flightControl.getLevelAdjust(axis));
         _comma(serialPort);
       }
-      serialPort->print(flightCommand.read(ROLL));
+      serialPort->print(controlLaw.getMotorCommand(ROLL));
       _comma(serialPort);
-      serialPort->print(flightCommand.read(PITCH));
+      serialPort->print(controlLaw.getMotorCommand(PITCH));
       _comma(serialPort);
-      serialPort->println(flightCommand.read(YAW));
+      serialPort->println(controlLaw.getMotorCommand(YAW));
       break;
     case 'U': // Send smoothed receiver values
       for (channel = ROLL; channel < AUX; channel++) {
-        serialPort->print(flightCommand.read(channel));
+        serialPort->print(flightCommand.readSmooth(channel));
         _comma(serialPort);
       }
-      serialPort->println(flightCommand.read(AUX));
+      serialPort->println(flightCommand.readSmooth(AUX));
       break;
     case 'V': // Send receiver status
       for (channel = ROLL; channel < AUX; channel++) {
