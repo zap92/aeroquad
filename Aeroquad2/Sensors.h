@@ -1,10 +1,16 @@
 #include "SubSystem.h"
 #include "HardwareComponent.h"
 
+
+#define PRESSURE_MINIMUM 94190.0
+#define PRESSURE_MAXIMUM 103100.0
+#define PRESSURE_HEIGHT_MAXIMUM 610.0
+#define PRESSURE_HEIGHT_MINIMUM -153.0
 class PressureSensor : public HardwareComponent
 {
 	protected:
 		float _currentHeight;
+		float _currentPressure;
 		
 	public:
 		PressureSensor() : HardwareComponent()
@@ -19,6 +25,8 @@ class PressureSensor : public HardwareComponent
 		
 		virtual void process(const unsigned long currentTime)
 		{
+			_currentHeight = fconstrain(fmap(_currentPressure, PRESSURE_MINIMUM, PRESSURE_MAXIMUM, PRESSURE_HEIGHT_MAXIMUM, PRESSURE_HEIGHT_MINIMUM), PRESSURE_HEIGHT_MINIMUM, PRESSURE_HEIGHT_MAXIMUM);
+			
 			HardwareComponent::process(currentTime);	
 		}
 		
@@ -95,14 +103,9 @@ class SPIPressureSensor : public PressureSensor, SPIDevice
 	
 		  	unsigned long pressureLsb = this->readIntFromRegister(PRESSURE_LSB_REGISTER);
 				  
-			unsigned long pressure = (((pressureMsb) << 16) | (pressureLsb));
-		  	pressure /= 4;
+			_currentPressure = (((pressureMsb) << 16) | (pressureLsb));
+		  	_currentPressure /= 4;
 		
-			_currentHeight = fmap(pressure, 103100, 94190, -153, 610);  //Map the pressures between -153m and 610m
-			DEBUGSERIALPRINT(_currentHeight);
-			DEBUGSERIALPRINTLN("");
-		
-			
 			PressureSensor::process(currentTime);
 		}
 };
@@ -297,26 +300,33 @@ class HMC5843Compass : public Compass
 		
 		void process(const unsigned long currentTime)
 		{
-			Wire.requestFrom(COMPAS_I2C_ADDRESS, 6);
+			Wire.requestFrom(COMPAS_I2C_ADDRESS, 7);
 			 
 			byte xAxisReadingHigh = Wire.receive();
 			byte xAxisReadingLow = Wire.receive();
 			int xAxisReading = (((xAxisReadingHigh) << 8) | (xAxisReadingLow));
+			DEBUGSERIALPRINT(xAxisReading);
+			DEBUGSERIALPRINT(":");
 			
 			byte yAxisReadingHigh = Wire.receive();
 			byte yAxisReadingLow = Wire.receive();
-			int yAxisReading = (((xAxisReadingHigh) << 8) | (xAxisReadingLow));
+			int yAxisReading = (((yAxisReadingHigh) << 8) | (yAxisReadingLow));
+			DEBUGSERIALPRINT(yAxisReading);
+			DEBUGSERIALPRINT(":");
 		
 			byte zAxisReadingHigh = Wire.receive();
 			byte zAxisReadingLow = Wire.receive();
-			int zAxisReading = (((xAxisReadingHigh) << 8) | (xAxisReadingLow));
+			int zAxisReading = (((zAxisReadingHigh) << 8) | (zAxisReadingLow));
+			DEBUGSERIALPRINT(zAxisReading);
+			DEBUGSERIALPRINT(":");
+			
+			//clock out another byte to get the device to wrap and be ready for the next read
+			Wire.receive();
 			
 			_currentHeading = this->_process3dReading(xAxisReading, yAxisReading, zAxisReading);
 			
-			//DEBUGSERIALPRINT(_currentHeading);
-			//DEBUGSERIALPRINT(":");
-			//DEBUGSERIALPRINT(_currentHeight);
-			//DEBUGSERIALPRINTLN("");
+			DEBUGSERIALPRINT(_currentHeading);
+			DEBUGSERIALPRINTLN("");
 			
 			Compass::process(currentTime);
 		}
