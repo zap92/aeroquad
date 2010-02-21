@@ -38,7 +38,7 @@ void setup()
 	
 	//Initialize I2C and SPI
 	Wire.begin();
-	SPIMaster::getInstance()->begin();
+	Spi.begin();
 	
 	//Assign the 1st and 3rd serial ports for serial telemetry
 	serialcoms.assignSerialPort(&Serial, true);		//Use for any debugging output
@@ -52,42 +52,43 @@ void setup()
 
 	//Run the GPS at 5hz offset 25ms
 	gps.initialize(200, 25);
-	//gps.disable();
+	gps.disable();
 	
 	//Run the IMU at 50hz
 	imu.initialize(20,0);
 	imu.setHardwareType(IMU::HardwareTypeRazor);
 	imu.setFilterType(IMU::FilterTypeSimplifiedKalman);
 	imu.calibrateZero();
-	imu.disable();
+	//imu.disable();
 	
 	//Run the sensors at 5hz offset 25ms
 	sensors.initialize(200,25);
 	sensors.setPressorSensorType(Sensors::PressureSensorSPI);
 	sensors.setHeightSensorType(Sensors::HeightSensorAnalogIn);
+	sensors.setCompassType(Sensors::CompassHMC5843);
 	//sensors.disable();
 	
 	//Run the receiver at 50hz
 	receiver.initialize(20,0);
 	receiver.setHardwareType(Receiver::HardwareTypeI2C);
 	//receiver.setHardwareType(Receiver::HardwareTypeFake);
-	//receiver.disable();
+	receiver.disable();
 	
 	//Run flight control at 50hz
 	flightcontrol.initialize(20,0);
 	flightcontrol.enableAutoLevel();
 	flightcontrol.enableHeadingHold();
-	//flightcontrol.disable();
-	
+	flightcontrol.disable();
+
 	//Run the camera at 10hz offset 50ms
 	camera.initialize(100, 50);
-	//camera.disable();
+	camera.disable();
 	
 	//Run the motors at 50hz
 	motors.initialize(20,0);
 	motors.setHardwareType(Motors::HardwareTypeOnboard);
 	motors.setOrientationType(MotorOrientationType::QuadPlusMotor);
-	//motors.disable();
+	motors.disable();
 	
 	//Run the LEDs at 5hz offset 75ms
 	led.initialize(200, 75);
