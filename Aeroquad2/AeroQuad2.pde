@@ -38,8 +38,7 @@ void setup()
 	
 	//Initialize I2C and SPI
 	Wire.begin();
-	//TODO: SPI
-	
+	SPIMaster::getInstance()->begin();
 	
 	//Assign the 1st and 3rd serial ports for serial telemetry
 	serialcoms.assignSerialPort(&Serial, true);		//Use for any debugging output
@@ -51,41 +50,51 @@ void setup()
 	//Run serial telemetry at 10hz offset 50ms
 	serialcoms.initialize(100, 50);
 
-	//Run the GPS at 10hz offset 25ms
-	gps.initialize(100, 25);
+	//Run the GPS at 5hz offset 25ms
+	gps.initialize(200, 25);
+	//gps.disable();
 	
-	//Run the IMU at 200hz
-	imu.initialize(5,0);
+	//Run the IMU at 50hz
+	imu.initialize(20,0);
 	imu.setHardwareType(IMU::HardwareTypeRazor);
 	imu.setFilterType(IMU::FilterTypeSimplifiedKalman);
 	imu.calibrateZero();
+	imu.disable();
 	
-	//Run the sensors at 50hz offset 25ms
-	sensors.initialize(20,25);
+	//Run the sensors at 5hz offset 25ms
+	sensors.initialize(200,25);
+	sensors.setPressorSensorType(Sensors::PressureSensorSPI);
+	sensors.setHeightSensorType(Sensors::HeightSensorAnalogIn);
+	//sensors.disable();
 	
 	//Run the receiver at 50hz
 	receiver.initialize(20,0);
 	receiver.setHardwareType(Receiver::HardwareTypeI2C);
 	//receiver.setHardwareType(Receiver::HardwareTypeFake);
+	//receiver.disable();
 	
-	//Run flight control at 200hz
-	flightcontrol.initialize(5,0);
+	//Run flight control at 50hz
+	flightcontrol.initialize(20,0);
 	flightcontrol.enableAutoLevel();
-	//flightcontrol.enableHeadingHold();
+	flightcontrol.enableHeadingHold();
+	//flightcontrol.disable();
 	
 	//Run the camera at 10hz offset 50ms
 	camera.initialize(100, 50);
+	//camera.disable();
 	
-	//Run the motors at 200hz
-	motors.initialize(5,0);
+	//Run the motors at 50hz
+	motors.initialize(20,0);
 	motors.setHardwareType(Motors::HardwareTypeOnboard);
 	motors.setOrientationType(MotorOrientationType::QuadPlusMotor);
+	//motors.disable();
 	
 	//Run the LEDs at 5hz offset 75ms
 	led.initialize(200, 75);
 	led.setPatternType(LED::LEDPatternInsideOut);
+	//led.disable();
 	
-	pinMode(40, OUTPUT);
+	pinMode(22,OUTPUT);
 }
 
 
@@ -99,7 +108,7 @@ void loop()
 	previousTime - currentTime;
 	
 	//for the purposes of timing the main loop we toggle a digital pin high and then low at the end
-	digitalWrite(40, HIGH);
+	digitalWrite(22, HIGH);
 	
 	//process all the "inputs" to the system
 	imu.process(currentTime);
@@ -118,5 +127,5 @@ void loop()
 	led.process(currentTime);
 	serialcoms.process(currentTime);
 	
-	digitalWrite(40, LOW);
+	digitalWrite(22, LOW);
 }

@@ -172,6 +172,17 @@ class SerialComs : public SubSystem
 			}
 		}
 		
+		void debugPrint(const unsigned long value)
+		{
+			for (unsigned int i = 0; i < _serialPortCount; i++)
+			{
+				if (_serialPortDebugFlag[i])
+				{
+					_serialPorts[i]->print(value);
+				}
+			}
+		}
+		
 		void debugPrintln(const char* value)
 		{
 			for (unsigned int i = 0; i < _serialPortCount; i++)
