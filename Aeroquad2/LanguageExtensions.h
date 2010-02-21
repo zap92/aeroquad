@@ -93,6 +93,7 @@ const int freeMemory()
 
 
 //SPI Support classes
+//This makes SPI MUCH easier to work with.
 #define SCK_PIN   52
 #define MISO_PIN  50
 #define MOSI_PIN  51
@@ -101,11 +102,6 @@ class SPIMaster
 {
 	private:
 		static SPIMaster* _staticInstance;
-		
-		SPIMaster()
-		{
-			
-		}
 		
 		const byte transfer(const byte data)
 		{
@@ -118,13 +114,14 @@ class SPIMaster
 		}
 	
 	public:
+		
+		SPIMaster()
+		{
+			_staticInstance = this;
+		}
+		
 		static SPIMaster* getInstance()
 		{
-			if (!_staticInstance)
-			{
-				_staticInstance = new SPIMaster();
-			}
-			
 			return _staticInstance;
 		}
 		
@@ -151,39 +148,19 @@ class SPIMaster
 			tmp = SPDR;	
 		}
 		
-		const byte readByte(const byte registerAddress)
+		const byte sendByte(const byte value)
 		{
-		    char in_byte;
-		    byte adjustedRegisterAddress = registerAddress << 2;
-		    adjustedRegisterAddress &= B11111100; //Read command
-
-		    this->transfer(adjustedRegisterAddress); //Write byte to device
-		    return this->transfer(0x00); //Send nothing, but we should get back the register value
+			return this->transfer(value);
 		}
 		
-		const int readInt(const byte registerAddress)
+		const byte readByte()
 		{
-		    byte adjustedRegisterAddress = registerAddress << 2;
-		    adjustedRegisterAddress &= B11111100; //Read command
-
-		    this->transfer(adjustedRegisterAddress); //Write byte to device
-		    byte in_byte1 = this->transfer(0x00);    
-		    byte in_byte2 = this->transfer(0x00);
-		
-			return (((in_byte1) << 8) | (in_byte2));
-		}
-		
-		const byte sendByte(const byte registerAddress, const byte registerValue)
-		{
-		    byte adjustedRegisterAddress = registerAddress << 2;
-		    adjustedRegisterAddress |= B00000010; //Write command
-
-		    this->transfer(adjustedRegisterAddress); //Send register location
-		    return this->transfer(registerValue); //Send value to record into register
+			return this->transfer(0x00);
 		}
 };
 
 SPIMaster* SPIMaster::_staticInstance = NULL;
+SPIMaster Spi;
 
 class SPIDevice
 {
@@ -199,31 +176,24 @@ class SPIDevice
 			digitalWrite(_csPin, HIGH);
 		}
 		
-		const byte sendByte(const byte registerAddress, const byte registerValue)
+		void activate()
 		{
 			digitalWrite(_csPin, LOW);	
-			byte readByte = SPIMaster::getInstance()->sendByte(registerAddress, registerValue);
-			digitalWrite(_csPin, HIGH);
-			
-			return readByte;
 		}
 		
-		const byte readByte(const byte registerAddress)
+		void deactivate()
 		{
-			digitalWrite(_csPin, LOW);	
-			byte readByte = SPIMaster::getInstance()->readByte(registerAddress);
-			digitalWrite(_csPin, HIGH);
-			
-			return readByte;
+			digitalWrite(_csPin, HIGH);	
+		}
+	
+		const byte sendByte(const byte value)
+		{
+			return SPIMaster::getInstance()->sendByte(value);	
 		}
 		
-		const int readInt(const byte registerAddress)
+		const byte readByte()
 		{
-			digitalWrite(_csPin, LOW);	
-			int readInt = SPIMaster::getInstance()->readInt(registerAddress);
-			digitalWrite(_csPin, HIGH);
-			
-			return readInt;
+			return SPIMaster::getInstance()->readByte();
 		}
 };
 
