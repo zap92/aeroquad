@@ -90,16 +90,9 @@ class MotorControlOnboard : public MotorHardware
 			{
 				int rawOutputValue = constrain(_motorOutput[i], MinimumMotorCommand, MaximumMotorCommand);
 				int analogOutputValue = map(rawOutputValue, 1000, 2000, 0, 255);
-								
-				if (i >= 4)
-				{
-					if (i > 4) DEBUGSERIALPRINT(",");
-					DEBUGSERIALPRINT(analogOutputValue);
-				}
-				
+			
 				analogWrite(_motorPins[i], analogOutputValue);
 			}	
-			DEBUGSERIALPRINTLN("");
 		}
 		
 	public:

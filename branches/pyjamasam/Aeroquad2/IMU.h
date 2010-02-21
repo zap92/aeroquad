@@ -354,7 +354,6 @@ class SimplifiedKalmanIMUFilter : public IMUFilter
 		}
 };
 
-
 class IMU : public SubSystem
 {
 	private:
