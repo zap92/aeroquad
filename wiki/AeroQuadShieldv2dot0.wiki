@@ -1,6 +1,6 @@
 #summary List of capabilities for the AeroQuad Shield v2.0 for the Arduino Mega
 
-= AeroQuad Shield v2.0 Capabilities =
+= !AeroQuad Shield v2.0 Capabilities =
 Exact channel quantities are TBD until board design is complete.  Stated numbers are starting quantities.
 
 == Inertial Measurement Unit ==
