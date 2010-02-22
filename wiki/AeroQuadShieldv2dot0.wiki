@@ -3,6 +3,10 @@
 = !AeroQuad Shield v2.0 Capabilities =
 Exact channel quantities are TBD until board design is complete.  Stated numbers are starting quantities.
 
+== External Pilot Commands ==
+ * I2C commands received from external daughter board
+ * Serial commands received through TX0/RX0
+ * PPM input on pin 49
 == Inertial Measurement Unit ==
  * 6DOF Inertial Measurement Unit constructed of either the
   * Sparkfun 5DOF IMU and IXZ500 Yaw gyro
@@ -12,10 +16,23 @@ Exact channel quantities are TBD until board design is complete.  Stated numbers
    * power will be routed to servo outputs
  * Screw down terminals for driving I2C ESC's
 == Servo Control ==
+ * Used for camera stabilization and/or tilt, motor tilt or any other deployment
  * ~16 powered servo style outputs powered from Motor Control ESC's
   * 4 servos powered from motor output 1
   * 4 servos powered from motor output 2
   * 4 servos powered from motor output 3
   * 4 servos powered from motor output 4
  * still need to decide how to provide power to servos if I2C used
-== 
+== Additional Sensors ==
+ * Magnetometer input from HMC5843 via I2C
+ * Barometer input from SCP1000 via SPI
+ * 4 Proximity sensors using analog input channels
+ * GPS connections for 5V or 3.3V and TX1/RX1
+ * OSD using MAX7456 via SPI
+ * AttoPilot Voltage and Current Sense using an analog input channel
+== Customizable light pattern ==
+ * Darlington array drivers for quantity 7 12V LED strips (power directly from external 12V lipo)
+== Utilities ==
+ * Reset button
+ * Ready LED (connected to DIO 13)
+ * voltage divider for battery monitor
