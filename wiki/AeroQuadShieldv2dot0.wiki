@@ -28,7 +28,7 @@ Exact channel quantities are TBD until board design is complete.  Stated numbers
  * Barometer input from SCP1000 via SPI
  * 4 Proximity sensors using analog input channels
  * GPS connections for 5V or 3.3V and TX1/RX1
- * OSD using MAX7456 via SPI
+ * Video On Screen Display using MAX7456 via SPI
  * !AttoPilot Voltage and Current Sense using an analog input channel
 == Customizable light pattern ==
  * Darlington array drivers for quantity 7 12V LED strips (power directly from external 12V lipo)
