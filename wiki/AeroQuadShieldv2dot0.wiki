@@ -5,7 +5,7 @@ Exact channel quantities are TBD until board design is complete.  Stated numbers
 
 == External Pilot Commands ==
  * I2C commands received from external daughter board
- * Serial commands received through TX0/RX0
+ * Serial commands received through TX0/RX0 (generated from joystick control from a PC/Configurator)
  * PPM input on pin 49
 == Inertial Measurement Unit ==
  * 6DOF Inertial Measurement Unit constructed of either the
