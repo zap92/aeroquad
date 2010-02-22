@@ -1,8 +1,8 @@
-#summary List of the capabilities for the AeroQuad Shield v2.0 for the Arduino Mega
+#summary List of capabilities for the AeroQuad Shield v2.0 for the Arduino Mega
 
+= AeroQuad Shield v2.0 Capabilities =
 Exact channel quantities are TBD until board design is complete.  Stated numbers are starting quantities.
 
-= Shield Capabilities =
 == Inertial Measurement Unit ==
  * 6DOF Inertial Measurement Unit constructed of either the
   * Sparkfun 5DOF IMU and IXZ500 Yaw gyro
