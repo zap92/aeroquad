@@ -26,10 +26,10 @@ Exact channel quantities are TBD until board design is complete.  Stated numbers
 == Additional Sensors ==
  * Magnetometer input from HMC5843 via I2C
  * Barometer input from SCP1000 via SPI
- * 4 Proximity sensors using analog input channels
+ * 4 Proximity sensors using analog input channels (servo style connector)
  * GPS connections for 5V or 3.3V and TX1/RX1
  * Video On Screen Display using MAX7456 via SPI
- * !AttoPilot Voltage and Current Sense using an analog input channel
+ * !AttoPilot Voltage and Current Sense using an analog input channel (servo style connector)
 == Customizable light pattern ==
  * Darlington array drivers for quantity 7 12V LED strips (power directly from external 12V lipo)
 == Utilities ==
