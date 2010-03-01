@@ -35,3 +35,5 @@ Eagle files and PDF's can be found at: http://code.google.com/p/aeroquad/source/
 == Utilities ==
 <wiki:comment>  * Reset button</wiki:comment>
  * Ready LED (connected to DIO 13)
+ * Spare I2C connection
+ * Spare SPI connection
