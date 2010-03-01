@@ -22,6 +22,8 @@ Eagle files and PDF's can be found at: http://code.google.com/p/aeroquad/source/
   * 4 servos powered from motor output 2
   * 2 servos powered from motor output 3
 <wiki:comment> * still need to decide how to provide power to servos if I2C used</wiki:comment>
+== GPS ==
+ * Connector available for 3.3V GPS connected to TX/RX1 of the Arduino Mega
 == Additional Sensors ==
  * Magnetometer input from HMC5843 via I2C
  * Barometer input from SCP1000 via SPI
