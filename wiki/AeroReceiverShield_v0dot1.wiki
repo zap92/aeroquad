@@ -20,4 +20,4 @@ Eagle files and PDF's can be found at: http://code.google.com/p/aeroquad/source/
 == Additional Spare Bus Connections ==
  * Spare I2C connectors passed through to the Mega
  * Spare SPI connectors passed through to the Mega
- * Additional Pro Mini pins broken out for any additional end user customization required
+ * Additional Pro Mini pins broken out for any additional end user customization desired
