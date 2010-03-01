@@ -27,7 +27,7 @@ Eagle files and PDF's can be found at: http://code.google.com/p/aeroquad/source/
  * Barometer input from SCP1000 via SPI
  * 4 Proximity sensors using analog input channels (servo style connector)
  * GPS connections for 3.3V and TX1/RX1
-  * Additional 5V connector supported through AeroReceiver Board
+  * Additional 5V connector supported through !AeroReceiver Board
  * !AttoPilot Voltage and Current Sense using an analog input channel (servo style connector)
  * Voltage divider for battery monitor
 == Customizable light pattern ==
