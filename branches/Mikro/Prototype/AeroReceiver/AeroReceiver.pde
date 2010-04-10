@@ -21,9 +21,10 @@
 #include <Wire.h>
 #include "Receiver.h"
 #define LEDPIN 13
+//#define DEBUG
 
-uint8_t ledOutput = HIGH;
-unsigned int receiver[10];
+byte ledOutput = HIGH;
+unsigned int channelData[2];
 
 void setup()
 {
@@ -32,6 +33,7 @@ void setup()
   digitalWrite(LEDPIN, ledOutput);
   
   configureReceiver();
+  channel = THROTTLE;
 
   Wire.begin(29);
   Wire.onRequest(sendReceiverData);
@@ -39,18 +41,21 @@ void setup()
 
 void loop()
 {
-  ledOutput = (ledOutput == HIGH) ? ledOutput = LOW : ledOutput = HIGH;
+  (ledOutput == HIGH) ? ledOutput = LOW : ledOutput = HIGH;
   digitalWrite(LEDPIN, ledOutput);
   delay(100);
-  /*for (channel = THROTTLE; channel < AUX5; channel++) {
-    Serial.print(readReceiver(receiverPin[channel]));
-    Serial.print(',');
-  }
-  Serial.println(readReceiver(receiverPin[AUX5]));*/
+  #ifdef DEBUG
+    for (channel = THROTTLE; channel < AUX5; channel++) {
+      Serial.print(readReceiver(receiverPin[channel]));
+      Serial.print(',');
+    }
+    Serial.println(readReceiver(receiverPin[AUX5]));
+  #endif
 }
 
 void sendReceiverData() {
-  for (channel = THROTTLE; channel < LASTCHANNEL; channel++)
-    receiver[channel] = readReceiver(receiverPin[channel]);
-  Wire.send((byte*)receiver, sizeof(receiver));
+  channelData[0] = channel;
+  channelData[1] = readReceiver(receiverPin[channel]);
+  Wire.send((byte*)channelData, sizeof(channelData));
+  (channel == AUX5) ? channel = THROTTLE : channel++;
 }
