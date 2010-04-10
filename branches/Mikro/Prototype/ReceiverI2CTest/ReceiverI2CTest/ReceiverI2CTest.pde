@@ -13,12 +13,13 @@
 #define AUX4 8
 #define AUX5 9
 #define LASTCHANNEL 10
+#define AERORECEIVER_ADR 29
+#define AERORECEIVER_MSG 4
 
-uint8_t byteDataHigh, byteDataLow, i;
-uint8_t ledOutput = HIGH;
-uint8_t channel = THROTTLE;
-uint8_t dataByte[20];
-unsigned int receiverData[20];
+byte ledOutput = HIGH;
+byte channel = THROTTLE;
+byte i, dataByte[AERORECEIVER_MSG];
+unsigned int receiverData[LASTCHANNEL];
 unsigned int currentTime = 0;
 unsigned int previousTime = 0;
 
@@ -32,25 +33,30 @@ void setup()
 
 void loop()
 {
-  previousTime = millis();
-  Wire.requestFrom(29, 20);
-  if (Wire.available() == 20) {
-    for (i = 0; i < 20; i++)
+  // Read I2C Receiver Data
+  previousTime = micros();
+  Wire.requestFrom(AERORECEIVER_ADR, AERORECEIVER_MSG);
+  if (Wire.available() == AERORECEIVER_MSG) {
+    for (i = 0; i < AERORECEIVER_MSG; i++)
       dataByte[i] = Wire.receive();
   }
-  currentTime = millis() - previousTime;
+  currentTime = micros() - previousTime;
   
-  for (i = 0; i < 20; i+=2) {
-    receiverData[i] = word(dataByte[i+1], dataByte[i]);
-    Serial.print(receiverData[i]);Serial.print(',');
+  // Decode data into channel number and channel value
+  channel = word(dataByte[1], dataByte[0]);
+  receiverData[channel] = word(dataByte[3], dataByte[2]);
+  
+  // Print data for debug
+  for (channel = THROTTLE; channel < LASTCHANNEL; channel++) {
+    Serial.print(receiverData[channel]);Serial.print(',');
   }
   Serial.print(currentTime);
   Serial.println();
   
-  
-  ledOutput = (ledOutput == HIGH) ? ledOutput = LOW : ledOutput = HIGH;
+  // Blink LED
+  (ledOutput == HIGH) ? ledOutput = LOW : ledOutput = HIGH;
   digitalWrite(LEDPIN, ledOutput);
-  delay(100);
+  delay(10);
 }
 
 
