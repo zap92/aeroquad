@@ -24,11 +24,11 @@ float altitude = 0;
 
 
 // define spi bus pins
-#define SLAVESELECT 47
+#define SLAVESELECT 49
 #define SPICLOCK 52
 #define DATAOUT 51	//MOSI
 #define DATAIN 50	 //MISO
-#define DRDY 46
+#define DRDY 48
 #define UBLB(a,b)  ( ( (a) << 8) | (b) )
 #define UBLB19(a,b) ( ( (a) << 16 ) | (b) )
 
