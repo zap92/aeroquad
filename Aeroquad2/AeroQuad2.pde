@@ -1,14 +1,13 @@
 #include <WProgram.h>
 #include <Wire.h>
 
+#define VERSION "0.1"
+
 #include "LanguageExtensions.h"
 #include "HardwareComponent.h"
 
 #include "SerialComs.h"
 SerialComs serialcoms;
-
-#include "Receiver.h"
-Receiver receiver;
 
 #include "GPS.h"
 GPS gps;
@@ -18,6 +17,13 @@ IMU imu;
 
 #include "Sensors.h"
 Sensors sensors;
+
+
+/*
+#include "Receiver.h"
+Receiver receiver;
+
+
 
 #include "FlightControl.h"
 FlightControl flightcontrol;
@@ -29,46 +35,51 @@ Motors motors;
 Camera camera;
 
 #include "LED.h"
-LED led;
+LED led;*/
 
 void setup()
-{
-	analogReference(EXTERNAL);
-	HardwareComponent::setReferenceVoltage(2760.0);
+{	
+	{
+		//Assign the 1st and 3rd serial ports for serial telemetry
+		serialcoms.assignSerialPort(&Serial, true);		//Use for any debugging output
+		serialcoms.assignSerialPort(&Serial3);			//Telemetry output to Xbee
+		//Run serial telemetry at 10hz offset 50ms
+		serialcoms.initialize(100, 50);
+	}
 	
-	//Initialize I2C and SPI
-	Wire.begin();
-	Spi.begin();
-	
-	//Assign the 1st and 3rd serial ports for serial telemetry
-	serialcoms.assignSerialPort(&Serial, true);		//Use for any debugging output
-	serialcoms.assignSerialPort(&Serial2);
-	
-	//Assign the 2nd serial port for the GPS
-	gps.assignSerialPort(&Serial1);
-	
-	//Run serial telemetry at 10hz offset 50ms
-	serialcoms.initialize(100, 50);
+	{
+		//Assign the 2nd serial port for the GPS
+		gps.assignSerialPort(&Serial1);
+		//gps.setHardwareType(GPS::HardwareTypeNMEA);
+		//gps.setHardwareType(GPS::HardwareTypeUBOX);
+		gps.setHardwareType(GPS::HardwareTypeMTK);
+		//Run the GPS at 2hz offset 25ms
+		gps.initialize(500, 25);
+	}
 
-	//Run the GPS at 5hz offset 25ms
-	gps.initialize(200, 25);
-	gps.disable();
+	{
+		imu.setHardwareType(IMU::HardwareTypeOilPan);
+		//imu.setFilterType(IMU::FilterTypeSimpleAccellOnly);
+		//imu.setFilterType(IMU::FilterTypeComplimentry);
+		//imu.setFilterType(IMU::FilterTypeSimplifiedKalman);
+		//imu.setFilterType(IMU::FilterTypeDCM);
+		imu.setFilterType(IMU::FilterTypeKalman);
+		//Run the IMU at 100hz
+		imu.initialize(10,0);
+		imu.calibrateZero();
+	}
 	
-	//Run the IMU at 50hz
-	imu.initialize(20,0);
-	imu.setHardwareType(IMU::HardwareTypeRazor);
-	imu.setFilterType(IMU::FilterTypeSimplifiedKalman);
-	imu.calibrateZero();
-	//imu.disable();
+	{
+		//Run the sensors at 20hz offset 25ms
+		//sensors.setPressorSensorType(Sensors::PressureSensorSPI);
+		//sensors.setHeightSensorType(Sensors::HeightSensorAnalogIn);
+		//sensors.setPowerSensorType(Sensors::PowerSensorAnalogIn);
+		sensors.setCompassType(Sensors::CompassHMC5843);
+		//sensors.setCompassLimits(-719.00, 745.00, -771.00, 771.00, -728.00, 688.00);
+		sensors.initialize(50,25);
+	}
 	
-	//Run the sensors at 5hz offset 25ms
-	sensors.initialize(200,25);
-	sensors.setPressorSensorType(Sensors::PressureSensorSPI);
-	sensors.setHeightSensorType(Sensors::HeightSensorAnalogIn);
-	sensors.setCompassType(Sensors::CompassHMC5843);
-	//sensors.disable();
-	
-	//Run the receiver at 50hz
+	/*//Run the receiver at 50hz
 	receiver.initialize(20,0);
 	receiver.setHardwareType(Receiver::HardwareTypeI2C);
 	//receiver.setHardwareType(Receiver::HardwareTypeFake);
@@ -93,9 +104,16 @@ void setup()
 	//Run the LEDs at 5hz offset 75ms
 	led.initialize(200, 75);
 	led.setPatternType(LED::LEDPatternInsideOut);
-	//led.disable();
+	//led.disable();*/
 	
-	pinMode(22,OUTPUT);
+	serialcoms.debugPrintln("!"VERSION);
+
+	
+	  /*while (Serial.available() <= 0) {
+	    Serial.print('A', BYTE); // send a capital A
+	    delay(300);
+	  }*/
+
 }
 
 
@@ -108,25 +126,20 @@ void loop()
 	deltaTime = currentTime - previousTime;
 	previousTime - currentTime;
 	
-	//for the purposes of timing the main loop we toggle a digital pin high and then low at the end
-	digitalWrite(22, HIGH);
-	
 	//process all the "inputs" to the system
-	imu.process(currentTime);
-	gps.process(currentTime);
-	receiver.process(currentTime);
+	//gps.process(currentTime);
 	sensors.process(currentTime);
+	//receiver.process(currentTime);
+	imu.process(currentTime);
 	
 	//process flight control
-	flightcontrol.process(currentTime);
+	//flightcontrol.process(currentTime);
 	
 	//process all the "outputs" from the system
-	motors.process(currentTime);
-	camera.process(currentTime);
+	//motors.process(currentTime);
+	//camera.process(currentTime);
 	
 	//process accessory sub systems
-	led.process(currentTime);
+	//led.process(currentTime);
 	serialcoms.process(currentTime);
-	
-	digitalWrite(22, LOW);
 }

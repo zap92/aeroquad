@@ -6,20 +6,33 @@ class HardwareComponent
 	private:
 		unsigned long _lastProcessTime;
 		
-		static float _referenceVoltage;
+		float _referenceVoltage;
+		int _dacPrecision;
 
 	public:
-		static void setReferenceVoltage(const float referenceVoltage)
+		void setReferenceVoltage(const float referenceVoltage)
 		{
 			_referenceVoltage = referenceVoltage;
 		}
-		static const float getReferenceVoltage()
+		const float getReferenceVoltage()
 		{
 			return _referenceVoltage;
 		}
 		
+		void setDacPrecision(const int dacPrecision)
+		{
+			_dacPrecision = dacPrecision;
+		}
+		
+		const int getDacPrecision()
+		{
+			return _dacPrecision;
+		}
+		
 		HardwareComponent() 
 		{
+			this->_referenceVoltage = 5.0;
+			this->_dacPrecision = 10;
 		}
 
 		void _initialize()
@@ -34,12 +47,9 @@ class HardwareComponent
 		virtual void process(const unsigned long currentTime)
 		{
 			//this method should be called after the subclass is done its processing
-			
 			_lastProcessTime = currentTime;
 		}
 };
-
-float HardwareComponent::_referenceVoltage = 0;
 
 #endif
 
