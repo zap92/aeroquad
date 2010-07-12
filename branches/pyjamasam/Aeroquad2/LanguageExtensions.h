@@ -3,6 +3,9 @@
 
 #include <stdlib.h>
 
+#define ToRad(x) ((x)*0.01745329252)  // *pi/180
+#define ToDeg(x) ((x)*57.2957795131)  // *180/pi
+
 void * operator new(size_t size)
 {
   return malloc(size);
@@ -90,111 +93,77 @@ const int freeMemory()
 	return stackptr - heapptr;
 }
 
-
-
-//SPI Support classes
-//This makes SPI MUCH easier to work with.
-#define SCK_PIN   52
-#define MISO_PIN  50
-#define MOSI_PIN  51
-#define SS_PIN    53
-class SPIMaster
+void normalize3DVector(float* vector)
 {
-	private:
-		static SPIMaster* _staticInstance;
-		
-		const byte transfer(const byte data)
-		{
-			//send then read a single byte
-			SPDR = data;			  // Start the transmission
-			while (!(SPSR & (1<<SPIF)))     // Wait for the end of the transmission
-		  	{};
-		  	
-			return SPDR;			  // return the received byte
-		}
-	
-	public:
-		
-		SPIMaster()
-		{
-			_staticInstance = this;
-		}
-		
-		static SPIMaster* getInstance()
-		{
-			return _staticInstance;
-		}
-		
-		void begin()
-		{
-			pinMode(SCK_PIN, OUTPUT);
-			pinMode(MOSI_PIN, OUTPUT);
-			pinMode(MISO_PIN, INPUT);
-			pinMode(SS_PIN, OUTPUT);
-			
-			digitalWrite(SS_PIN,HIGH);
+	static float R;  
+	R = sqrt(vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2]);
+	vector[0] /= R;
+	vector[1] /= R;  
+	vector[2] /= R;  
+}
 
-			this->mode(0);
-		}
-		
-		void mode(const byte mode)
-		{
-			byte tmp;
 
-			// enable SPI master with configuration byte specified
-			SPCR = 0;
-			SPCR = (mode & 0x7F) | (1<<SPE) | (1<<MSTR);
-			tmp = SPSR;
-			tmp = SPDR;	
-		}
-		
-		const byte sendByte(const byte value)
-		{
-			return this->transfer(value);
-		}
-		
-		const byte readByte()
-		{
-			return this->transfer(0x00);
-		}
-};
 
-SPIMaster* SPIMaster::_staticInstance = NULL;
-SPIMaster Spi;
+#define Bit_Set(p,m) ((p) |= (1<<m)) 
+#define Bit_Clear(p,m) ((p) &= ~(1<<m))
 
-class SPIDevice
+
+//Computes the cross product of two vectors
+void Vector_Cross_Product(float vectorOut[3], float v1[3],float v2[3])
 {
-	private:
-		byte _csPin;
-		
-	public:	
-		void initialize(const byte csPin)
-		{
-			_csPin = csPin;
+  vectorOut[0]= (v1[1]*v2[2]) - (v1[2]*v2[1]);
+  vectorOut[1]= (v1[2]*v2[0]) - (v1[0]*v2[2]);
+  vectorOut[2]= (v1[0]*v2[1]) - (v1[1]*v2[0]);
+}
 
-			pinMode(_csPin, OUTPUT);
-			digitalWrite(_csPin, HIGH);
-		}
-		
-		void activate()
-		{
-			digitalWrite(_csPin, LOW);	
-		}
-		
-		void deactivate()
-		{
-			digitalWrite(_csPin, HIGH);	
-		}
-	
-		const byte sendByte(const byte value)
-		{
-			return SPIMaster::getInstance()->sendByte(value);	
-		}
-		
-		const byte readByte()
-		{
-			return SPIMaster::getInstance()->readByte();
-		}
-};
+//Multiply the vector by a scalar. 
+void Vector_Scale(float vectorOut[3],float vectorIn[3], float scale2)
+{
+  for(int c=0; c<3; c++)
+  {
+   vectorOut[c]=vectorIn[c]*scale2; 
+  }
+}
 
+
+//Computes the dot product of two vectors
+float Vector_Dot_Product(float vector1[3],float vector2[3])
+{
+  float op=0;
+  
+  for(int c=0; c<3; c++)
+  {
+  	op+=vector1[c]*vector2[c];
+  }
+  
+  return op; 
+}
+
+void Vector_Add(float vectorOut[3],float vectorIn1[3], float vectorIn2[3])
+{
+  for(int c=0; c<3; c++)
+  {
+     vectorOut[c]=vectorIn1[c]+vectorIn2[c];
+  }
+}
+
+//Multiply two 3x3 matrixs. This function developed by Jordi can be easily adapted to multiple n*n matrix's. (Pero me da flojera!). 
+void Matrix_Multiply(float a[3][3], float b[3][3],float mat[3][3])
+{
+  float op[3]; 
+  for(int x=0; x<3; x++)
+  {
+    for(int y=0; y<3; y++)
+    {
+      for(int w=0; w<3; w++)
+      {
+       op[w]=a[x][w]*b[w][y];
+      } 
+      mat[x][y]=0;
+      mat[x][y]=op[0]+op[1]+op[2];
+      
+      float test=mat[x][y];
+    }
+  }
+}
 #endif

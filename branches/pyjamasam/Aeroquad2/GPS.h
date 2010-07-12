@@ -1,368 +1,417 @@
 #include "SubSystem.h"
 
-/*
-  TinyGPS - a small GPS library for Arduino providing basic NMEA parsing
- Copyright (C) 2008-9 Mikal Hart
- All rights reserved.
- 
- This library is free software; you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public
- License as published by the Free Software Foundation; either
- version 2.1 of the License, or (at your option) any later version.
- 
- This library is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- Lesser General Public License for more details.
- 
- You should have received a copy of the GNU Lesser General Public
- License along with this library; if not, write to the Free Software
- Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- */
+class GPSHardware : public HardwareComponent
+{
+	public:
+		typedef enum { FixNone = 0, Fix2D, Fix3D } GPSFixType;
+	
+	
+	protected:
+		unsigned long _lastFix;
+		
+		unsigned long _lng;
+		unsigned long _lat;
+		
+		unsigned long _alt;
+		
+		unsigned long _groundSpeed;
+		unsigned long _groundCourse;
+		
+		unsigned int _numberOfSatellites;
+		GPSFixType _fixState;
+		
+		unsigned long _time;
+		
+		bool _newData;
+		
+	public:
+		GPSHardware() : HardwareComponent()
+		{
+			_lastFix = 0;
+		}
 
-#define _GPS_VERSION 9 // software version of this library
-#define _GPS_MPH_PER_KNOT 1.15077945
-#define _GPS_MPS_PER_KNOT 0.51444444
-#define _GPS_KMPH_PER_KNOT 1.852
-#define _GPS_MILES_PER_METER 0.00062137112
-#define _GPS_KM_PER_METER 0.001
+		virtual void initialize(HardwareSerial *serialPort)
+		{
+			HardwareComponent::initialize();
+		}	
+		
+		virtual void process(const unsigned long currentTime, const byte dataByte)
+		{
+			HardwareComponent::process(currentTime);	
+		}
+		
+		virtual unsigned int baudRate()
+		{
+			return 9600;
+		}
+		
+		virtual const GPSFixType fixType()
+		{
+			return FixNone;
+		}
+		
+		const unsigned long lastFix()
+		{
+			return _lastFix;
+		}
+		
+		const unsigned long longitude()
+		{
+			return _lng;
+		}
+		
+		const unsigned long latitude()
+		{
+			return _lat;
+		}
+		
+		const unsigned long altitude()
+		{
+			return _alt;	
+		}
+};
 
-#define _GPRMC_TERM   "GPRMC"
-#define _GPGGA_TERM   "GPGGA"
+class MTKGPSHardware : public GPSHardware
+{
+	private:
+		uint8_t _calculatedChecksumA;     // Running checksum of the packet
+		uint8_t _calculatedChecksumB;
+		
+		uint8_t _step;
+		uint8_t _class;
+		uint8_t _id;
+
+		uint8_t _payloadChecksumA;		//packet checksum received over the wire
+		uint8_t _payloadChecksumB;
+		
+		uint8_t _payloadLengthHi;
+		uint8_t _payloadLengthLo;
+		uint8_t _payloadCounter;
+		
+		uint8_t _buffer[60];
+		
+		void _resetStateMachine()
+		{
+			_calculatedChecksumA = _calculatedChecksumB = 0;
+
+			_step = 0;
+			_class = 0;
+			_id = 0;
+
+			_payloadChecksumA = _payloadChecksumB = 0;
+
+		 	_payloadLengthHi = 0;
+			_payloadLengthLo = 0;
+			_payloadCounter = 0;
+		}
+		
+		void _updateRunningCheckup(const byte dataByte)
+		{
+			_calculatedChecksumA += dataByte;
+			_calculatedChecksumB += _calculatedChecksumA; 
+		}
+		
+		long _join4Bytes(unsigned char buffer[])
+		{
+		  	union long_union {
+				int32_t dword;
+				uint8_t  byte[4];
+			} longUnion;
+
+			longUnion.byte[3] = *buffer;
+			longUnion.byte[2] = *(buffer+1);
+			longUnion.byte[1] = *(buffer+2);
+			longUnion.byte[0] = *(buffer+3);
+			
+			return(longUnion.dword);
+		}
+		
+		void _parsePacket(void)
+		{
+		  	int j;
+			//Verifing if we are in class 1, you can change this "IF" for a "Switch" in case you want to use other MTK classes.. 
+			//In this case all the message im using are in class 1, to know more about classes check PAGE 60 of DataSheet.
+		  	if (_class == 0x01) 
+		  	{
+		    	switch(_id)	//Checking the MTK ID
+		    	{
+		    		case 0x05: //ID Custom
+					{
+		     			j=0;
+						_lng = _join4Bytes(&_buffer[j]); // lon*10000000
+						j+=4;
+						_lat = _join4Bytes(&_buffer[j]); // lat*10000000
+						j+=4;
+						_alt = _join4Bytes(&_buffer[j]);
+						j+=4;
+						_groundSpeed = _join4Bytes(&_buffer[j]);
+						j+=4;
+						_groundCourse = _join4Bytes(&_buffer[j]);
+						j+=4;
+						_numberOfSatellites = _buffer[j];
+						j++;
+						_fixState = (GPSHardware::GPSFixType)_buffer[j];
+						j++;
+						_time = _join4Bytes(&_buffer[j]);
+						
+						_newData = 1;
+		      			break;
+					}
+		      	}
+		    }   
+		}
+	
+	public:
+		unsigned int baudRate()
+		{
+			return 38400;
+		}
+		
+		void initialize(HardwareSerial *serialPort)
+		{
+			GPSHardware::initialize(serialPort);
+			
+			//Ensure that the GPS is running in 4hz mode
+			//This doesn't seam to work yet
+			serialPort->println("$PMTK220,250*2F");
+			
+			this->_resetStateMachine();
+		}
+		
+		void process(const unsigned long currentTime, const byte dataByte)
+		{
+			GPSHardware::process(currentTime, dataByte);	
+			
+			 switch(_step)     //Normally we start from zero. This is a state machine
+		     {
+		      	case 0: 
+				{
+		        	if (dataByte == 0xB5)  // MTK sync char 1
+					{
+		          		_step++;   //OH first data packet is correct, so jump to the next step
+					}
+		        	break;
+	 			}
+	
+		      	case 1:  
+				{
+		        	if (dataByte == 0x62)  // MTK sync char 2
+					{
+		          		_step++;   //ooh! The second data packet is correct, jump to the step 2
+					}
+		        	else 
+		          	{
+						_step = 0;   //Nop, is not correct so restart to step zero and try again.     
+					}
+		        	break;
+				}
+				
+		      	case 2:
+				{
+		        	_class = dataByte;
+		        	_updateRunningCheckup(_class);
+		        	_step++;
+		        	break;
+				}
+				
+		      	case 3:
+				{
+		        	_id = dataByte;
+		        	_step = 4;
+			        _payloadLengthHi = 26;
+					_payloadLengthLo = 0;
+					_payloadCounter = 0;
+
+			        _updateRunningCheckup(_id);
+		        	break;
+				}
+				
+		      	case 4:
+				{
+					if (_payloadCounter < _payloadLengthHi)  // We stay in this state until we reach the payload_length
+		        	{
+		          		_buffer[_payloadCounter] = dataByte;
+		          		_updateRunningCheckup(dataByte);
+		          		_payloadCounter++;
+		
+		          		if (_payloadCounter == _payloadLengthHi)
+		            	{
+							_step++;
+						}
+		       		}
+		        	break;
+				}
+				
+		      	case 5:
+				{
+		        	_payloadChecksumA = dataByte;   // First checksum byte
+		        	_step++;
+		        	break;
+				}
+				
+		      	case 6:
+				{
+					_payloadChecksumB = dataByte;	// Second checksum byte
+				
+			  		// We end the GPS read...
+		        	if((_calculatedChecksumA == _payloadChecksumA) && (_calculatedChecksumB == _payloadChecksumB))   // Verify the received checksum with the generated checksum.. 
+					{
+			  			this->_parsePacket();
+			
+						_lastFix = millis();			//record the last time we got a fix.  We can use this to check for a drop out
+					}
+		        	else
+				  	{
+				  		//bad checksum
+						//Ignore this packet
+				  	}
+				
+					//reset things to get ready for the next packet
+					this->_resetStateMachine();
+		        	break;
+			  	}
+			}
+		}
+};
 
 class GPS : public SubSystem
 {
 	private:
 		HardwareSerial *_serialPort;
-
-		//GPS Related properties
-		enum { _GPS_SENTENCE_GPGGA, _GPS_SENTENCE_GPRMC, _GPS_SENTENCE_OTHER };
-
-		unsigned long _time, _new_time;
-		unsigned long _date, _new_date;
-		long _latitude, _new_latitude;
-		long _longitude, _new_longitude;
-		long _altitude, _new_altitude;
-		unsigned long  _speed, _new_speed;
-		unsigned long  _course, _new_course;
-
-		unsigned long _last_time_fix, _new_time_fix;
-		unsigned long _last_position_fix, _new_position_fix;
-
-		// parsing state variables
-		byte _parity;
-		bool _is_checksum_term;
-		char _term[15];
-		byte _sentence_type;
-		byte _term_number;
-		byte _term_offset;
-		bool _gps_data_good;
-
-		unsigned long _encoded_characters;
-		unsigned short _good_sentences;
-		unsigned short _failed_checksum;
-		unsigned short _passed_checksum;
-
-  		int _from_hex(char a) 
-		{
-			if (a >= 'A' && a <= 'F')
-				return a - 'A' + 10;
-			else if (a >= 'a' && a <= 'f')
-				return a - 'a' + 10;
-			else
-				return a - '0';
-		}
-
-		bool _gpsisdigit(char c) 
-		{ 
-			return c >= '0' && c <= '9'; 
-		}
-
-		long _gpsatol(const char *str)
-		{
-			long ret = 0;
-			while (_gpsisdigit(*str))
-				ret = 10 * ret + *str++ - '0';
-			
-			return ret;
-		}
-
-  		int _gpsstrcmp(const char *str1, const char *str2)
-		{
-			while (*str1 && *str1 == *str2)
-				++str1, ++str2;
-			
-			return *str1;
-		}
-
- 		unsigned long _parse_decimal()
-		{
-			char *p = _term;
-			bool isneg = *p == '-';
-			
-			if (isneg) ++p;
-			
-			unsigned long ret = 100UL * _gpsatol(p);
-			
-			while (_gpsisdigit(*p)) ++p;
-			
-			if (*p == '.')
-			{
-				if (_gpsisdigit(p[1]))
-				{
-					ret += 10 * (p[1] - '0');
-					if (_gpsisdigit(p[2]))
-						ret += p[2] - '0';
-				}
-			}
-			return isneg ? -ret : ret;
-		}
-
-  		unsigned long _parse_degrees()
-		{
-			char *p;
-			unsigned long left = _gpsatol(_term);
-			unsigned long tenk_minutes = (left % 100UL) * 10000UL;
-			for (p=_term; _gpsisdigit(*p); ++p);
-				if (*p == '.')
-			{
-				unsigned long mult = 1000;
-				while (_gpsisdigit(*++p))
-				{
-					tenk_minutes += mult * (*p - '0');
-					mult /= 10;
-				}
-			}
-			return (left / 100) * 100000 + tenk_minutes / 6;
-		}
-
-
-  		bool _term_complete()
-		{
-			if (_is_checksum_term)
-			{
-				byte checksum = 16 * _from_hex(_term[0]) + _from_hex(_term[1]);
-				if (checksum == _parity)
-				{
-					if (_gps_data_good)
-					{
-						++_good_sentences;
-
-						_last_time_fix = _new_time_fix;
-						_last_position_fix = _new_position_fix;
-
-						switch(_sentence_type)
-						{
-							case _GPS_SENTENCE_GPRMC:
-								_time      = _new_time;
-								_date      = _new_date;
-								_latitude  = _new_latitude;
-								_longitude = _new_longitude;
-								_speed     = _new_speed;
-								_course    = _new_course;
-								break;
-							case _GPS_SENTENCE_GPGGA:
-								_altitude  = _new_altitude;
-								_time      = _new_time;
-								_latitude  = _new_latitude;
-								_longitude = _new_longitude;
-								break;
-						}
-						return true;
-					}
-				}
-				else
-				{
-					++_failed_checksum;
-				}
-				
-				return false;
-			}
-
-    		// the first term determines the sentence type
-			if (_term_number == 0)
-			{
-				if (!_gpsstrcmp(_term, _GPRMC_TERM))
-					_sentence_type = _GPS_SENTENCE_GPRMC;
-				else if (!_gpsstrcmp(_term, _GPGGA_TERM))
-					_sentence_type = _GPS_SENTENCE_GPGGA;
-				else
-					_sentence_type = _GPS_SENTENCE_OTHER;
-					
-				return false;
-    		}
-
-    		if (_sentence_type != _GPS_SENTENCE_OTHER && _term[0])
-			{
-				switch((_sentence_type == _GPS_SENTENCE_GPGGA ? 200 : 100) + _term_number)
-				{
-					case 101: // Time in both sentences
-					case 201:
-						_new_time = _parse_decimal();
-						_new_time_fix = millis();
-						break;
-					case 102: // GPRMC validity
-						_gps_data_good = _term[0] == 'A';
-						break;
-					case 103: // Latitude
-					case 202:
-						_new_latitude = _parse_degrees();
-						_new_position_fix = millis();
-						break;
-					case 104: // N/S
-					case 203:
-						if (_term[0] == 'S')
-							_new_latitude = -_new_latitude;
-						break;
-					case 105: // Longitude
-					case 204:
-						_new_longitude = _parse_degrees();
-					break;
-					case 106: // E/W
-					case 205:
-						if (_term[0] == 'W')
-							_new_longitude = -_new_longitude;
-					break;
-					case 107: // Speed (GPRMC)
-						_new_speed = _parse_decimal();
-						break;
-					case 108: // Course (GPRMC)
-						_new_course = _parse_decimal();
-						break;
-					case 109: // Date (GPRMC)
-						_new_date = _gpsatol(_term);
-						break;
-					case 206: // Fix data (GPGGA)
-						_gps_data_good = _term[0] > '0';
-						break;
-					case 209: // Altitude (GPGGA)
-						_new_altitude = _parse_decimal();
-						break;
-				}
-  			}
-
-  			return false;
-		}
-
-  		bool _encode(char c)
-		{
-			bool valid_sentence = false;
-
-			++_encoded_characters;
-			switch(c)
-			{
-				case ',': // term terminators
-					_parity ^= c;
-				case '\r':
-				case '\n':
-				case '*':
-					if (_term_offset < sizeof(_term))
-					{
-						_term[_term_offset] = 0;
-						valid_sentence = _term_complete();
-					}
-					++_term_number;
-					_term_offset = 0;
-					_is_checksum_term = c == '*';
-					return valid_sentence;
-
-				case '$': // sentence begin
-					_term_number = _term_offset = 0;
-					_parity = 0;
-					_sentence_type = _GPS_SENTENCE_OTHER;
-					_is_checksum_term = false;
-					_gps_data_good = false;
-					return valid_sentence;
-			}
-
-			// ordinary characters
-			if (_term_offset < sizeof(_term) - 1)
-				_term[_term_offset++] = c;
-			if (!_is_checksum_term)
-				_parity ^= c;
-
-			return valid_sentence;
-		}
+		GPSHardware *_gpsHardware;
 
 	public:
-  		enum { GPS_INVALID_AGE = 0xFFFFFFFF, GPS_INVALID_ANGLE = 999999999, GPS_INVALID_ALTITUDE = 999999999, GPS_INVALID_DATE = 0, 
-			GPS_INVALID_TIME = 0xFFFFFFFF, GPS_INVALID_SPEED = 999999999, GPS_INVALID_FIX_TIME = 0xFFFFFFFF};
-
-	GPS() : SubSystem()
-	{
-		_time = GPS_INVALID_TIME;
-		_date = GPS_INVALID_DATE;
-		_latitude = GPS_INVALID_ANGLE;
-		_longitude = GPS_INVALID_ANGLE;
-		_altitude = GPS_INVALID_ALTITUDE;
-		_speed = GPS_INVALID_SPEED;
-		_course = GPS_INVALID_ANGLE;
-		_last_time_fix = GPS_INVALID_FIX_TIME;
-		_last_position_fix = GPS_INVALID_FIX_TIME;
-		_parity = 0;
-		_is_checksum_term = false;
-		_sentence_type = _GPS_SENTENCE_OTHER;
-		_term_number = 0;
-		_term_offset = 0;
-		_gps_data_good = false;
-		_encoded_characters = 0;
-		_good_sentences = 0;
-		_failed_checksum = 0;
-		_term[0] = '\0';
-	}
-
-	void assignSerialPort(HardwareSerial *serialPort)
-	{
-		_serialPort = serialPort;
-	}
-
-	void initialize(const unsigned int frequency, const unsigned int offset = 0) 
-	{ 
-		SubSystem::initialize(frequency, offset); 
-
-		if (!_serialPort)
+		typedef enum { HardwareTypeNMEA = 0, HardwareTypeUBOX, HardwareTypeMTK } HardwareType;
+		
+		GPS() : SubSystem()
 		{
-			//No Serial port assigned.  Just disable this sub system
-			this->disable();
 		}
-		else
-		{
-			_serialPort->begin(4800);
-		}
-	}
 
-  	void process(const unsigned long currentTime)
-	{
-		if (this->_canProcess(currentTime))
+		void assignSerialPort(HardwareSerial *serialPort)
 		{
-			//We are enabled and have a valid serial port and our time contraint has been met.  So lets process some data
-			int charCounter = 0;
-			
-			//Only process up to 100 characters per cycle.  Just to make sure we don't consume all the CPU cycles
-			while (_serialPort->available() && charCounter <= 100)
+			_serialPort = serialPort;
+		}
+		
+		void setHardwareType(const HardwareType hardwareType)
+		{
+			switch (hardwareType)
 			{
-				_encode(_serialPort->read());
-				charCounter++;
+				case HardwareTypeMTK:
+				{
+					_gpsHardware = new MTKGPSHardware();
+					break;
+				}
 			}
 		}
-	}
 
-	void get_position(long *latitude, long *longitude, long *altitude, unsigned long *course, long *speed, unsigned long *fix_age = 0)
-	{
-		if (latitude) *latitude = _latitude;
-		if (longitude) *longitude = _longitude;
-		if (altitude) *altitude = _altitude;
-		if (course) *course = _course;
-		if (speed) *speed = _speed * _GPS_MPS_PER_KNOT;
-		if (fix_age) *fix_age = _last_position_fix == GPS_INVALID_FIX_TIME ? GPS_INVALID_AGE : millis() - _last_position_fix;
-	}
+		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
+		{ 
+			SubSystem::initialize(frequency, offset); 
 
-	void get_datetime(unsigned long *date, unsigned long *time, unsigned long *fix_age = 0)
-	{
-		if (date) *date = _date;
-		if (time) *time = _time;
-		if (fix_age) *fix_age = _last_time_fix == GPS_INVALID_FIX_TIME ? GPS_INVALID_AGE : millis() - _last_time_fix;
-	}
+			if (_serialPort && _gpsHardware)
+			{
+				_serialPort->begin(_gpsHardware->baudRate());
+				_gpsHardware->initialize(_serialPort);
+			}
+			else
+			{
+				this->disable();
+			}
+		}
+
+  		void process(const unsigned long currentTime)
+		{
+			if (this->_canProcess(currentTime))
+			{
+				unsigned int numberBytesAvailable = _serialPort->available();
+				if (numberBytesAvailable > 0)
+				{
+					for (int i=0; i < numberBytesAvailable; i++)
+				    {
+						_gpsHardware->process(currentTime, _serialPort->read());
+					}
+				}
+			}
+		}
+		
+		//Public accessors for GPS data
+	    const GPSHardware::GPSFixType fixType()
+		{
+			if (_gpsHardware)
+			{
+				if (millis() - _gpsHardware->lastFix() < 2000)
+				{
+					return _gpsHardware->fixType();
+				}
+				else
+				{
+					//haven't gotten a fix in more then 2 seconds.  This isn't good.
+					return GPSHardware::FixNone;
+				}
+			}
+			else
+			{
+				//No GPS hardware available.
+				return GPSHardware::FixNone;
+			}
+		}
+		
+		const unsigned long lastFix()
+		{
+			if (_gpsHardware)
+			{
+				return _gpsHardware->lastFix();
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+		const unsigned long longitude()
+		{
+			if (_gpsHardware)
+			{
+				return _gpsHardware->longitude();
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+		const unsigned long latitude()
+		{
+			if (_gpsHardware)
+			{
+				return _gpsHardware->latitude();
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+		const unsigned long altitude()
+		{
+			if (_gpsHardware)
+			{
+				return _gpsHardware->altitude();
+			}
+			else
+			{
+				return 0;
+			}	
+		}
+
+/*unsigned long _groundSpeed;
+unsigned long _groundCourse;
+
+unsigned int _numberOfSatellites;
+GPSFixType _fixState;
+
+unsigned long _time;*/
+		
 };
 
 

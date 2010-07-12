@@ -3,16 +3,6 @@
 #define BAUD 115200
 #define MAXASSIGNEDSERIALPORTS 4
 
-#define USESERIALDEBUG
-
-#ifdef USESERIALDEBUG
-#define DEBUGSERIALPRINT(value) {serialcoms.debugPrint(value);}
-#define DEBUGSERIALPRINTLN(value) {serialcoms.debugPrintln(value);}
-#else
-#define DEBUGSERIALPRINT(value)
-#define DEBUGSERIALPRINTLN(value)
-#endif
-
 class SerialComs : public SubSystem
 {
 	private:
@@ -97,8 +87,12 @@ class SerialComs : public SubSystem
 			{
 				for (unsigned int i = 0; i < _serialPortCount; i++)
 				{
-					_serialPorts[i]->begin(BAUD);
+					if (_serialPorts[i])
+					{
+						_serialPorts[i]->begin(BAUD);
+					}
 				}
+				
 				this->enable();
 			}
 			else
@@ -182,7 +176,7 @@ class SerialComs : public SubSystem
 				}
 			}
 		}
-		
+
 		void debugPrintln(const char* value)
 		{
 			for (unsigned int i = 0; i < _serialPortCount; i++)

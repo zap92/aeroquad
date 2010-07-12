@@ -3,6 +3,10 @@
 
 class SubSystem
 {
+	
+private:
+	static SubSystem* _staticInstance;
+	
 	protected:
 		unsigned int _enabled;
 		unsigned long _lastRunTime;
@@ -10,11 +14,18 @@ class SubSystem
 		unsigned int _frequency;
 
 	public:
+		static SubSystem* getInstance()
+		{
+			return _staticInstance;
+		}
+		
 		SubSystem() 
 		{
 			_enabled = 0;
 			_lastRunTime = 0;
 			_frequency = 0;
+			
+			_staticInstance = this;
 		}
 
 		virtual void initialize(const unsigned int frequency, const unsigned int offset) 
@@ -57,6 +68,8 @@ class SubSystem
 		
 		}
 };
+
+SubSystem* SubSystem::_staticInstance = NULL;
 
 #endif
 
