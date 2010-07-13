@@ -27,7 +27,7 @@ class IMUHardware : public AnalogInHardwareComponent
 		}
 		
 		
-#define ZEROLEVELSAMPLECOUNT 20
+#define ZEROLEVELSAMPLECOUNT 50
 		virtual void calibrateZero()
 		{
 			int zeroLevelSamples[ZEROLEVELSAMPLECOUNT];
@@ -120,45 +120,45 @@ class OilpanIMU : public IMUHardware
 			
 			//With the settings below gyros give us deg/ms
 			_inputConfigurations[IMUGyroX].zeroLevel = 1370;			//in mv
-			_inputConfigurations[IMUGyroX].sensitivity = 2.2;			//in mV/deg/ms
+			_inputConfigurations[IMUGyroX].sensitivity = 2.2;				//in mV/deg/ms
 			_inputConfigurations[IMUGyroX].inputInUse = true; 
-			_inputConfigurations[IMUGyroX].hardwarePin = 2;
-			_inputConfigurations[IMUGyroX].invert = true;
+			_inputConfigurations[IMUGyroX].hardwarePin = 2;	
+			_inputConfigurations[IMUGyroX].invert = true;		
 						
 			_inputConfigurations[IMUGyroY].zeroLevel = 1370;			//in mv
-			_inputConfigurations[IMUGyroY].sensitivity = 2.2;			//in mV/deg/ms
+			_inputConfigurations[IMUGyroY].sensitivity = 2.2;				//in mV/deg/ms
 			_inputConfigurations[IMUGyroY].inputInUse = true; 
-			_inputConfigurations[IMUGyroY].hardwarePin = 1;
+			_inputConfigurations[IMUGyroY].hardwarePin = 1;			
 			
 			_inputConfigurations[IMUGyroZ].zeroLevel = 1370;			//in mv
-			_inputConfigurations[IMUGyroZ].sensitivity = 2.2;			//in mV/deg/ms
+			_inputConfigurations[IMUGyroZ].sensitivity = 2.2;				//in mV/deg/ms
 			_inputConfigurations[IMUGyroZ].inputInUse = true; 
-			_inputConfigurations[IMUGyroZ].hardwarePin = 0;
+			_inputConfigurations[IMUGyroZ].hardwarePin = 0;			
 			
 			
 			//X,Y,Z Accels
 			//With the settings below accels give us G
 			_inputConfigurations[IMUAcclX].zeroLevel = 1650;			//in mv
-		 	_inputConfigurations[IMUAcclX].sensitivity = 310;			//in mv/G
+		 	_inputConfigurations[IMUAcclX].sensitivity = 310;				//in mv/G
 			_inputConfigurations[IMUAcclX].inputInUse = true; 
 			_inputConfigurations[IMUAcclX].hardwarePin = 4;
 			_inputConfigurations[IMUAcclX].invert = true;
 
 			_inputConfigurations[IMUAcclY].zeroLevel = 1650;			//in mv
-		 	_inputConfigurations[IMUAcclY].sensitivity = 310;			//in mv/G
+		 	_inputConfigurations[IMUAcclY].sensitivity = 310;				//in mv/G
 			_inputConfigurations[IMUAcclY].inputInUse = true; 
 			_inputConfigurations[IMUAcclY].hardwarePin = 5;
-			_inputConfigurations[IMUAcclY].invert = true;
+			//_inputConfigurations[IMUAcclY].invert = true;
 
 			_inputConfigurations[IMUAcclZ].zeroLevel = 1650;			//in mv
-		 	_inputConfigurations[IMUAcclZ].sensitivity = 310;			//in mv/G
+		 	_inputConfigurations[IMUAcclZ].sensitivity = 310;				//in mv/G
 			_inputConfigurations[IMUAcclZ].inputInUse = true; 
 			_inputConfigurations[IMUAcclZ].hardwarePin = 6;
 			
 
 			//Temp input
 			_inputConfigurations[6].zeroLevel = 1375;			//in mv
-		 	_inputConfigurations[6].sensitivity = 4.4;			//in mv/oC
+		 	_inputConfigurations[6].sensitivity = 4.4;				//in mv/oC
 			_inputConfigurations[6].inputInUse = true; 
 			_inputConfigurations[6].hardwarePin = 3;
 			
@@ -257,7 +257,6 @@ class OilpanIMU : public IMUHardware
 };
 
 OilpanIMU *OilpanIMU::_staticInstance = NULL;
-
 //Timer used to trigger the frequency that we read the ADC
 ISR (TIMER2_OVF_vect)
 {
@@ -352,6 +351,7 @@ class IMUFilter
 {
 	protected:
 		typedef enum { IMUFilterAxisX = 0, IMUFilterAxisY, IMUFilterAxisZ } IMUFilterAxis;
+		typedef enum { IMUFilterRoll = 0, IMUFilterPitch, IMUFilterYaw } IMUFilterAttitude;
 		
 		unsigned long _lastProcessTime;
 		unsigned int  _deltaTime;
@@ -362,27 +362,49 @@ class IMUFilter
 		float _gyroRaw[3];
 		int _suplimentalRaw[3];
 
-		float _processedRate[3];
-		float _processedAngleInDegrees[3];
+		float _processedRateInRadians[3];
+		float _processedRateInDegrees[3];		
 		float _processedAngleInRadians[3];
+		float _processedAngleInDegrees[3];
 		
-		const float _process3dYawReading(const int xReading, const int yReading, const int zReading, const float roll, const float pitch)
+		const float _correctYawReading(const float rollAngle, const float pitchAngle)
 		{			
-			//float flatHeadingInRadians = atan2(-yReading, xReading);
-			
 			//http://www.ssec.honeywell.com/magnetic/datasheets/lowcost.pdf
-			float cos_roll = cos(roll);
-			float sin_roll = sin(roll);
-			float cos_pitch = cos(pitch);
-			float sin_pitch = sin(pitch);
+			float cos_roll = cos(rollAngle);
+			float sin_roll = sin(rollAngle);
+			float cos_pitch = cos(pitchAngle);
+			float sin_pitch = sin(pitchAngle);
 			
 			// Tilt compensated Magnetic field X
-			float compensatedX = (xReading*cos_pitch) + (yReading*sin_roll*sin_pitch) + (zReading*cos_roll*sin_pitch);
+			float compensatedX = (_suplimentalRaw[0]*cos_pitch) + (_suplimentalRaw[1]*sin_roll*sin_pitch) + (_suplimentalRaw[2]*cos_roll*sin_pitch);
 			// Tilt compensated Magnetic field Y
-			float compensatedY = (yReading*cos_roll) - (zReading*sin_roll);
+			float compensatedY = (_suplimentalRaw[1]*cos_roll) - (_suplimentalRaw[2]*sin_roll);
 
 			// Compensated Magnetic Heading
 			return atan2(-compensatedY,compensatedX);
+		}
+		
+		void _calculateRawAngles(float *rollAngle, float *pitchAngle, float* yawAngle)
+		{
+			float gravityVector = sqrt(sq(_accelRaw[IMUFilterAxisX]) + sq(_accelRaw[IMUFilterAxisY]) + sq(_accelRaw[IMUFilterAxisZ]));
+			
+			//Pitch is defined as moving AROUND the X axis
+			if (pitchAngle)
+			{
+				*pitchAngle = acos(_accelRaw[IMUFilterAxisX]/gravityVector) - 1.57079633;				
+			}
+			
+			//Roll is defined as moving AROUND the Y axis
+			if (rollAngle)
+			{
+				*rollAngle = -acos(_accelRaw[IMUFilterAxisY]/gravityVector) + 1.57079633;								
+			}
+			
+			//YAW is defined as moving AROUND the Z axis
+			if (yawAngle)
+			{
+				*yawAngle = _correctYawReading(*rollAngle, *pitchAngle);
+			}
 		}
 		
 	public:
@@ -393,11 +415,13 @@ class IMUFilter
 			
 			_firstPass = true;
 			
-			_processedRate[IMUFilterAxisX] = _processedRate[IMUFilterAxisY] = _processedRate[IMUFilterAxisZ] = 0;
-			_processedAngleInDegrees[IMUFilterAxisX] = _processedAngleInDegrees[IMUFilterAxisY] = _processedAngleInDegrees[IMUFilterAxisZ] = 0;
-			_processedAngleInRadians[IMUFilterAxisX] = _processedAngleInRadians[IMUFilterAxisY] = _processedAngleInRadians[IMUFilterAxisZ] = 0;
-			
 			_suplimentalRaw[IMUFilterAxisX] = _suplimentalRaw[IMUFilterAxisY] = _suplimentalRaw[IMUFilterAxisZ] = 0;
+			
+			_processedRateInRadians[IMUFilterRoll] = _processedRateInRadians[IMUFilterPitch] = _processedRateInRadians[IMUFilterYaw] = 0;			
+			_processedRateInDegrees[IMUFilterRoll] = _processedRateInDegrees[IMUFilterPitch] = _processedRateInDegrees[IMUFilterYaw] = 0;			
+			
+			_processedAngleInDegrees[IMUFilterRoll] = _processedAngleInDegrees[IMUFilterPitch] = _processedAngleInDegrees[IMUFilterYaw] = 0;
+			_processedAngleInRadians[IMUFilterRoll] = _processedAngleInRadians[IMUFilterPitch] = _processedAngleInRadians[IMUFilterYaw] = 0;						
 		}
 		
 		virtual void initialize()
@@ -410,10 +434,21 @@ class IMUFilter
 			_deltaTime = currentTime - _lastProcessTime;
 			_lastProcessTime = currentTime;
 			
-			//Copy over the gyro rates.  If the subclassed filters overwrite then so be it, but this is the default
-			_processedRate[IMUFilterAxisX] = _gyroRaw[IMUFilterAxisX];
-			_processedRate[IMUFilterAxisY] = _gyroRaw[IMUFilterAxisY];
-			_processedRate[IMUFilterAxisZ] = _gyroRaw[IMUFilterAxisZ];			
+			//Copy over the gyro rates.  If the subclassed filters overwrite then so be it, but this is the default			
+			
+			//Pitch is defined as moving AROUND the X axis
+			_processedRateInDegrees[IMUFilterRoll] = _gyroRaw[IMUFilterAxisY];
+			
+			//Roll is defined as moving AROUND the Y axis
+			_processedRateInDegrees[IMUFilterPitch] = _gyroRaw[IMUFilterAxisX];
+			
+			//YAW is defined as moving AROUND the Z axis
+			_processedRateInDegrees[IMUFilterYaw] = _gyroRaw[IMUFilterAxisZ];
+			
+			//Gyros are in deg/s, so we need to switch to rad/s
+			_processedRateInRadians[IMUFilterRoll] = ToRad(_processedRateInDegrees[IMUFilterRoll]);
+			_processedRateInRadians[IMUFilterPitch] = ToRad(_processedRateInDegrees[IMUFilterPitch]);
+			_processedRateInRadians[IMUFilterYaw] = ToRad(_processedRateInDegrees[IMUFilterYaw]);					
 		}
 		
 		void setCurrentReadings(const float *currentReadings)
@@ -433,65 +468,78 @@ class IMUFilter
 		void setSuplimentalYawReadings (const int *currentReadings)
 		{
 			_suplimentalRaw[IMUFilterAxisX] = currentReadings[0];
-			_suplimentalRaw[IMUFilterAxisY] = currentReadings[0];
-			_suplimentalRaw[IMUFilterAxisZ] = currentReadings[0];
+			_suplimentalRaw[IMUFilterAxisY] = currentReadings[1];
+			_suplimentalRaw[IMUFilterAxisZ] = currentReadings[2];
 		}
 		
 		//Accessors for the processed values
-		const float currentRollRate()
+		const float currentRollRateInDegrees()
 		{
-			return _processedRate[IMUFilterAxisX];
+			return _processedRateInDegrees[IMUFilterRoll];
 		}
 		
-		const float currentPitchRate()
+		const float currentPitchRateInDegrees()
 		{
-			return _processedRate[IMUFilterAxisY];
+			return _processedRateInDegrees[IMUFilterPitch];
 		}
 		
-		const float currentYawRate()
+		const float currentYawRateInDegrees()
 		{
-			return _processedRate[IMUFilterAxisZ];
+			return _processedRateInDegrees[IMUFilterYaw];
 		}
+		
+		
+		const float currentRollRateInRadians()
+		{
+			return _processedRateInRadians[IMUFilterRoll];
+		}
+		
+		const float currentPitchRateInRadians()
+		{
+			return _processedRateInRadians[IMUFilterPitch];
+		}
+		
+		const float currentYawRateInRadians()
+		{
+			return _processedRateInRadians[IMUFilterYaw];
+		}
+		
+		
+		
 		
 		const float currentRollAngleInDegrees()
-		{
-			//The roll angle rotates "around" the Y axis
-			return _processedAngleInDegrees[IMUFilterAxisY];
+		{		
+			return _processedAngleInDegrees[IMUFilterRoll];
 		}
 		
 		const float currentPitchAngleInDegrees()
-		{
-			//The roll angle rotates "around" the X axis
-			return _processedAngleInDegrees[IMUFilterAxisX];
+		{			
+			return _processedAngleInDegrees[IMUFilterPitch];
 		}
 		
 		const float currentYawAngleInDegrees()
 		{
-			return _processedAngleInDegrees[IMUFilterAxisZ];
+			return _processedAngleInDegrees[IMUFilterYaw];
 		}
-		
-		
+				
 		
 		const float currentRollAngleInRadians()
-		{
-			//The roll angle rotates "around" the Y axis
-			return _processedAngleInRadians[IMUFilterAxisY];
+		{			
+			return _processedAngleInRadians[IMUFilterRoll];
 		}
 		
 		const float currentPitchAngleInRadians()
-		{
-			//The roll angle rotates "around" the X axis
-			return _processedAngleInRadians[IMUFilterAxisX];
+		{		
+			return _processedAngleInRadians[IMUFilterPitch];
 		}
 		
 		const float currentYawAngleInRadians()
 		{
-			return _processedAngleInRadians[IMUFilterAxisZ];
-		}
+			return _processedAngleInRadians[IMUFilterYaw];
+		}	
 };
 
 //Working
-//No Yaw Processing yet
 //Just a simple Accel only filter.
 class SimpleAccellOnlyIMUFilter : public IMUFilter
 {
@@ -510,22 +558,19 @@ class SimpleAccellOnlyIMUFilter : public IMUFilter
 		{
 			IMUFilter::filter(currentTime);
 			
-			//Very simplistic angle determination.
-			//Doesn't use the gyros at all.
-			float R = sqrt(sq(_accelRaw[IMUFilterAxisX]) + sq(_accelRaw[IMUFilterAxisY]) + sq(_accelRaw[IMUFilterAxisZ]));
-			
-			_processedAngleInRadians[IMUFilterAxisX] = fmap(acos(_accelRaw[IMUFilterAxisX]/R), 0, M_PI, -(M_PI/2), (M_PI/2));
-			_processedAngleInRadians[IMUFilterAxisY] = fmap(acos(_accelRaw[IMUFilterAxisY]/R), 0, M_PI, -(M_PI/2), (M_PI/2));
-			
-			_processedAngleInDegrees[IMUFilterAxisX] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
-			_processedAngleInDegrees[IMUFilterAxisY] = ToDeg(_processedAngleInRadians[IMUFilterAxisY]);
+			//Very simplistic angle determination (just use the raw acels - very noisy, but good to test things without the filter getting in the way)
+			this->_calculateRawAngles(&_processedAngleInRadians[IMUFilterRoll], &_processedAngleInRadians[IMUFilterPitch], &_processedAngleInRadians[IMUFilterYaw]);
+						
+			//Convert to Degrees just incase we need it anywhere (convience sake only)			
+			_processedAngleInDegrees[IMUFilterRoll] = ToDeg(_processedAngleInRadians[IMUFilterRoll]);
+			_processedAngleInDegrees[IMUFilterPitch] = ToDeg(_processedAngleInRadians[IMUFilterPitch]);
+			_processedAngleInDegrees[IMUFilterYaw] = ToDeg(_processedAngleInRadians[IMUFilterYaw]);
 			
 			if (_firstPass) {_firstPass = false;}
 		}
 };
 
 //Working
-//No Yaw processing yet
 //Based on the code by RoyB at: http://www.rcgroups.com/forums/showpost.php?p=12082524&postcount=1286    
 class ComplimentryMUFilter : public IMUFilter
 {
@@ -544,22 +589,28 @@ class ComplimentryMUFilter : public IMUFilter
 		float newRate_pitch;
 		float filterTerm0_pitch;
 		float filterTerm1_pitch;
-		float filterTerm2_pitch;
+		float filterTerm2_pitch;	
+		
+		float previousAngle_yaw;
+		float newAngle_yaw;
+		float newRate_yaw;
+		float filterTerm0_yaw;
+		float filterTerm1_yaw;
+		float filterTerm2_yaw;					
 
 	public:
 		ComplimentryMUFilter() : IMUFilter()
 		{
-		    filterTerm0_roll = filterTerm0_pitch = 0;
-			filterTerm1_roll = filterTerm1_pitch = 0;
-			filterTerm2_roll = filterTerm2_pitch = 0;
+		    filterTerm0_roll = filterTerm0_pitch = filterTerm0_yaw = 0;
+			filterTerm1_roll = filterTerm1_pitch = filterTerm1_yaw =0;
+			filterTerm2_roll = filterTerm2_pitch = filterTerm2_yaw =0;
+			
+			previousAngle_roll = previousAngle_pitch = previousAngle_yaw = 0;			 
 		}
 		
 		void initialize()
 		{
-			previousAngle_roll = 0;
-			previousAngle_pitch = 0;
-
-		    timeConstantCF = 4.0;
+		    timeConstantCF = 4;
 		
 			IMUFilter::initialize();
 		}
@@ -568,149 +619,58 @@ class ComplimentryMUFilter : public IMUFilter
 		{			
 			IMUFilter::filter(currentTime);
 			
-			float dt = _deltaTime / 1000.0;
+			float dt = _deltaTime / 1000.0;			//delta time in Seconds
 			
-			float newRollAngle = atan2(_accelRaw[IMUFilterAxisX],_accelRaw[IMUFilterAxisZ]);
-			float newPitchAngle = atan2(_accelRaw[IMUFilterAxisY],_accelRaw[IMUFilterAxisZ]);
-			
-			float newRollRate = ToRad(_gyroRaw[IMUFilterAxisX]);
-			float newPitchRate = ToRad(_gyroRaw[IMUFilterAxisY]);
-									
+			//Only calculate the roll and pitch.  We'll oragnize YAW down further after filtering the data				
+			float newPitchAngle, newRollAngle, newYawAngle;
+			this->_calculateRawAngles(&newRollAngle, &newPitchAngle, NULL);
+												
 			if (_firstPass)
 			{
 				previousAngle_roll = newRollAngle;
-				filterTerm2_roll = newRollRate;
+				filterTerm2_roll = _processedRateInRadians[IMUFilterRoll];
 				
 				previousAngle_pitch = newPitchAngle;
-				filterTerm2_pitch = newPitchRate;
+				filterTerm2_pitch = _processedRateInRadians[IMUFilterPitch];	
+				
+				//previousAngle_yaw = newYawAngle;
+				//filterTerm2_yaw = _processedRateInRadians[IMUFilterYaw];								
 				
 				_firstPass = false;
 			}
 			else
 			{		
-				filterTerm0_roll = (newRollAngle - previousAngle_roll) * timeConstantCF *  timeConstantCF;
+				float sqTimeConstant = sq(timeConstantCF *  timeConstantCF);
+				float doubleTimeConstant = 2 * timeConstantCF;
+				
+				filterTerm0_roll = (newRollAngle - previousAngle_roll) * sqTimeConstant;
 				filterTerm2_roll += (filterTerm0_roll * dt);
-				filterTerm1_roll = filterTerm2_roll + (newRollAngle - previousAngle_roll) * 2 *  timeConstantCF + newRollRate;
+				filterTerm1_roll = filterTerm2_roll + (newRollAngle - previousAngle_roll) * doubleTimeConstant + _processedRateInRadians[IMUFilterRoll];
 				previousAngle_roll = (filterTerm1_roll * dt) + previousAngle_roll;
 				
-				filterTerm0_pitch = (newPitchAngle - previousAngle_pitch) * timeConstantCF *  timeConstantCF;
+				filterTerm0_pitch = (newPitchAngle - previousAngle_pitch) * sqTimeConstant;
 				filterTerm2_pitch += filterTerm0_pitch * dt;
-				filterTerm1_pitch = filterTerm2_pitch + (newPitchAngle - previousAngle_pitch) * 2 *  timeConstantCF + newPitchRate;
-				previousAngle_pitch = (filterTerm1_pitch * dt) + previousAngle_pitch;
-			}
-			
-			_processedAngleInRadians[IMUFilterAxisX] = previousAngle_roll;
-			_processedAngleInRadians[IMUFilterAxisY] = previousAngle_pitch;
-			
-			_processedAngleInDegrees[IMUFilterAxisX] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
-			_processedAngleInDegrees[IMUFilterAxisY] = ToDeg(_processedAngleInRadians[IMUFilterAxisY]);
-		}
-};
-
-//Not Working.
-//Seams to "Lock" at certian angles
-//Based on the code at: http://www.starlino.com/imu_guide.html
-class SimplifiedKalmanIMUFilter : public IMUFilter
-{
-	private:
-		//Notation "w" stands for one of the axes, so for example RwAcc[0],RwAcc[1],RwAcc[2] means RxAcc,RyAcc,RzAcc
-		float _rwEst[3];    	 //Rw estimated from combining RwAcc and RwGyro
-		float _rwGyro[3];        //Rw obtained from last estimated value and gyro movement
-		float _rwAcc[3];        //projection of normalized gravitation force vector on x/y/z axis, as measured by accelerometer
-		float _awz[2];
-		
-		float _gyroWeight;		// gyro weight/smooting factor	
-	public:
-		SimplifiedKalmanIMUFilter() : IMUFilter()
-		{
-			
-		}
-		
-		void initialize()
-		{
-			IMUFilter::initialize();
-			
-			_gyroWeight = 10;
-		}
-		
-		void filter(const unsigned long currentTime)
-		{	
-			IMUFilter::filter(currentTime);  
-			
-			static float tmpf;  			//temp variable
-			static int w;
-
-			//get accelerometer readings in g, gives us RwAcc vector
-			for(w=0;w<=2;w++)
-			{
-				_rwAcc[w] = _accelRaw[w];
-			}
-
-			//normalize vector (convert to a vector with same direction and with length 1)
-			normalize3DVector(_rwAcc);
-
-			if (_firstPass)
-			{
-			    for(w=0;w<=2;w++)
-				{
-					_rwEst[w] = _rwAcc[w];    //initialize with accelerometer readings
-				}
-				_firstPass = false;
-			}
-			else
-			{
-			    //evaluate RwGyro vector
-			    if(fabs(_rwEst[2]) < 0.1)
-				{
-			      	//Rz is too small and because it is used as reference for computing Axz, Ayz it's error fluctuations will amplify leading to bad results
-			      	//in this case skip the gyro data and just use previous estimate
-			      	for(w=0;w<=2;w++)
-			 		{
-						_rwGyro[w] = _rwEst[w];
-					}
-			    }
-				else
-				{
-			      //get angles between projection of R on ZX/ZY plane and Z axis, based on last RwEst
-			      	for(w=0;w<=1;w++)
-					{
-						tmpf = (_gyroRaw[w] / 1000.0f) / 1000.0f;                   //get current gyro rate in deg/ns
-						tmpf *= (_deltaTime / 1000.0f);                     		//get angle change in deg
-			        	_awz[w] = (atan2(_rwEst[w],_rwEst[2]));   		//get angle and convert to degrees        
-			        	_awz[w] += ToRad(tmpf);                         //get updated angle according to gyro movement
-			      	}
-
-			      	//estimate sign of RzGyro by looking in what qudrant the angle Axz is, 
-			      	//RzGyro is pozitive if  Axz in range -90 ..90 => cos(Awz) >= 0
-			      	int signRzGyro = ( cos(_awz[0]) >=0 ) ? 1 : -1;
-
-			      	//reverse calculation of RwGyro from Awz angles, for formula deductions see  http://starlino.com/imu_guide.html
-			      	for(w=0;w<=1;w++)
-					{
-			        	_rwGyro[w] = sin(_awz[w]);
-			        	_rwGyro[w] /= sqrt( 1 + sq(cos(_awz[w])) * sq(tan(_awz[1-w])) );
-			   		}
-			    
-					_rwGyro[2] = signRzGyro * sqrt(1 - sq(_rwGyro[0]) - sq(_rwGyro[1]));
-			    
-			    	//combine Accelerometer and gyro readings
-			    	for(w=0;w<=2;w++)
-			 		{
-						_rwEst[w] = (_rwAcc[w] + _gyroWeight * _rwGyro[w]) / (1 + _gyroWeight);
-					}
+				filterTerm1_pitch = filterTerm2_pitch + (newPitchAngle - previousAngle_pitch) * doubleTimeConstant + _processedRateInRadians[IMUFilterPitch];
+				previousAngle_pitch = (filterTerm1_pitch * dt) + previousAngle_pitch;	
 				
-			    	normalize3DVector(_rwEst);
-				}
-			}
+				newYawAngle = this->_correctYawReading(previousAngle_roll, previousAngle_pitch);
+				
+				/*filterTerm0_yaw = (newYawAngle - previousAngle_yaw) * sqTimeConstant;
+				filterTerm2_yaw += filterTerm0_yaw * dt;
+				filterTerm1_yaw = filterTerm2_yaw + (newYawAngle - previousAngle_yaw) * doubleTimeConstant + _processedRateInRadians[IMUFilterYaw];
+				previousAngle_yaw = (filterTerm1_yaw * dt) + previousAngle_yaw;*/			
+			}						
 			
-			//This algo returns us data with the signs backwards to what the rest of the system expects.  Invert
-			_processedAngleInRadians[IMUFilterAxisX] = -_rwEst[0];
-			_processedAngleInRadians[IMUFilterAxisY] = -_rwEst[1];
+			_processedAngleInRadians[IMUFilterRoll] = previousAngle_roll;
+			_processedAngleInRadians[IMUFilterPitch] = previousAngle_pitch;
+			_processedAngleInRadians[IMUFilterYaw] = newYawAngle; //previousAngle_yaw; <-> filtered YAW "bounces"
 			
-			_processedAngleInDegrees[IMUFilterAxisX] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
-			_processedAngleInDegrees[IMUFilterAxisY] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
+			_processedAngleInDegrees[IMUFilterRoll] = ToDeg(_processedAngleInRadians[IMUFilterRoll]);
+			_processedAngleInDegrees[IMUFilterPitch] = ToDeg(_processedAngleInRadians[IMUFilterPitch]);
+			_processedAngleInDegrees[IMUFilterYaw] = ToDeg(_processedAngleInRadians[IMUFilterYaw]);
 		}
 };
+
 
 //Not working yet.
 //Just returns 0's
@@ -814,37 +774,32 @@ class DCMIMUFilter : public IMUFilter
 			//Compensation the Roll, Pitch and Yaw drift. 
 			float errorCourse;
 			static float Scaled_Omega_P[3];
-			static float Scaled_Omega_I[3];
-			float Accel_magnitude;
-			float Accel_weight;
+			static float Scaled_Omega_I[3];			
 
 			//*****Roll and Pitch***************
 			Vector_Cross_Product(&_errorRollPitch[0],&_accelVector[0],&_DCMMatrix[2][0]); //adjust the ground of reference
-			Vector_Scale(&_omegaP[0],&_errorRollPitch[0],_kpRollPitch*Accel_weight);
+			Vector_Scale(&_omegaP[0],&_errorRollPitch[0],_kpRollPitch*_accelWeight);
 
-			Vector_Scale(&Scaled_Omega_I[0],&_errorRollPitch[0],_kpRollPitch*Accel_weight);
+			Vector_Scale(&Scaled_Omega_I[0],&_errorRollPitch[0],_kpRollPitch*_accelWeight);
 			Vector_Add(_omegaI,_omegaI,Scaled_Omega_I);
 
 			//*****YAW***************
 			// We make the gyro YAW drift correction based on compass magnetic heading 
-			if (0) 
-			{
-				/*errorCourse = (DCM_Matrix[0][0]*APM_Compass.Heading_Y) - (DCM_Matrix[1][0]*APM_Compass.Heading_X);  //Calculating YAW error
-				Vector_Scale(errorYaw,&DCM_Matrix[2][0],errorCourse); //Applys the yaw correction to the XYZ rotation of the aircraft, depeding the position.
+			errorCourse = (_DCMMatrix[0][0]*_suplimentalRaw[IMUFilterAxisY]) - (_DCMMatrix[1][0]*_suplimentalRaw[IMUFilterAxisX]);  //Calculating YAW error
+			Vector_Scale(_errorYaw,&_DCMMatrix[2][0],errorCourse); //Applys the yaw correction to the XYZ rotation of the aircraft, depeding the position.
 
-				Vector_Scale(&Scaled_Omega_P[0],&errorYaw[0],Kp_YAW);
-				Vector_Add(Omega_P,Omega_P,Scaled_Omega_P);//Adding  Proportional.
+			Vector_Scale(&Scaled_Omega_P[0],&_errorYaw[0],_kpYaw);
+			Vector_Add(_omegaP,_omegaP,Scaled_Omega_P);//Adding  Proportional.
 
-				Vector_Scale(&Scaled_Omega_I[0],&errorYaw[0],Ki_YAW);
-				Vector_Add(Omega_I,Omega_I,Scaled_Omega_I);//adding integrator to the Omega_I*/
-			}
+			Vector_Scale(&Scaled_Omega_I[0],&_errorYaw[0],_kiYaw);
+			Vector_Add(_omegaI,_omegaI,Scaled_Omega_I);//adding integrator to the Omega_I*/			
 		}
 		
 		void _eulerAngles()
 		{
 			// Euler angles from DCM matrix
-			_processedAngleInDegrees[IMUFilterAxisX] = ToDeg(atan2(_DCMMatrix[2][1],_DCMMatrix[2][2]));
-			_processedAngleInDegrees[IMUFilterAxisY] = ToDeg(asin(-_DCMMatrix[2][0]));
+			_processedAngleInRadians[IMUFilterRoll] = atan2(_DCMMatrix[2][1],_DCMMatrix[2][2]);
+			_processedAngleInRadians[IMUFilterPitch] = asin(-_DCMMatrix[2][0]);
 			//yaw = atan2(DCM_Matrix[1][0],DCM_Matrix[0][0]);
 		}
 		
@@ -1000,8 +955,7 @@ private:
 	};
 	
 	struct Gyro1DKalman _rollFilterData;
-	struct Gyro1DKalman _pitchFilterData;
-	struct Gyro1DKalman _yawFilterData;
+	struct Gyro1DKalman _pitchFilterData;	
 	
 	// Initializing the struct
 	void _init(struct Gyro1DKalman *filterdata, float Q_angle, float Q_gyro, float R_angle)
@@ -1104,8 +1058,7 @@ public:
 		IMUFilter::initialize();
 		
 		_init(&_rollFilterData, 0.001, 0.003, 0.03);
-		_init(&_pitchFilterData, 0.001, 0.003, 0.03);
-		_init(&_yawFilterData, 0.001, 0.003, 0.03);
+		_init(&_pitchFilterData, 0.001, 0.003, 0.03);		
 	}
 	
 	void filter(const unsigned long currentTime)
@@ -1114,55 +1067,159 @@ public:
 
 		float dt = _deltaTime / 1000.0f;  //delta time in seconds
 		
-		//Get current angles
-		float R = sqrt(sq(_accelRaw[IMUFilterAxisX]) + sq(_accelRaw[IMUFilterAxisY]) + sq(_accelRaw[IMUFilterAxisZ]));
-		float rawRollAngle = acos(_accelRaw[IMUFilterAxisX]/R);
-		float rawPitchAngle = acos(_accelRaw[IMUFilterAxisY]/R);
-		
+		float rawRollAngle, rawPitchAngle, rawYawAngle;
+		this->_calculateRawAngles(&rawRollAngle, &rawPitchAngle, NULL);	
+
 		if (_firstPass)
 		{
 			//make sure to initialize things the first time through.
 			_rollFilterData.x_angle = rawRollAngle;
-			_pitchFilterData.x_angle = rawPitchAngle;
+			_pitchFilterData.x_angle = rawPitchAngle;			
 			
 			_firstPass = false;
 		}
 		else
 		{
-			//Roll
-			_predict(&_rollFilterData, ToRad(_gyroRaw[IMUFilterAxisX]), dt);
+			//Filter Roll
+			_predict(&_rollFilterData, _processedRateInRadians[IMUFilterRoll], dt);
 		 	_update(&_rollFilterData, rawRollAngle);
 		
-			//Pitch
-			_predict(&_pitchFilterData, ToRad(_gyroRaw[IMUFilterAxisY]), dt);
+			//Filter Pitch
+			_predict(&_pitchFilterData, _processedRateInRadians[IMUFilterPitch], dt);
 			_update(&_pitchFilterData, rawPitchAngle);
-		}
+						
+			//Here we calculate yaw using the filtered  roll and pitch values
+			rawYawAngle = this->_correctYawReading(_rollFilterData.x_angle, _pitchFilterData.x_angle);
+			//Make sure the Yaw angle is a full 360 so it doesn't wrap around to negative numbers (thus killing the filter for a hair)
+			if (rawYawAngle < 0)
+			{
+				rawYawAngle += 6.28318531;
+			}								
+		}				
 		
-		_processedAngleInRadians[IMUFilterAxisX] = fmap(_rollFilterData.x_angle, 0, M_PI, -(M_PI/2), (M_PI/2));
-		_processedAngleInRadians[IMUFilterAxisY] = fmap(_pitchFilterData.x_angle, 0, M_PI, -(M_PI/2), (M_PI/2));
-		_processedAngleInDegrees[IMUFilterAxisX] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
-		_processedAngleInDegrees[IMUFilterAxisY] = ToDeg(_processedAngleInRadians[IMUFilterAxisY]);
+		_processedAngleInRadians[IMUFilterRoll] = _rollFilterData.x_angle;
+		_processedAngleInRadians[IMUFilterPitch] = _pitchFilterData.x_angle;				
+		_processedAngleInRadians[IMUFilterYaw] = rawYawAngle;
 		
-		//We need to process the 3d yaw angle now.  Since we have processed roll and pitch we can now correct the 3d magnetic reading
-		//and generate the compass heading
-		float rawCompassHeading = this->_process3dYawReading(_suplimentalRaw[0], _suplimentalRaw[1], _suplimentalRaw[2], _processedAngleInRadians[IMUFilterAxisY], _processedAngleInRadians[IMUFilterAxisX]);
-		
-		//Yaw
-		_predict(&_yawFilterData, ToRad(_gyroRaw[IMUFilterAxisZ]), dt);
-		_update(&_yawFilterData, rawCompassHeading);
-		
-		_processedAngleInRadians[IMUFilterAxisZ] = fmap(_yawFilterData.x_angle, 0, M_PI, -(M_PI/2), (M_PI/2));		
-		_processedAngleInDegrees[IMUFilterAxisZ] = ToDeg(_processedAngleInRadians[IMUFilterAxisZ]);
-		
-		/*serialcoms.debugPrint(_processedAngleInRadians[IMUFilterAxisY]);
-		serialcoms.debugPrint(",");
-		serialcoms.debugPrint(_processedAngleInRadians[IMUFilterAxisX]);
-		serialcoms.debugPrint(",");
-		serialcoms.debugPrint(rawCompassHeading);
-		serialcoms.debugPrintln("");*/
+		_processedAngleInDegrees[IMUFilterRoll] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
+		_processedAngleInDegrees[IMUFilterPitch] = ToDeg(_processedAngleInRadians[IMUFilterAxisY]);
+		_processedAngleInDegrees[IMUFilterYaw] = ToDeg(_processedAngleInRadians[IMUFilterAxisZ]);				
 	}	
 };
 
+
+//Not working yet
+//Based on the code at: http://code.google.com/p/gluonpilot/source/browse/trunk/Firmware/rtos_pilot/ahrs_simple_quaternion.c
+/*class QuaternionIMUFilter : public IMUFilter
+{
+	private:
+		static double pitch_rad, roll_rad;
+		static double pitch_acc, roll_acc;
+		static double q[4];
+		static double w; 		// speed along z axis
+		
+		static double p_bias;	// in rad/sec
+		static double q_bias;
+
+		void quaternionNormalize(double *q)
+		{
+		        double norm = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+		
+		        q[0] /= norm;   
+		        q[1] /= norm;
+		        q[2] /= norm;
+		        q[3] /= norm;
+		}
+
+		void quaternionFromAttitude (const double roll, const double pitch, const double yaw, double* q)
+		{
+		        double cos_roll_2 = cosf(roll/2.0);
+		        double sin_roll_2 = sinf(roll/2.0);
+		        double cos_pitch_2 = cosf(pitch/2.0);
+		        double sin_pitch_2 = sinf(pitch/2.0);
+		        double cos_yaw_2 = cosf(yaw/2.0);
+		        double sin_yaw_2 = sinf(yaw/2.0);
+		
+		        q[0] = cos_roll_2 * cos_pitch_2 * cos_yaw_2 + sin_roll_2 * sin_pitch_2 * sin_yaw_2;
+		        q[1] = sin_roll_2 * cos_pitch_2 * cos_yaw_2 - cos_roll_2 * sin_pitch_2 * sin_yaw_2;
+		        q[2] = cos_roll_2 * sin_pitch_2 * cos_yaw_2 + sin_roll_2 * cos_pitch_2 * sin_yaw_2;
+		        q[3] = cos_roll_2 * cos_pitch_2 * sin_yaw_2 - sin_roll_2 * sin_pitch_2 * cos_yaw_2; // WAS cos_roll_2 * cos_pitch_2 * sin_yaw_2 - sin_roll_2 * sin_pitch_2 * sin_yaw_2
+		
+		        quaternion_normalize(q);
+		}
+		
+		
+		double quaternionToRoll (const double* q)
+		{
+		        double r;
+		        errno = 0;
+		        r = atan2( 2.0 * ( q[2]*q[3] + q[0]*q[1] ) ,
+		                     (1.0 - 2.0 * (q[1]*q[1] + q[2]*q[2])) );  
+		        if (errno)
+		                return  0.0;
+		        else
+		                return r;
+		}       
+		
+		double quaternionToPitch(const double* q)
+		{
+		        double r;
+		        errno = 0;
+		        r = asinf( -2.0 * (q[1]*q[3] - q[0]*q[2]) );    
+		        if (errno)
+		                return  0.0;
+		        else
+		                return r;
+		}
+		
+		
+		double quaternionToYaw(const double* q)
+		{
+		        double r;
+		        errno = 0;
+		        r = atan2( 2.0 * ( q[0]*q[3] + q[1]*q[2] ) ,
+		                  (1.0 - 2.0 * (q[2]*q[2] + q[3]*q[3])) );  
+		        if (errno)
+		                return  0.0;
+		        else
+		                return r;
+		}       
+
+
+	public:
+		QuaternionIMUFilter() : IMUFilter()
+		{
+			pitch_rad = 0.0, roll_rad = 0.0;
+			pitch_acc = 0.0, roll_acc = 0.0;
+			
+			p_bias = 0.0;  
+			q_bias = 0.0;
+		}
+		
+		void initialize()
+		{
+			IMUFilter::initialize();
+			
+			quaternionFromAttitude(0.0, 0.0, 0.0, q);                	
+		}
+		
+		void filter(const unsigned long currentTime)
+		{
+			IMUFilter::filter(currentTime);
+			
+			float sensorData_p = _processedRateInRadians[IMUFilterRoll] + p_bias;
+			float sensorData_q = _processedRateInRadians[IMUFilterPitch] + q_bias;
+			
+			quaternionUpdateWithRates(sensorData_p, sensorData_q, _processedRateInRadians[IMUFilterYaw], q, _deltaTime);
+
+			float roll_rad = quaternionToRoll(q);
+        	float pitch_rad = quaternionToPitch(q);
+        	float yaw_rad = quaternionToYaw(q);
+
+			
+			if (_firstPass) {_firstPass = false;}
+		}
+};*/
 
 class IMU : public SubSystem
 {
@@ -1174,8 +1231,8 @@ class IMU : public SubSystem
 		
 	public:
 		typedef enum { ArduPilotOilPan } HardwareType;
-		typedef enum { SimpleAccellOnly = 0, Complimentry, SimplifiedKalman, DCM, Kalman } FilterType;
-		typedef enum { YawSourceHMC5843Compass } SuplimentalYawSourceType;
+		typedef enum { SimpleAccellOnly = 0, Complimentry, DCM, Kalman, Quaternion } FilterType;
+		typedef enum { HMC5843 } SuplimentalYawSourceType;
 			
 		IMU() : SubSystem()
 		{
@@ -1225,7 +1282,7 @@ class IMU : public SubSystem
 		{
 			switch (yawSourceType)
 			{
-				case YawSourceHMC5843Compass:
+				case HMC5843:
 				{
 					_suplimentalYawSource = new HMC5843Compass();
 					break;
@@ -1253,13 +1310,7 @@ class IMU : public SubSystem
 				{
 					_imuFilter = new ComplimentryMUFilter();
 					break;
-				}
-				
-				case SimplifiedKalman:
-				{
-					_imuFilter = new SimplifiedKalmanIMUFilter();
-					break;
-				}
+				}								
 				
 				case DCM:
 				{
@@ -1272,6 +1323,12 @@ class IMU : public SubSystem
 					_imuFilter = new KalmanIMUFilter();
 					break;
 				}
+				
+				/*case Quaternion:
+				{
+					_imuFilter = new QuaternionIMUFilter();
+					break;
+				}*/
 								
 				default:
 				{
@@ -1291,26 +1348,28 @@ class IMU : public SubSystem
 					
 					if (_suplimentalYawSource)
 					{
-						//_suplimentalYawSource->process(currentTime);
+						_suplimentalYawSource->process(currentTime);
 					}
 
 					if (_imuFilter)
 					{
 						_imuFilter->setCurrentReadings(_imuHardware->getCurrentReadings());
-						_imuFilter->setSuplimentalYawReadings(_suplimentalYawSource->getCurrentReadings());
+						if (_suplimentalYawSource)
+						{
+							_imuFilter->setSuplimentalYawReadings(_suplimentalYawSource->getCurrentReadings());
+						}
 						_imuFilter->filter(currentTime);
 						
 						//Pitch is defined as the angle between the aircraft's longitudinal axis and the local horizontal plane (positive for nose up). 
 						//Roll is defined as the angle about the longitudinal axis between the local horizontal plane and the actual flight orientation (positive for right wing down).
 						
-						serialcoms.debugPrint("!ANG:");
+						serialcoms.debugPrint("!:");
 						serialcoms.debugPrint(_imuFilter->currentRollAngleInRadians());
 						serialcoms.debugPrint(",");			
 						serialcoms.debugPrint(_imuFilter->currentPitchAngleInRadians());
 						serialcoms.debugPrint(",");
 						serialcoms.debugPrint(_imuFilter->currentYawAngleInRadians());
 						serialcoms.debugPrintln("");
-						
 					}
 					
 					
@@ -1342,35 +1401,68 @@ class IMU : public SubSystem
 		}
 				
 		//Accessors for the processed values
-		const float currentRollRate()
+		const float currentRollRateInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentRollRate();
+				return _imuFilter->currentRollRateInDegrees();
 			}
 			
 			return 0;
 		}
 		
-		const float currentPitchRate()
+		const float currentPitchRateInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentPitchRate();
+				return _imuFilter->currentPitchRateInDegrees();
 			}
 			
 			return 0;	
 		}
 		
-		const float currentYawRate()
+		const float currentYawRateInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentYawRate();
+				return _imuFilter->currentYawRateInDegrees();
 			}
 			
 			return 0;
 		}
+		
+		const float currentRollRateInRadians()
+		{
+			if (_imuFilter)
+			{
+				return _imuFilter->currentRollRateInRadians();
+			}
+			
+			return 0;
+		}
+		
+		const float currentPitchRateInRadians()
+		{
+			if (_imuFilter)
+			{
+				return _imuFilter->currentPitchRateInRadians();
+			}
+			
+			return 0;	
+		}
+		
+		const float currentYawRateInRadians()
+		{
+			if (_imuFilter)
+			{
+				return _imuFilter->currentYawRateInRadians();
+			}
+			
+			return 0;
+		}
+		
+		
+		
 		
 		const float currentRollAngleInDegrees()
 		{
@@ -1392,6 +1484,16 @@ class IMU : public SubSystem
 			return 0;
 		}
 		
+		const float currentYawAngleInDegrees()
+		{
+			if (_imuFilter)
+			{
+				return _imuFilter->currentYawAngleInDegrees();
+			}
+			
+			return 0;
+		}
+		
 		const float currentRollAngleInRadians()
 		{
 			if (_imuFilter)
@@ -1407,6 +1509,16 @@ class IMU : public SubSystem
 			if (_imuFilter)
 			{
 				return _imuFilter->currentPitchAngleInRadians();
+			}
+			
+			return 0;
+		}
+		
+		const float currentPitchYawInRadians()
+		{
+			if (_imuFilter)
+			{
+				return _imuFilter->currentYawAngleInRadians();
 			}
 			
 			return 0;

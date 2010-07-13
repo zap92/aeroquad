@@ -86,6 +86,8 @@ class AnalogInHardwareComponent : public HardwareComponent
 			for (int i = 0; i < MAXINPUTCOUNT; i++)
 			{
 				_inputConfigurations[i].inputInUse = false;
+				_inputConfigurations[i].invert = false;
+				
 				_lastReadings[i] = 0.0f;
 				_rawReadings[i] = 0;
 			}
