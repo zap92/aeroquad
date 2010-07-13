@@ -15,9 +15,9 @@ GPS gps;
 #include "IMU.h"
 IMU imu;
 
-#include "Sensors.h"
-Sensors sensors;
 
+/*#include "Sensors.h"
+Sensors sensors;*/
 
 /*
 #include "Receiver.h"
@@ -58,25 +58,25 @@ void setup()
 	}
 
 	{
-		imu.setHardwareType(IMU::HardwareTypeOilPan);
-		//imu.setFilterType(IMU::FilterTypeSimpleAccellOnly);
+		imu.setHardwareType(IMU::ArduPilotOilPan);
+		imu.setSuplimentalYawSource(IMU::YawSourceHMC5843Compass);
+		imu.setFilterType(IMU::SimpleAccellOnly);
 		//imu.setFilterType(IMU::FilterTypeComplimentry);
 		//imu.setFilterType(IMU::FilterTypeSimplifiedKalman);
 		//imu.setFilterType(IMU::FilterTypeDCM);
-		imu.setFilterType(IMU::FilterTypeKalman);
-		//Run the IMU at 100hz
+		//imu.setFilterType(IMU::Kalman);
+		//Run the IMU at 100hz (10ms cycle time)
 		imu.initialize(10,0);
 		imu.calibrateZero();
 	}
 	
 	{
-		//Run the sensors at 20hz offset 25ms
+		//Run the sensors at 50hz offset 25ms
 		//sensors.setPressorSensorType(Sensors::PressureSensorSPI);
 		//sensors.setHeightSensorType(Sensors::HeightSensorAnalogIn);
 		//sensors.setPowerSensorType(Sensors::PowerSensorAnalogIn);
-		sensors.setCompassType(Sensors::CompassHMC5843);
-		//sensors.setCompassLimits(-719.00, 745.00, -771.00, 771.00, -728.00, 688.00);
-		sensors.initialize(50,25);
+		//sensors.setCompassType(Sensors::CompassHMC5843);
+		//sensors.initialize(20,0);
 	}
 	
 	/*//Run the receiver at 50hz
@@ -107,13 +107,6 @@ void setup()
 	//led.disable();*/
 	
 	serialcoms.debugPrintln("!"VERSION);
-
-	
-	  /*while (Serial.available() <= 0) {
-	    Serial.print('A', BYTE); // send a capital A
-	    delay(300);
-	  }*/
-
 }
 
 
@@ -128,8 +121,8 @@ void loop()
 	
 	//process all the "inputs" to the system
 	//gps.process(currentTime);
-	sensors.process(currentTime);
 	//receiver.process(currentTime);
+	//sensors.process(currentTime);
 	imu.process(currentTime);
 	
 	//process flight control

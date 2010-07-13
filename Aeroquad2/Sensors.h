@@ -166,205 +166,11 @@ class AnalogInHeightSensor : public HeightSensor
 		}
 };
 
-class Compass : public HardwareComponent
-{
-	protected:
-		float _currentHeadingInRadians;
-		float _currentHeadingInDegrees;
-		
-		float _xMagnetMax, _xMagnetMin;
-		float _yMagnetMax, _yMagnetMin;
-		float _zMagnetMax, _zMagnetMin;
-		
-		void _process3dReading(const int xReading, const int yReading, const int zReading)
-		{
-			//Double check the compass limits.  This ensures we are scaling correctly
-			/*if (xReading > _xMagnetMax) 
-			{
-				_xMagnetMax = xReading;
-			}
-			if (yReading > _yMagnetMax) 
-			{
-				_yMagnetMax = yReading;
-			}
-			if (zReading > _zMagnetMax) 
-			{
-				_zMagnetMax = zReading;
-			}
-			
-			if (xReading < _xMagnetMin) 
-			{
-				_xMagnetMin = xReading;
-			}
-			if (yReading < _yMagnetMin) 
-			{
-				_yMagnetMin = yReading;
-			}
-			if (zReading < _zMagnetMin) 
-			{
-				_zMagnetMin = zReading;
-			}
-
-			//Map the incoming Data from -1 to 1
-			float xMagnetMaped = fmap(xReading, _xMagnetMin, _xMagnetMax, -300000, 300000)/300000.0;
-			float yMagnetMaped = fmap(yReading, _yMagnetMin, _yMagnetMax, -300000, 300000)/300000.0;
-			float zMagnetMaped = fmap(zReading, _zMagnetMin, _zMagnetMax, -300000, 300000)/300000.0;
-
-
-			//normalize the magnetic vector
-			float norm = sqrt( sq(xMagnetMaped) + sq(yMagnetMaped) + sq(zMagnetMaped));
-			xMagnetMaped /=norm;
-			yMagnetMaped /=norm;
-			zMagnetMaped /=norm;*/
-			
-			float flatHeadingInRadians = atan2(yReading, xReading);
-			
-			/*if (flatHeadingInRadians > 0)
-			{
-				flatHeadingInRadians = fabs(flatHeadingInRadians);
-			}
-			else
-			{
-				flatHeadingInRadians = (2*M_PI) - flatHeadingInRadians;
-			}*/
-
-
-
-			//http://www.ssec.honeywell.com/magnetic/datasheets/lowcost.pdf
-			float currentRollAngle = -imu.currentRollAngleInRadians();
-			float currentPitchAngle = -imu.currentPitchAngleInRadians();
-
-			float cos_roll = cos(currentRollAngle);
-			float sin_roll = sin(currentRollAngle);
-			float cos_pitch = cos(currentPitchAngle);
-			float sin_pitch = sin(currentPitchAngle);
-			
-			// Tilt compensated Magnetic field X
-			float compensatedX = (xReading*cos_pitch) + (yReading*sin_roll*sin_pitch) + (zReading*cos_roll*sin_pitch);
-			// Tilt compensated Magnetic field Y
-			float compensatedY = (yReading*cos_roll) - (zReading*sin_roll);
-
-			// Compensated Magnetic Heading
-			_currentHeadingInRadians = atan2(compensatedY,compensatedX);			
-			
-			
-			/*if (_currentHeadingInRadians < 0)
-			{
-				_currentHeadingInRadians = fabs(_currentHeadingInRadians);
-			}
-			else
-			{
-				_currentHeadingInRadians = (2*M_PI) - _currentHeadingInRadians;
-			}*/
-			
-			_currentHeadingInDegrees = ToDeg(flatHeadingInRadians);
-			
-			
-			
-						
-			serialcoms.debugPrint("!ANG:");
-			serialcoms.debugPrint(imu.currentRollAngleInRadians());
-			serialcoms.debugPrint(",");			
-			serialcoms.debugPrint(imu.currentPitchAngleInRadians());
-			serialcoms.debugPrint(",");
-			serialcoms.debugPrint(flatHeadingInRadians);
-			serialcoms.debugPrintln("");
-		}
-	
-	public:
-		Compass() : HardwareComponent()
-		{
-			_currentHeadingInDegrees = _currentHeadingInRadians = 0.0;
-		}
-		
-		void setLimits(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax)
-		{
-			_xMagnetMax = xMax;
-			_xMagnetMin = xMin;
-			
-			_yMagnetMax = yMax;
-			_yMagnetMin = yMin;
-			
-			_zMagnetMax = zMax;
-			_zMagnetMin = zMin;
-		}
-
-		virtual void initialize()
-		{
-			HardwareComponent::initialize();
-		}	
-	
-		virtual void process(const unsigned long currentTime)
-		{
-			HardwareComponent::process(currentTime);	
-		}
-	
-		const float getHeadingInRadians()
-		{
-			return _currentHeadingInRadians;
-		}
-			
-		const float getHeadingInDegrees()
-		{
-			return _currentHeadingInDegrees;
-		}	
-};
-
-#define HMC5843COMPAS_I2C_ADDRESS 0x1E
-class HMC5843Compass : public Compass
-{
-	public:
-		void initialize()
-		{
-			Compass::initialize();
-			
-			//Set the compass to continous read mode
-			Wire.begin();
-			Wire.beginTransmission(HMC5843COMPAS_I2C_ADDRESS);
-			Wire.send(0x02);
-			Wire.send(0x00);         //Set to continous streaming mode
-			Wire.endTransmission();  
-
-			delay(5);                //HMC5843 needs some ms before communication
-		}
-		
-		void process(const unsigned long currentTime)
-		{	
-			Compass::process(currentTime);
-			
-			Wire.beginTransmission(HMC5843COMPAS_I2C_ADDRESS);
-			Wire.send(0x03);        //sends address to read from
-			Wire.endTransmission(); //end transmission
-			 
-			Wire.requestFrom(HMC5843COMPAS_I2C_ADDRESS, 6);    // request 6 bytes from device
-			byte xAxisReadingHigh = Wire.receive();
-			byte xAxisReadingLow = Wire.receive();
-			int xAxisReading = (((xAxisReadingHigh) << 8) | (xAxisReadingLow));
-						
-			byte yAxisReadingHigh = Wire.receive();
-			byte yAxisReadingLow = Wire.receive();
-			int yAxisReading = (((yAxisReadingHigh) << 8) | (yAxisReadingLow));
-			
-			byte zAxisReadingHigh = Wire.receive();
-			byte zAxisReadingLow = Wire.receive();
-			int zAxisReading = (((zAxisReadingHigh) << 8) | (zAxisReadingLow));
-			
-			Wire.endTransmission(); //end transmission
-			
-			//The APM and DIYDrones HMC5843 board combination need things swapped around to because of mounting differences
-			this->_process3dReading(xAxisReading, yAxisReading, -zAxisReading);
-		}
-};
-
-
-
-
 class Sensors : public SubSystem
 {
 	private:
 		PressureSensor *_pressureSensor;
 		HeightSensor *_heightSensor;
-		Compass *_compass;
 		
 	public:
 		
@@ -379,12 +185,7 @@ class Sensors : public SubSystem
 		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
-			
-			if (_compass)
-			{
-				_compass->initialize();
-			}
-			
+						
 			//Read and process pressure reading
 			if (_pressureSensor)
 			{
@@ -402,12 +203,6 @@ class Sensors : public SubSystem
 		{
 			if (this->_canProcess(currentTime))
 			{
-				//Read compass and process compass reading
-				if (_compass)
-				{
-					_compass->process(currentTime);
-				}
-				
 				//Read and process pressure reading
 				if (_pressureSensor)
 				{
@@ -460,33 +255,7 @@ class Sensors : public SubSystem
 				}
 			}
 		}
-		
-		void setCompassType(const CompassType hardwareType)
-		{
-			switch (hardwareType)
-			{
-				case CompassHMC5843:
-				{
-					_compass = new HMC5843Compass();
-					break;
-				}
 				
-				default:
-				{
-					serialcoms.debugPrintln("ERROR: Unknown Compass type selected.");
-					break;
-				}
-			}
-		}
-		
-		void setCompassLimits(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax)
-		{
-			if (_compass)
-			{
-				_compass->setLimits(xMin, xMax, yMin, yMax, zMin, zMax);
-			}
-		}
-		
 		//accessors for sensor values
 		
 		//Altitude
@@ -510,23 +279,6 @@ class Sensors : public SubSystem
 			return 0.0;
 		}
 		
-		//Heading
-		const float headingFromCompassInRadians()
-		{
-			if (_compass)
-			{
-				return _compass->getHeadingInRadians();
-			}
-			return 0.0;
-		}
-		const float headingFromCompassInDegrees()
-		{
-			if (_compass)
-			{
-				return _compass->getHeadingInDegrees();
-			}
-			return 0.0;
-		}
 		
 		
 		//Power sensors

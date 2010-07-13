@@ -1,85 +1,33 @@
 #include "SubSystem.h"
 #include "HardwareComponent.h"
 
-class IMUHardware : public HardwareComponent
+class IMUHardware : public AnalogInHardwareComponent
 {
 	protected:
 		enum {IMUGyroX = 0, IMUGyroY, IMUGyroZ, IMUAcclX, IMUAcclY, IMUAcclZ};
-		
-		float _lastReading[6];
-		int _rawReadings[6];
-		
-		typedef struct {					
-			bool inputInUse;
-			bool invert;    				//invert input
-		  	int zeroLevel;     				// zero level (mV) @ 0
-		  	float sensitivity;   			// input sensitivity (mv/unit) 
-			int hardwarePin;
-		} inputConfiguration;
-		
-		inputConfiguration _inputConfigurations[6];
 
 	public:
-		IMUHardware() : HardwareComponent()
+		IMUHardware(const unsigned int inputCount) : AnalogInHardwareComponent(inputCount)
 		{
-			for (int i = IMUGyroX; i <= IMUAcclZ; i++)
-			{
-				_inputConfigurations[i].inputInUse = false;
-				_inputConfigurations[i].invert = false;
-			}
 		}
 
 		virtual void initialize()
 		{
 			HardwareComponent::initialize();
 		}	
-		
-		virtual const int readRawValue(const unsigned int axis)
-		{
-			return analogRead(axis);
-		}
-		
+				
 		virtual void process(const unsigned long currentTime)
 		{
-			this->scaleRawReadingsToEngineeringValues();		
-			HardwareComponent::process(currentTime);	
+			AnalogInHardwareComponent::process(currentTime);
 		}
 		
-		void scaleRawReadingsToEngineeringValues()
+		const float* getCurrentReadings()
 		{
-			static float tmpf;	        //temporary variable
-			
-			float dacMvValue = this->getReferenceVoltage() / (pow(2,this->getDacPrecision()) - 1);
-			
-			for (int i = IMUGyroX; i <= IMUAcclZ; i++)
-			{
-				if (_inputConfigurations[i].inputInUse)
-				{
-					int rawAnalogValue = _rawReadings[i];
-					tmpf = (float)rawAnalogValue * dacMvValue;
-					//DEBUGSERIALPRINT(tmpf);
-					//DEBUGSERIALPRINT(":");
-					tmpf -= _inputConfigurations[i].zeroLevel; 		 		//voltage relative to zero level (mV)
-					//DEBUGSERIALPRINT(tmpf);
-					//DEBUGSERIALPRINT(":");	
-				  	tmpf /= _inputConfigurations[i].sensitivity;    		//input sensitivity in mV/Unit
-					//DEBUGSERIALPRINT(tmpf);
-					//DEBUGSERIALPRINT(":");
-					if (_inputConfigurations[i].invert)
-					{						
-				  		tmpf *= -1;  		//invert axis value according to configuration 
-					}
-					_lastReading[i] = tmpf;
-					
-					//serialcoms.debugPrint(_lastReading[i]);
-					//serialcoms.debugPrint(",");
-				}
-			}
-			
-			//serialcoms.debugPrintln("");
+			return _lastReadings;
 		}
 		
-#define ZEROLEVELSAMPLECOUNT 50
+		
+#define ZEROLEVELSAMPLECOUNT 20
 		virtual void calibrateZero()
 		{
 			int zeroLevelSamples[ZEROLEVELSAMPLECOUNT];
@@ -102,20 +50,8 @@ class IMUHardware : public HardwareComponent
 					
 					//convert the mode value to mV and assign it to the related _inputConfigurations structre for this input
 					_inputConfigurations[i].zeroLevel = (float)sampleMode * dacMvValue;
-					/*DEBUGSERIALPRINT(i);
-					DEBUGSERIALPRINT(":");
-					DEBUGSERIALPRINT(_inputConfigurations[i].zeroLevel);
-					DEBUGSERIALPRINT("\t");*/
 				}
 			}
-						
-			/*DEBUGSERIALPRINTLN;
-			delay(4000);*/
-		}
-		
-		const float *getCurrentReadings()
-		{
-			return _lastReading;
 		}
 };
 
@@ -152,7 +88,7 @@ class OilpanIMU : public IMUHardware
 			return _staticInstance;
 		}
 		
-		OilpanIMU() : IMUHardware()
+		OilpanIMU() : IMUHardware(8 /*number of inputs that this device has*/)
 		{
 			_staticInstance = this;
 			
@@ -168,14 +104,14 @@ class OilpanIMU : public IMUHardware
 			_adc_cmd[8] = 0x00;
 			
 			
-			memset((void*)_adc_value, 0, 8);
-			memset((void*)_adc_counter,0,8);
+			memset((void*)&_adc_value, 0, 8);
+			memset((void*)&_adc_counter,0,8);
 			
 			this->setReferenceVoltage(3300);
 			this->setDacPrecision(12);
 		}
 		
-		void initialize()
+		virtual void initialize()
 		{
 			IMUHardware::initialize();
 			
@@ -220,6 +156,17 @@ class OilpanIMU : public IMUHardware
 			_inputConfigurations[IMUAcclZ].hardwarePin = 6;
 			
 
+			//Temp input
+			_inputConfigurations[6].zeroLevel = 1375;			//in mv
+		 	_inputConfigurations[6].sensitivity = 4.4;			//in mv/oC
+			_inputConfigurations[6].inputInUse = true; 
+			_inputConfigurations[6].hardwarePin = 3;
+			
+			//Aux input (using it for bottom facing ultrasonic range sensor)
+			_inputConfigurations[7].zeroLevel = 0;				//in mv
+		 	_inputConfigurations[7].sensitivity = 310;			//in mv/cm
+			_inputConfigurations[7].inputInUse = true; 
+			_inputConfigurations[7].hardwarePin = 7;
  	
 			//Since the Oilpan uses a dedicated DAC lets setup what we need to get it running.
 			//This all comes from the APM_ADC code provided by DIYDrones
@@ -249,7 +196,7 @@ class OilpanIMU : public IMUHardware
 			}
 		} 		
 		
-	 	const int readRawValue(const unsigned int axis)
+	 	virtual const int readRawValue(const unsigned int axis)
 		{
 			//All we need to do here is just grab the value from the variable that holds it
 			int result;
@@ -267,26 +214,22 @@ class OilpanIMU : public IMUHardware
 			_adc_counter[axis] = 0;
 			sei();						//turn interrupts back on
 			
-			return(result);
+			return result;
 		}
 		
 		
-		void process(const unsigned long currentTime)
+		virtual void process(const unsigned long currentTime)
 		{
-			for (int i = IMUGyroX; i <= IMUAcclZ; i++)
+			for (int i = 0; i < _inputCount; i++)
 			{
 				if (_inputConfigurations[i].inputInUse)
 				{
 					_rawReadings[i] = this->readRawValue(_inputConfigurations[i].hardwarePin);
-					//DEBUGSERIALPRINT(_rawReadings[i]);
-					//DEBUGSERIALPRINT(",");
 				}
 			}
 			
-			//DEBUGSERIALPRINTLN;
-			
 			//Call the generic IMU Hardware process method
-			IMUHardware::process(currentTime);	
+			IMUHardware::process(currentTime);
 		}
 		
 		//This is called via an Interrupt to pull the data from the ADC.
@@ -296,7 +239,7 @@ class OilpanIMU : public IMUHardware
 			uint8_t ch;
 			unsigned int adc_tmp;
 
-			//bit_set(PORTC,0); // To test performance with a scope
+			//Bit_Set(PORTC,0); // To test performance with a scope
 			Bit_Clear(PORTC,4);             // Enable Chip Select (PIN PC4)
 			_ADC_SPI_transfer(_adc_cmd[0]);       // Command to read the first channel
 
@@ -309,7 +252,7 @@ class OilpanIMU : public IMUHardware
 			}
 
 			Bit_Set(PORTC,4);                // Disable Chip Select (PIN PH6)
-			//bit_clear(PORTC,0); // To test performance
+			//Bit_Clear(PORTC,0); // To test performance
 		}
 };
 
@@ -324,6 +267,87 @@ ISR (TIMER2_OVF_vect)
 	TCNT2 = 104;        // 400 Hz
 }
 
+class SuplimentalYawSource : public HardwareComponent
+{
+	protected:
+		int _lastReadings[3];
+		
+	public:
+		SuplimentalYawSource() : HardwareComponent()
+		{
+			_lastReadings[0] = _lastReadings[1] = _lastReadings[2] = 0;
+		}
+		
+		virtual void initialize()
+		{
+			HardwareComponent::initialize();
+		}	
+	
+		virtual void process(const unsigned long currentTime)
+		{
+			HardwareComponent::process(currentTime);	
+		}
+		
+		const int* getCurrentReadings()
+		{
+			return _lastReadings;
+		}
+		
+		
+};
+
+#define HMC5843COMPAS_I2C_ADDRESS 0x1E
+class HMC5843Compass : public SuplimentalYawSource
+{
+	public:
+		virtual void initialize()
+		{
+			SuplimentalYawSource::initialize();
+
+			//Set the compass to continous read mode
+			Wire.begin();
+			Wire.beginTransmission(HMC5843COMPAS_I2C_ADDRESS);
+			Wire.send(0x02);
+			Wire.send(0x00);         //Set to continous streaming mode
+			Wire.endTransmission();  
+
+			delay(5);                //HMC5843 needs some ms before communication
+		}
+
+		virtual void process(const unsigned long currentTime)
+		{	
+			SuplimentalYawSource::process(currentTime);
+
+			Wire.beginTransmission(HMC5843COMPAS_I2C_ADDRESS);
+			Wire.send(0x03);        //sends address to read from
+			Wire.endTransmission(); //end transmission
+
+			Wire.requestFrom(HMC5843COMPAS_I2C_ADDRESS, 6);    // request 6 bytes from device
+			byte xAxisReadingHigh = Wire.receive();
+			byte xAxisReadingLow = Wire.receive();
+			int xAxisReading = (((xAxisReadingHigh) << 8) | (xAxisReadingLow));
+
+			byte yAxisReadingHigh = Wire.receive();
+			byte yAxisReadingLow = Wire.receive();
+			int yAxisReading = (((yAxisReadingHigh) << 8) | (yAxisReadingLow));
+
+			byte zAxisReadingHigh = Wire.receive();
+			byte zAxisReadingLow = Wire.receive();
+			int zAxisReading = (((zAxisReadingHigh) << 8) | (zAxisReadingLow));
+
+			Wire.endTransmission(); //end transmission
+
+			//The APM and DIYDrones HMC5843 board combination need things swapped around to because of mounting differences
+			_lastReadings[0] = -yAxisReading;
+			_lastReadings[1] = -xAxisReading;
+			_lastReadings[2] = -zAxisReading;
+		}
+};
+	
+
+
+
+
 class IMUFilter
 {
 	protected:
@@ -336,10 +360,30 @@ class IMUFilter
 		
 		float _accelRaw[3];
 		float _gyroRaw[3];
+		int _suplimentalRaw[3];
 
 		float _processedRate[3];
-		float _processedAngleInDegrees[2];
-		float _processedAngleInRadians[2];
+		float _processedAngleInDegrees[3];
+		float _processedAngleInRadians[3];
+		
+		const float _process3dYawReading(const int xReading, const int yReading, const int zReading, const float roll, const float pitch)
+		{			
+			//float flatHeadingInRadians = atan2(-yReading, xReading);
+			
+			//http://www.ssec.honeywell.com/magnetic/datasheets/lowcost.pdf
+			float cos_roll = cos(roll);
+			float sin_roll = sin(roll);
+			float cos_pitch = cos(pitch);
+			float sin_pitch = sin(pitch);
+			
+			// Tilt compensated Magnetic field X
+			float compensatedX = (xReading*cos_pitch) + (yReading*sin_roll*sin_pitch) + (zReading*cos_roll*sin_pitch);
+			// Tilt compensated Magnetic field Y
+			float compensatedY = (yReading*cos_roll) - (zReading*sin_roll);
+
+			// Compensated Magnetic Heading
+			return atan2(-compensatedY,compensatedX);
+		}
 		
 	public:
 		IMUFilter()
@@ -350,8 +394,10 @@ class IMUFilter
 			_firstPass = true;
 			
 			_processedRate[IMUFilterAxisX] = _processedRate[IMUFilterAxisY] = _processedRate[IMUFilterAxisZ] = 0;
-			_processedAngleInDegrees[IMUFilterAxisX] = _processedAngleInDegrees[IMUFilterAxisY] = 0;
-			_processedAngleInRadians[IMUFilterAxisX] = _processedAngleInRadians[IMUFilterAxisY] = 0;
+			_processedAngleInDegrees[IMUFilterAxisX] = _processedAngleInDegrees[IMUFilterAxisY] = _processedAngleInDegrees[IMUFilterAxisZ] = 0;
+			_processedAngleInRadians[IMUFilterAxisX] = _processedAngleInRadians[IMUFilterAxisY] = _processedAngleInRadians[IMUFilterAxisZ] = 0;
+			
+			_suplimentalRaw[IMUFilterAxisX] = _suplimentalRaw[IMUFilterAxisY] = _suplimentalRaw[IMUFilterAxisZ] = 0;
 		}
 		
 		virtual void initialize()
@@ -384,6 +430,13 @@ class IMUFilter
 			_accelRaw[IMUFilterAxisZ] = currentReadings[5];	//Z
 		}
 		
+		void setSuplimentalYawReadings (const int *currentReadings)
+		{
+			_suplimentalRaw[IMUFilterAxisX] = currentReadings[0];
+			_suplimentalRaw[IMUFilterAxisY] = currentReadings[0];
+			_suplimentalRaw[IMUFilterAxisZ] = currentReadings[0];
+		}
+		
 		//Accessors for the processed values
 		const float currentRollRate()
 		{
@@ -412,6 +465,13 @@ class IMUFilter
 			return _processedAngleInDegrees[IMUFilterAxisX];
 		}
 		
+		const float currentYawAngleInDegrees()
+		{
+			return _processedAngleInDegrees[IMUFilterAxisZ];
+		}
+		
+		
+		
 		const float currentRollAngleInRadians()
 		{
 			//The roll angle rotates "around" the Y axis
@@ -423,9 +483,15 @@ class IMUFilter
 			//The roll angle rotates "around" the X axis
 			return _processedAngleInRadians[IMUFilterAxisX];
 		}
+		
+		const float currentYawAngleInRadians()
+		{
+			return _processedAngleInRadians[IMUFilterAxisZ];
+		}
 };
 
 //Working
+//No Yaw Processing yet
 //Just a simple Accel only filter.
 class SimpleAccellOnlyIMUFilter : public IMUFilter
 {
@@ -459,6 +525,7 @@ class SimpleAccellOnlyIMUFilter : public IMUFilter
 };
 
 //Working
+//No Yaw processing yet
 //Based on the code by RoyB at: http://www.rcgroups.com/forums/showpost.php?p=12082524&postcount=1286    
 class ComplimentryMUFilter : public IMUFilter
 {
@@ -532,9 +599,8 @@ class ComplimentryMUFilter : public IMUFilter
 				previousAngle_pitch = (filterTerm1_pitch * dt) + previousAngle_pitch;
 			}
 			
-			//This filter calculates things backwards so we need to invert the results
-			_processedAngleInRadians[IMUFilterAxisX] = -previousAngle_roll;
-			_processedAngleInRadians[IMUFilterAxisY] = -previousAngle_pitch;
+			_processedAngleInRadians[IMUFilterAxisX] = previousAngle_roll;
+			_processedAngleInRadians[IMUFilterAxisY] = previousAngle_pitch;
 			
 			_processedAngleInDegrees[IMUFilterAxisX] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
 			_processedAngleInDegrees[IMUFilterAxisY] = ToDeg(_processedAngleInRadians[IMUFilterAxisY]);
@@ -935,6 +1001,7 @@ private:
 	
 	struct Gyro1DKalman _rollFilterData;
 	struct Gyro1DKalman _pitchFilterData;
+	struct Gyro1DKalman _yawFilterData;
 	
 	// Initializing the struct
 	void _init(struct Gyro1DKalman *filterdata, float Q_angle, float Q_gyro, float R_angle)
@@ -1038,6 +1105,7 @@ public:
 		
 		_init(&_rollFilterData, 0.001, 0.003, 0.03);
 		_init(&_pitchFilterData, 0.001, 0.003, 0.03);
+		_init(&_yawFilterData, 0.001, 0.003, 0.03);
 	}
 	
 	void filter(const unsigned long currentTime)
@@ -1045,8 +1113,9 @@ public:
 		IMUFilter::filter(currentTime);
 
 		float dt = _deltaTime / 1000.0f;  //delta time in seconds
-		float R = sqrt(sq(_accelRaw[IMUFilterAxisX]) + sq(_accelRaw[IMUFilterAxisY]) + sq(_accelRaw[IMUFilterAxisZ]));
 		
+		//Get current angles
+		float R = sqrt(sq(_accelRaw[IMUFilterAxisX]) + sq(_accelRaw[IMUFilterAxisY]) + sq(_accelRaw[IMUFilterAxisZ]));
 		float rawRollAngle = acos(_accelRaw[IMUFilterAxisX]/R);
 		float rawPitchAngle = acos(_accelRaw[IMUFilterAxisY]/R);
 		
@@ -1071,28 +1140,48 @@ public:
 		
 		_processedAngleInRadians[IMUFilterAxisX] = fmap(_rollFilterData.x_angle, 0, M_PI, -(M_PI/2), (M_PI/2));
 		_processedAngleInRadians[IMUFilterAxisY] = fmap(_pitchFilterData.x_angle, 0, M_PI, -(M_PI/2), (M_PI/2));
-		
 		_processedAngleInDegrees[IMUFilterAxisX] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
 		_processedAngleInDegrees[IMUFilterAxisY] = ToDeg(_processedAngleInRadians[IMUFilterAxisY]);
+		
+		//We need to process the 3d yaw angle now.  Since we have processed roll and pitch we can now correct the 3d magnetic reading
+		//and generate the compass heading
+		float rawCompassHeading = this->_process3dYawReading(_suplimentalRaw[0], _suplimentalRaw[1], _suplimentalRaw[2], _processedAngleInRadians[IMUFilterAxisY], _processedAngleInRadians[IMUFilterAxisX]);
+		
+		//Yaw
+		_predict(&_yawFilterData, ToRad(_gyroRaw[IMUFilterAxisZ]), dt);
+		_update(&_yawFilterData, rawCompassHeading);
+		
+		_processedAngleInRadians[IMUFilterAxisZ] = fmap(_yawFilterData.x_angle, 0, M_PI, -(M_PI/2), (M_PI/2));		
+		_processedAngleInDegrees[IMUFilterAxisZ] = ToDeg(_processedAngleInRadians[IMUFilterAxisZ]);
+		
+		/*serialcoms.debugPrint(_processedAngleInRadians[IMUFilterAxisY]);
+		serialcoms.debugPrint(",");
+		serialcoms.debugPrint(_processedAngleInRadians[IMUFilterAxisX]);
+		serialcoms.debugPrint(",");
+		serialcoms.debugPrint(rawCompassHeading);
+		serialcoms.debugPrintln("");*/
 	}	
 };
-
 
 
 class IMU : public SubSystem
 {
 	private:
 		IMUHardware *_imuHardware;
+		SuplimentalYawSource *_suplimentalYawSource;
 		IMUFilter *_imuFilter;
 		
+		
 	public:
-		typedef enum { HardwareTypeOilPan } HardwareType;
-		typedef enum { FilterTypeSimpleAccellOnly = 0, FilterTypeComplimentry, FilterTypeSimplifiedKalman, FilterTypeDCM, FilterTypeKalman } FilterType;
+		typedef enum { ArduPilotOilPan } HardwareType;
+		typedef enum { SimpleAccellOnly = 0, Complimentry, SimplifiedKalman, DCM, Kalman } FilterType;
+		typedef enum { YawSourceHMC5843Compass } SuplimentalYawSourceType;
 			
 		IMU() : SubSystem()
 		{
 			_imuHardware = NULL;
 			_imuFilter = NULL;
+			_suplimentalYawSource = NULL;
 		}
 		
 		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
@@ -1102,6 +1191,11 @@ class IMU : public SubSystem
 			if (_imuHardware)
 			{
 				_imuHardware->initialize();
+			}
+			
+			if (_suplimentalYawSource)
+			{
+				_suplimentalYawSource->initialize();
 			}
 			
 			if (_imuFilter)
@@ -1114,7 +1208,7 @@ class IMU : public SubSystem
 		{
 			switch (hardwareType)
 			{	
-				case HardwareTypeOilPan:
+				case ArduPilotOilPan:
 				{
 					_imuHardware = new OilpanIMU();
 					break;
@@ -1127,35 +1221,53 @@ class IMU : public SubSystem
 			}
 		}
 		
+		void setSuplimentalYawSource(const SuplimentalYawSourceType yawSourceType)
+		{
+			switch (yawSourceType)
+			{
+				case YawSourceHMC5843Compass:
+				{
+					_suplimentalYawSource = new HMC5843Compass();
+					break;
+				}
+				
+				default:
+				{
+					serialcoms.debugPrintln("ERROR: Unknown Suplimental Yaw Source type selected.");	
+					break;
+				}
+			}
+		}
+		
 		void setFilterType(const FilterType filterType)
 		{
 			switch (filterType)
 			{
-				case FilterTypeSimpleAccellOnly:
+				case SimpleAccellOnly:
 				{
 					_imuFilter = new SimpleAccellOnlyIMUFilter();
 					break;
 				}
 				
-				case FilterTypeComplimentry:
+				case Complimentry:
 				{
 					_imuFilter = new ComplimentryMUFilter();
 					break;
 				}
 				
-				case FilterTypeSimplifiedKalman:
+				case SimplifiedKalman:
 				{
 					_imuFilter = new SimplifiedKalmanIMUFilter();
 					break;
 				}
 				
-				case FilterTypeDCM:
+				case DCM:
 				{
 					_imuFilter = new DCMIMUFilter();
 					break;
 				}
 				
-				case FilterTypeKalman:
+				case Kalman:
 				{
 					_imuFilter = new KalmanIMUFilter();
 					break;
@@ -1176,14 +1288,29 @@ class IMU : public SubSystem
 				if (_imuHardware)
 				{
 					_imuHardware->process(currentTime);
+					
+					if (_suplimentalYawSource)
+					{
+						//_suplimentalYawSource->process(currentTime);
+					}
 
 					if (_imuFilter)
 					{
 						_imuFilter->setCurrentReadings(_imuHardware->getCurrentReadings());
+						_imuFilter->setSuplimentalYawReadings(_suplimentalYawSource->getCurrentReadings());
 						_imuFilter->filter(currentTime);
 						
 						//Pitch is defined as the angle between the aircraft's longitudinal axis and the local horizontal plane (positive for nose up). 
 						//Roll is defined as the angle about the longitudinal axis between the local horizontal plane and the actual flight orientation (positive for right wing down).
+						
+						serialcoms.debugPrint("!ANG:");
+						serialcoms.debugPrint(_imuFilter->currentRollAngleInRadians());
+						serialcoms.debugPrint(",");			
+						serialcoms.debugPrint(_imuFilter->currentPitchAngleInRadians());
+						serialcoms.debugPrint(",");
+						serialcoms.debugPrint(_imuFilter->currentYawAngleInRadians());
+						serialcoms.debugPrintln("");
+						
 					}
 					
 					
