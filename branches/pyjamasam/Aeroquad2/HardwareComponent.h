@@ -6,33 +6,9 @@ class HardwareComponent
 	private:
 		unsigned long _lastProcessTime;
 		
-		float _referenceVoltage;
-		int _dacPrecision;
-
 	public:
-		void setReferenceVoltage(const float referenceVoltage)
-		{
-			_referenceVoltage = referenceVoltage;
-		}
-		const float getReferenceVoltage()
-		{
-			return _referenceVoltage;
-		}
-		
-		void setDacPrecision(const int dacPrecision)
-		{
-			_dacPrecision = dacPrecision;
-		}
-		
-		const int getDacPrecision()
-		{
-			return _dacPrecision;
-		}
-		
 		HardwareComponent() 
 		{
-			this->_referenceVoltage = 5.0;
-			this->_dacPrecision = 10;
 		}
 
 		void _initialize()
@@ -48,6 +24,101 @@ class HardwareComponent
 		{
 			//this method should be called after the subclass is done its processing
 			_lastProcessTime = currentTime;
+		}
+};
+
+#define MAXINPUTCOUNT 20
+class AnalogInHardwareComponent : public HardwareComponent
+{
+	private:
+		float _referenceVoltage;
+		int _dacPrecision;
+		
+	protected:
+		float _lastReadings[MAXINPUTCOUNT];
+		int _rawReadings[MAXINPUTCOUNT];
+		
+		int _inputCount;
+
+		typedef struct {					
+			bool inputInUse;
+			bool invert;    				//invert input
+		  	int zeroLevel;     				// zero level (mV) @ 0
+		  	float sensitivity;   			// input sensitivity (mv/unit) 
+			int hardwarePin;
+		} inputConfiguration;
+
+		inputConfiguration _inputConfigurations[MAXINPUTCOUNT];
+		
+	private:
+		void _scaleRawReadingsToEngineeringValues()
+		{
+			static float tmpf;	        //temporary variable
+			
+			float dacMvValue = this->getReferenceVoltage() / (pow(2,this->getDacPrecision()) - 1);
+			
+			for (int i = 0; i <= _inputCount; i++)
+			{
+				if (_inputConfigurations[i].inputInUse)
+				{
+					int rawAnalogValue = _rawReadings[i];
+					tmpf = (float)rawAnalogValue * dacMvValue;
+					tmpf -= _inputConfigurations[i].zeroLevel; 		 		//voltage relative to zero level (mV)
+				  	tmpf /= _inputConfigurations[i].sensitivity;    		//input sensitivity in mV/Unit
+					if (_inputConfigurations[i].invert)
+					{						
+				  		tmpf *= -1;  		//invert axis value according to configuration 
+					}
+					_lastReadings[i] = tmpf;
+				}
+			}
+		}
+
+	public:
+		AnalogInHardwareComponent(const unsigned int inputCount) : HardwareComponent()
+		{
+			this->_referenceVoltage = 5.0;
+			this->_dacPrecision = 10;
+			
+			_inputCount = inputCount;
+			
+			//Initalize ALL the inputs, even if we aren't going to use them
+			for (int i = 0; i < MAXINPUTCOUNT; i++)
+			{
+				_inputConfigurations[i].inputInUse = false;
+				_lastReadings[i] = 0.0f;
+				_rawReadings[i] = 0;
+			}
+		}
+		
+		void setReferenceVoltage(const float referenceVoltage)
+		{
+			_referenceVoltage = referenceVoltage;
+		}
+		const float getReferenceVoltage()
+		{
+			return _referenceVoltage;
+		}
+
+		void setDacPrecision(const int dacPrecision)
+		{
+			_dacPrecision = dacPrecision;
+		}
+
+		const int getDacPrecision()
+		{
+			return _dacPrecision;
+		}
+		
+		virtual const int readRawValue(const unsigned int axis)
+		{
+			return analogRead(axis);
+		}
+		
+		virtual void process(const unsigned long currentTime)
+		{
+			this->_scaleRawReadingsToEngineeringValues();		
+			HardwareComponent::process(currentTime);
 		}
 };
 
