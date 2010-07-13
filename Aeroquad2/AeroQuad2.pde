@@ -43,7 +43,7 @@ void setup()
 		//Assign the 1st and 3rd serial ports for serial telemetry
 		serialcoms.assignSerialPort(&Serial, true);		//Use for any debugging output
 		serialcoms.assignSerialPort(&Serial3);			//Telemetry output to Xbee
-		//Run serial telemetry at 10hz offset 50ms
+		//Run serial telemetry at 10hz offset 50ms (100ms cycle time)
 		serialcoms.initialize(100, 50);
 	}
 	
@@ -53,18 +53,18 @@ void setup()
 		//gps.setHardwareType(GPS::HardwareTypeNMEA);
 		//gps.setHardwareType(GPS::HardwareTypeUBOX);
 		gps.setHardwareType(GPS::HardwareTypeMTK);
-		//Run the GPS at 2hz offset 25ms
+		//Run the GPS at 2hz offset 25ms (500ms cycle time)
 		gps.initialize(500, 25);
 	}
 
 	{
 		imu.setHardwareType(IMU::ArduPilotOilPan);
-		imu.setSuplimentalYawSource(IMU::YawSourceHMC5843Compass);
-		imu.setFilterType(IMU::SimpleAccellOnly);
-		//imu.setFilterType(IMU::FilterTypeComplimentry);
-		//imu.setFilterType(IMU::FilterTypeSimplifiedKalman);
-		//imu.setFilterType(IMU::FilterTypeDCM);
-		//imu.setFilterType(IMU::Kalman);
+		imu.setSuplimentalYawSource(IMU::HMC5843);
+		//imu.setFilterType(IMU::SimpleAccellOnly);
+		//imu.setFilterType(IMU::Complimentry);		
+		//imu.setFilterType(IMU::DCM);
+		//imu.setFilterType(IMU::Quaternion);
+		imu.setFilterType(IMU::Kalman);
 		//Run the IMU at 100hz (10ms cycle time)
 		imu.initialize(10,0);
 		imu.calibrateZero();
