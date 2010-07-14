@@ -147,8 +147,7 @@ class OilpanIMU : public IMUHardware
 			_inputConfigurations[IMUAcclY].zeroLevel = 1650;			//in mv
 		 	_inputConfigurations[IMUAcclY].sensitivity = 310;				//in mv/G
 			_inputConfigurations[IMUAcclY].inputInUse = true; 
-			_inputConfigurations[IMUAcclY].hardwarePin = 5;
-			//_inputConfigurations[IMUAcclY].invert = true;
+			_inputConfigurations[IMUAcclY].hardwarePin = 5;			
 
 			_inputConfigurations[IMUAcclZ].zeroLevel = 1650;			//in mv
 		 	_inputConfigurations[IMUAcclZ].sensitivity = 310;				//in mv/G
@@ -161,10 +160,11 @@ class OilpanIMU : public IMUHardware
 		 	_inputConfigurations[6].sensitivity = 4.4;				//in mv/oC
 			_inputConfigurations[6].inputInUse = true; 
 			_inputConfigurations[6].hardwarePin = 3;
+			_inputConfigurations[6].invert = true;
 			
-			//Aux input (using it for bottom facing ultrasonic range sensor)
-			_inputConfigurations[7].zeroLevel = 0;				//in mv
-		 	_inputConfigurations[7].sensitivity = 310;			//in mv/cm
+			//Aux input (using it for bottom facing ultrasonic range sensor)			
+			_inputConfigurations[7].zeroLevel = 0;					//in mv
+		 	_inputConfigurations[7].sensitivity = 9.765625;		//in mv/in
 			_inputConfigurations[7].inputInUse = true; 
 			_inputConfigurations[7].hardwarePin = 7;
  	
@@ -226,10 +226,12 @@ class OilpanIMU : public IMUHardware
 				{
 					_rawReadings[i] = this->readRawValue(_inputConfigurations[i].hardwarePin);
 				}
-			}
+			}						
 			
 			//Call the generic IMU Hardware process method
 			IMUHardware::process(currentTime);
+			
+			Serial.println(_lastReadings[7] * 2.54);
 		}
 		
 		//This is called via an Interrupt to pull the data from the ADC.
@@ -322,6 +324,9 @@ class HMC5843Compass : public SuplimentalYawSource
 			Wire.endTransmission(); //end transmission
 
 			Wire.requestFrom(HMC5843COMPAS_I2C_ADDRESS, 6);    // request 6 bytes from device
+			
+			while(!Wire.available());  // wait
+			
 			byte xAxisReadingHigh = Wire.receive();
 			byte xAxisReadingLow = Wire.receive();
 			int xAxisReading = (((xAxisReadingHigh) << 8) | (xAxisReadingLow));
@@ -334,7 +339,7 @@ class HMC5843Compass : public SuplimentalYawSource
 			byte zAxisReadingLow = Wire.receive();
 			int zAxisReading = (((zAxisReadingHigh) << 8) | (zAxisReadingLow));
 
-			Wire.endTransmission(); //end transmission
+			Wire.endTransmission();
 
 			//The APM and DIYDrones HMC5843 board combination need things swapped around to because of mounting differences
 			_lastReadings[0] = -yAxisReading;

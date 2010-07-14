@@ -43,6 +43,7 @@ void setup()
 		//Assign the 1st and 3rd serial ports for serial telemetry
 		serialcoms.assignSerialPort(&Serial, true);		//Use for any debugging output
 		serialcoms.assignSerialPort(&Serial3);			//Telemetry output to Xbee
+		
 		//Run serial telemetry at 10hz offset 50ms (100ms cycle time)
 		serialcoms.initialize(100, 50);
 	}
@@ -53,6 +54,7 @@ void setup()
 		//gps.setHardwareType(GPS::HardwareTypeNMEA);
 		//gps.setHardwareType(GPS::HardwareTypeUBOX);
 		gps.setHardwareType(GPS::HardwareTypeMTK);
+		
 		//Run the GPS at 2hz offset 25ms (500ms cycle time)
 		gps.initialize(500, 25);
 	}
@@ -62,19 +64,22 @@ void setup()
 		imu.setSuplimentalYawSource(IMU::HMC5843);
 		//imu.setFilterType(IMU::SimpleAccellOnly);		//Works fine.  In all its noisy glory
 		//imu.setFilterType(IMU::Complimentry);			//Works fine, but not a very good filter
-		//imu.setFilterType(IMU::DCM);					//Implimentation doesn't quite work yet.  Returns 0's all the time
-		//imu.setFilterType(IMU::Quaternion);			//Implimentation not yet complete.  Not working
-		imu.setFilterType(IMU::Kalman);					//Works fine.
-		//Run the IMU at 50hz (10ms cycle time)
+		//imu.setFilterType(IMU::DCM);						//Implimentation doesn't quite work yet.  Returns 0's all the time
+		//imu.setFilterType(IMU::Quaternion);				//Implimentation not yet complete.  Not working
+		imu.setFilterType(IMU::Kalman);						//Works fine.
+		
+		//Run the IMU at 50hz (20ms cycle time)
 		imu.initialize(20,0);
 		imu.calibrateZero();
 	}
 	
 	{
-		//Run the sensors at 50hz offset 25ms
+		
 		sensors.setPressorSensorType(Sensors::PressureSensorBMP085);
-		//sensors.setHeightSensorType(Sensors::HeightSensorAnalogIn);
+		sensors.setHeightSensorType(Sensors::MaxBotixMaxSonar);
 		//sensors.setPowerSensorType(Sensors::PowerSensorAnalogIn);
+		
+		//Run the sensors at 50hz (20ms cycle time)
 		sensors.initialize(20,0);
 	}
 	
@@ -101,9 +106,12 @@ void setup()
 	motors.disable();
 	*/
 	
-	//Run the LEDs at 5hz offset 75ms
-	led.initialize(200, 75);
-	led.setPatternType(LED::PatternSweep);
+	{
+		led.setPatternType(LED::PatternSweep);
+		
+		//Run the LEDs at 10hz offset 75ms (100ms cycle time)
+		led.initialize(100, 75);		
+	}
 	
 	//Setup Done.
 	serialcoms.debugPrintln("!"VERSION);
@@ -122,7 +130,7 @@ void loop()
 	//process all the "inputs" to the system
 	gps.process(currentTime);
 	//receiver.process(currentTime);
-	//sensors.process(currentTime);
+	sensors.process(currentTime);
 	imu.process(currentTime);
 	
 	//process flight control

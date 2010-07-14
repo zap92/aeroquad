@@ -21,21 +21,17 @@ class PowerSensor : public AnalogInHardwareComponent
 		}
 };
 
-/*
-#define PRESSURE_MINIMUM 94190.0
-#define PRESSURE_MAXIMUM 103100.0
-#define PRESSURE_HEIGHT_MAXIMUM 610.0
-#define PRESSURE_HEIGHT_MINIMUM -153.0
 class PressureSensor : public HardwareComponent
 {
 	protected:
-		float _currentHeight;
-		float _currentPressure;
+		long _currentPressure;				
+		long _currentTemperature;
 		
 	public:
 		PressureSensor() : HardwareComponent()
 		{
-			_currentHeight = 0.0;
+			_currentPressure = 0.0f;
+			_currentTemperature = 0.0f;
 		}
 
 		virtual void initialize()
@@ -44,18 +40,244 @@ class PressureSensor : public HardwareComponent
 		}	
 		
 		virtual void process(const unsigned long currentTime)
-		{
-			_currentHeight = fconstrain(fmap(_currentPressure, PRESSURE_MINIMUM, PRESSURE_MAXIMUM, PRESSURE_HEIGHT_MAXIMUM, PRESSURE_HEIGHT_MINIMUM), PRESSURE_HEIGHT_MINIMUM, PRESSURE_HEIGHT_MAXIMUM);
-			
+		{						
 			HardwareComponent::process(currentTime);	
 		}
 		
-		const float getHeight()
+		const long getTemperature()
 		{
-			return _currentHeight;
+			return _currentTemperature;
+		}
+		
+		const long getPressure()
+		{
+				return _currentPressure;
+		}
+		
+		const float getAltitude()
+		{
+			float tmp_float = (_currentPressure/101325.0);
+    		tmp_float = pow(tmp_float,0.190295);
+    		return 44330.0*(1.0-tmp_float);    
 		}
 };
-*/
+
+//Based on the code from: http://code.google.com/p/arducopter/source/browse/trunk/libraries/APM_BMP085/APM_BMP085.cpp and http://code.jeelabs.org/libraries/Ports/PortsBMP085.cpp
+//Because of the way this sensor is coded it responds at 1/2 of the sensor subsystem cycle speed
+#define BMP085_ADDRESS 0x77  //(0xEE >> 1)
+#define BMP085_EOC_PIN 30        // End of conversion pin PC7
+class BMP085PressureSensor : public PressureSensor
+{
+	private:
+		byte _samplingMode;
+		int _state;
+		
+		long _rawTemperature;
+		long _rawPressure;				
+		
+		//Calibration data that will be read from the sensor as per the datasheet
+		//http://www.bosch-sensortec.com/content/language1/downloads/BST-BMP085-DS000-05.pdf (page 12)
+		int _calibrationAC1;
+		int _calibrationAC2;
+		int _calibrationAC3;
+		unsigned int _calibrationAC4;
+    	unsigned int _calibrationAC5;
+    	unsigned int _calibrationAC6;  
+		int _calibrationB1;
+		int _calibrationB2;
+		int _calibrationMB;
+		int _calibrationMC;
+		int _calibrationMD;
+		
+		void _initiateRawTemperatureReading()
+		{
+			Wire.beginTransmission(BMP085_ADDRESS);
+			Wire.send(0xF4);
+			Wire.send(0x2E);
+			Wire.endTransmission();			
+		}
+		
+		const long _readRawTempature()
+		{
+			byte msb, lsb;
+			
+			Wire.beginTransmission(BMP085_ADDRESS);
+  			Wire.send(0xF6);
+  			Wire.endTransmission();	
+			
+			Wire.requestFrom(BMP085_ADDRESS,2);
+			{
+				while(!Wire.available());		// waiting			
+				msb = Wire.receive();
+			
+				while(!Wire.available());		// waiting
+				lsb = Wire.receive();
+			}
+			Wire.endTransmission();
+						
+			return (long)msb << 8 | (long)lsb;
+		}				
+		
+		void _initiateRawPressureReading()
+		{
+			Wire.beginTransmission(BMP085_ADDRESS);
+  			Wire.send(0xF4);
+  			Wire.send(0x34+(_samplingMode<<6));
+  			Wire.endTransmission();	
+		}
+		
+		const int32_t _readRawPressure()
+		{
+			byte msb, lsb, xlsb;
+			
+			Wire.beginTransmission(BMP085_ADDRESS);
+			Wire.send(0xF6);
+			Wire.endTransmission();
+			
+			Wire.requestFrom(BMP085_ADDRESS, 3);
+			{
+				while(!Wire.available());		// waiting			
+				msb = Wire.receive();
+			
+				while(!Wire.available());		// waiting
+				lsb = Wire.receive();
+			
+				while(!Wire.available());		// waiting
+				xlsb = Wire.receive();
+			}
+			Wire.endTransmission();
+			
+			return (((long)msb<<16) | ((long)lsb<<8) | ((long)xlsb)) >> (8-_samplingMode);
+		}
+		
+		void _processReadings()
+		{
+			//Based on the code from page 13 of the datasheet														
+			long x1, x2, x3, b3, b5, b6, p, tmp;
+			unsigned long b4, b7;
+			
+			//Calculate the true temperature
+			x1 = ((long)_rawTemperature - _calibrationAC6) * _calibrationAC5 >> 15;
+			x2 = ((long) _calibrationMC << 11) / (x1 + _calibrationMD);
+			b5 = x1 + x2;
+			_currentTemperature = (b5 + 8) >> 4;			  			  			
+  			  			
+  			//Calculate the true pressure
+			b6 = b5 - 4000;
+			x1 = (_calibrationB2 * (b6 * b6 >> 12)) >> 11; 
+			x2 = _calibrationAC2 * b6 >> 11;
+			x3 = x1 + x2;			
+			tmp = _calibrationAC1;
+			tmp = (tmp*4 + x3) << _samplingMode;
+			b3 = (tmp+2)/4;
+			x1 = _calibrationAC3 * b6 >> 13;
+			x2 = (_calibrationB1 * (b6 * b6 >> 12)) >> 16;
+			x3 = ((x1 + x2) + 2) >> 2;
+			b4 = (_calibrationAC4 * (uint32_t) (x3 + 32768)) >> 15;
+			b7 = ((unsigned long) _rawPressure - b3) * (50000 >> _samplingMode);
+			p = b7 < 0x80000000 ? (b7 * 2) / b4 : (b7 / b4) * 2;
+			
+			x1 = (p >> 8) * (p >> 8);
+			x1 = (x1 * 3038) >> 16;
+			x2 = (-7357 * p) >> 16;
+			
+			_currentPressure = p + ((x1 + x2 + 3791) >> 4);
+		}
+    		
+	public:
+		
+		BMP085PressureSensor() : PressureSensor()
+		{
+				_samplingMode = 3;				//Over Sampling
+				_state = 0;
+				
+				_rawTemperature = 0;
+				_rawPressure = 0;			
+		}
+		
+		virtual void initialize()
+		{
+			PressureSensor::initialize();		
+			
+			pinMode(BMP085_EOC_PIN,INPUT);   // End Of Conversion (PC7) input
+			
+			Wire.begin();
+			
+			//Read the calibration registers
+			Wire.beginTransmission(BMP085_ADDRESS);
+			Wire.send(0xAA);
+			Wire.endTransmission();
+			
+			byte rawCalibrationData[22];
+			Wire.requestFrom(BMP085_ADDRESS, 22);  
+			int i = 0;
+  			while(Wire.available())
+  			{ 
+    			rawCalibrationData[i] = Wire.receive();  // receive one byte
+    			i++;
+  			}
+  			
+			_calibrationAC1 = ((int)rawCalibrationData[0] << 8) | rawCalibrationData[1];
+			_calibrationAC2 = ((int)rawCalibrationData[2] << 8) | rawCalibrationData[3];
+			_calibrationAC3 = ((int)rawCalibrationData[4] << 8) | rawCalibrationData[5];
+			_calibrationAC4 = ((int)rawCalibrationData[6] << 8) | rawCalibrationData[7];
+			_calibrationAC5 = ((int)rawCalibrationData[8] << 8) | rawCalibrationData[9];
+			_calibrationAC6 = ((int)rawCalibrationData[10] << 8) | rawCalibrationData[11];
+			_calibrationB1 = ((int)rawCalibrationData[12] << 8) | rawCalibrationData[13];
+			_calibrationB2 = ((int)rawCalibrationData[14] << 8) | rawCalibrationData[15];
+			_calibrationMB = ((int)rawCalibrationData[16] << 8) | rawCalibrationData[17];
+			_calibrationMC = ((int)rawCalibrationData[18] << 8) | rawCalibrationData[19];
+			_calibrationMD = ((int)rawCalibrationData[20] << 8) | rawCalibrationData[21];						
+
+			Wire.endTransmission();	
+			
+			//setup for the first step
+			_state = 0;
+			_initiateRawTemperatureReading();
+		}
+		
+		virtual void process(unsigned long currentTime)
+		{
+			PressureSensor::process(currentTime);			
+			
+			switch (_state)
+			{
+				case 0:
+				{
+					//Attempt to read the temperature reading this time through the loop
+					if (digitalRead(BMP085_EOC_PIN))
+					{				
+						_rawTemperature = _readRawTempature();
+					
+						//setup for the next step through
+						_initiateRawPressureReading();
+						_state++;
+					}
+					break;	
+				}
+				case 1:
+				{					
+					//Attempt to read the pressure reading this time through the loop
+					
+					//If the end of conversion pin is high proceed with the reading
+					if (digitalRead(BMP085_EOC_PIN))
+					{
+						_rawPressure = _readRawPressure();
+						
+						//process true tempature and pressure readings						
+						_processReadings();												
+						
+						//Back to the first step
+						_state = 0;
+						_initiateRawTemperatureReading();
+					}
+					break;	
+				}				
+			}
+		}
+			
+};
+
 /*#define BARO_CSB 47
 #define BARO_DRDY 46
 #define PRESSURE_MSB_REGISTER 0x1F   //Pressure 3 MSB
@@ -128,28 +350,29 @@ class SPIPressureSensor : public PressureSensor, SPIDevice
 		
 			PressureSensor::process(currentTime);
 		}
-};*/
+};
 
-/*
-class HeightSensor : public HardwareComponent
+*/
+
+class HeightSensor : public AnalogInHardwareComponent
 {
 	protected:
 		float _currentHeight;
 		
 	public:
-		HeightSensor() : HardwareComponent()
+		HeightSensor() : AnalogInHardwareComponent(1)
 		{
 			_currentHeight = 0.0;
 		}
 
 		virtual void initialize()
 		{
-			HardwareComponent::initialize();
+			AnalogInHardwareComponent::initialize();
 		}	
 		
 		virtual void process(const unsigned long currentTime)
 		{
-			HardwareComponent::process(currentTime);	
+			AnalogInHardwareComponent::process(currentTime);	
 		}
 		
 		const float getHeight()
@@ -159,43 +382,37 @@ class HeightSensor : public HardwareComponent
 };
 
 #define HEIGHTSENSOR_INPUTPIN 10
-class AnalogInHeightSensor : public HeightSensor
+class MaxBotixMaxSonarHeightSensor : public HeightSensor
 {
 	public:		
-		void initialize()
+		virtual void initialize()
 		{
 			HeightSensor::initialize();
-			
-			pinMode(HEIGHTSENSOR_INPUTPIN, INPUT);
 		}
 		
 		void process(const unsigned long currentTime)
 		{	
-			static float tmpf;	        //temporary variable
 			
-			int rawAnalogValue = analogRead(HEIGHTSENSOR_INPUTPIN);
-			tmpf = rawAnalogValue * HardwareComponent::getReferenceVoltage() / 1024.0f;  //voltage (mV)
-		  	tmpf /= 3.2;    		//input sensitivity in mV/Unit
-			
-			//convert from cm to meters
-			_currentHeight = tmpf / 100;
-					
+			//This sensor is using the Aux pin on the Oilpan IMU board.  
+			//get a static instance to that
 			HeightSensor::process(currentTime);
 		}
 };
-*/
+
 class Sensors : public SubSystem
 {
 	private:
-//		PressureSensor *_pressureSensor;
-//		HeightSensor *_heightSensor;
+		PressureSensor *_pressureSensor;
 		PowerSensor *_powerSensor;
+		HeightSensor *_heightSensor;
+
 		
 	public:
 		
 		typedef enum { PressureSensorNone = 0, PressureSensorBMP085} PressureSensorType;
-		typedef enum { HeightSensorNone = 0, HeightSensorAnalogIn} HeightSensorType;
-			
+		typedef enum { HeightSensorNone = 0, MaxBotixMaxSonar } HeightSensorType;
+		typedef enum { PowerSensorNone = 0 } PowerSensorType;
+		
 		Sensors() : SubSystem()
 		{				
 		}
@@ -203,42 +420,63 @@ class Sensors : public SubSystem
 		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
-						
-			//Read and process pressure reading
-			/*if (_pressureSensor)
+									
+			if (_pressureSensor)
 			{
 				_pressureSensor->initialize();
-			}*/
+			}
 			
-			//Read and process height reading
-			/*if (_heightSensor)
+			if (_powerSensor)
+			{
+				_powerSensor->initialize();
+			}
+						
+			if (_heightSensor)
 			{
 				_heightSensor->initialize();
-			}*/
+			}
 		}
 		
 		void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
-			{
-				//Read and process pressure reading
-				/*if (_pressureSensor)
+			{				
+				if (_pressureSensor)
 				{
 					_pressureSensor->process(currentTime);
-				}*/
+				}
 				
-				//Read and process height reading
-				/*if (_heightSensor)
+				if (_powerSensor)
+				{
+					_powerSensor->process(currentTime);
+				}
+								
+				if (_heightSensor)
 				{
 					_heightSensor->process(currentTime);
-				}*/
-				
-				//TODO
-				//Read and process current and voltage
+				}								
 			}
 		}
 		
 		void setPressorSensorType(const PressureSensorType hardwareType)
+		{
+			switch (hardwareType)
+			{
+				case PressureSensorBMP085:
+				{
+					_pressureSensor = new BMP085PressureSensor();
+					break;
+				}
+				
+				default:
+				{
+					serialcoms.debugPrintln("ERROR: Unknown Pressure Sensor type selected.");
+					break;
+				}
+			}
+		}
+		
+		void setPowerSensorType(const PowerSensorType hardwareType)
 		{
 			switch (hardwareType)
 			{
@@ -260,11 +498,11 @@ class Sensors : public SubSystem
 		{
 			switch (hardwareType)
 			{
-				/*case HeightSensorAnalogIn:
+				case MaxBotixMaxSonar:
 				{
-					_heightSensor = new AnalogInHeightSensor();
+					_heightSensor = new MaxBotixMaxSonarHeightSensor();
 					break;
-				}*/
+				}
 				
 				default:
 				{
@@ -275,38 +513,28 @@ class Sensors : public SubSystem
 		}
 				
 		//accessors for sensor values
-		
-		//Altitude
-		const float heightFromPressure()
+		const long getTemperature()
 		{
-			/*if (_pressureSensor)
+			if (_pressureSensor)
 			{
-				return _pressureSensor->getHeight();
-			}*/
-			
-			return 0.0;
+				_pressureSensor->getTemperature();
+			}
 		}
 		
-		const float heightFromUltrasonic()
+		const long getPressure()
 		{
-			/*if (_heightSensor)
+			if (_pressureSensor)
 			{
-				return _heightSensor->getHeight();
-			}*/
-			
-			return 0.0;
+				_pressureSensor->getPressure();
+			}
 		}
 		
-		
-		
-		//Power sensors
-		const float currentVoltage()
+		const float getAltitudeUsingPressure()
 		{
-			return 0.0f;
-		}
+			if (_pressureSensor)
+			{
+				_pressureSensor->getAltitude();
+			}
+		}	
 		
-		const float currentCurrentConsumptionRate()
-		{
-			return 0.0f;
-		}
 };
