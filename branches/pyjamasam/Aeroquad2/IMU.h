@@ -13,7 +13,7 @@ class IMUHardware : public AnalogInHardwareComponent
 
 		virtual void initialize()
 		{
-			HardwareComponent::initialize();
+			AnalogInHardwareComponent::initialize();
 		}	
 				
 		virtual void process(const unsigned long currentTime)
@@ -1363,13 +1363,13 @@ class IMU : public SubSystem
 						//Pitch is defined as the angle between the aircraft's longitudinal axis and the local horizontal plane (positive for nose up). 
 						//Roll is defined as the angle about the longitudinal axis between the local horizontal plane and the actual flight orientation (positive for right wing down).
 						
-						serialcoms.debugPrint("!:");
+						/*serialcoms.debugPrint("!:");
 						serialcoms.debugPrint(_imuFilter->currentRollAngleInRadians());
 						serialcoms.debugPrint(",");			
 						serialcoms.debugPrint(_imuFilter->currentPitchAngleInRadians());
 						serialcoms.debugPrint(",");
 						serialcoms.debugPrint(_imuFilter->currentYawAngleInRadians());
-						serialcoms.debugPrintln("");
+						serialcoms.debugPrintln("");*/
 					}
 					
 					
