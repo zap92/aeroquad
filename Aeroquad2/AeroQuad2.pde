@@ -15,15 +15,15 @@ GPS gps;
 #include "IMU.h"
 IMU imu;
 
-
-/*#include "Sensors.h"
-Sensors sensors;*/
+#include "Sensors.h"
+Sensors sensors;
 
 /*
 #include "Receiver.h"
 Receiver receiver;
 
-
+#include "Navigation.h"
+Navigation navigation;
 
 #include "FlightControl.h"
 FlightControl flightcontrol;
@@ -32,10 +32,10 @@ FlightControl flightcontrol;
 Motors motors;
 
 #import "Camera.h"
-Camera camera;
+Camera camera;*/
 
 #include "LED.h"
-LED led;*/
+LED led;
 
 void setup()
 {	
@@ -60,23 +60,22 @@ void setup()
 	{
 		imu.setHardwareType(IMU::ArduPilotOilPan);
 		imu.setSuplimentalYawSource(IMU::HMC5843);
-		//imu.setFilterType(IMU::SimpleAccellOnly);
-		//imu.setFilterType(IMU::Complimentry);		
-		//imu.setFilterType(IMU::DCM);
-		//imu.setFilterType(IMU::Quaternion);
-		imu.setFilterType(IMU::Kalman);
-		//Run the IMU at 100hz (10ms cycle time)
-		imu.initialize(10,0);
+		//imu.setFilterType(IMU::SimpleAccellOnly);		//Works fine.  In all its noisy glory
+		//imu.setFilterType(IMU::Complimentry);			//Works fine, but not a very good filter
+		//imu.setFilterType(IMU::DCM);					//Implimentation doesn't quite work yet.  Returns 0's all the time
+		//imu.setFilterType(IMU::Quaternion);			//Implimentation not yet complete.  Not working
+		imu.setFilterType(IMU::Kalman);					//Works fine.
+		//Run the IMU at 50hz (10ms cycle time)
+		imu.initialize(20,0);
 		imu.calibrateZero();
 	}
 	
 	{
 		//Run the sensors at 50hz offset 25ms
-		//sensors.setPressorSensorType(Sensors::PressureSensorSPI);
+		sensors.setPressorSensorType(Sensors::PressureSensorBMP085);
 		//sensors.setHeightSensorType(Sensors::HeightSensorAnalogIn);
 		//sensors.setPowerSensorType(Sensors::PowerSensorAnalogIn);
-		//sensors.setCompassType(Sensors::CompassHMC5843);
-		//sensors.initialize(20,0);
+		sensors.initialize(20,0);
 	}
 	
 	/*//Run the receiver at 50hz
@@ -100,12 +99,13 @@ void setup()
 	motors.setHardwareType(Motors::HardwareTypeOnboard);
 	motors.setOrientationType(MotorOrientationType::QuadPlusMotor);
 	motors.disable();
+	*/
 	
 	//Run the LEDs at 5hz offset 75ms
 	led.initialize(200, 75);
-	led.setPatternType(LED::LEDPatternInsideOut);
-	//led.disable();*/
+	led.setPatternType(LED::PatternSweep);
 	
+	//Setup Done.
 	serialcoms.debugPrintln("!"VERSION);
 }
 
@@ -120,7 +120,7 @@ void loop()
 	previousTime - currentTime;
 	
 	//process all the "inputs" to the system
-	//gps.process(currentTime);
+	gps.process(currentTime);
 	//receiver.process(currentTime);
 	//sensors.process(currentTime);
 	imu.process(currentTime);
@@ -133,6 +133,6 @@ void loop()
 	//camera.process(currentTime);
 	
 	//process accessory sub systems
-	//led.process(currentTime);
+	led.process(currentTime);
 	serialcoms.process(currentTime);
 }

@@ -1,9 +1,13 @@
 #include "SubSystem.h"
 
+#define GREENLED 37
+#define YELLOWLED 36
+#define REDLED 35
+
 class LED : public SubSystem
 {
 	public:
-		typedef enum { LEDPatternOff = 0, LEDPatternInsideOut = 1, LEDPatternOutsideIn = 2} LEDPattern;
+		typedef enum { PatternOff = 0, PatternChase, PatternSweep } LEDPattern;
 		
 	private: 
 		bool _readyLEDState;
@@ -16,7 +20,7 @@ class LED : public SubSystem
 		LED() : SubSystem()
 		{
 			_readyLEDState = false;
-			_activePattern = LEDPatternOff;
+			_activePattern = PatternOff;
 			
 			_patternState = 0;
 		}
@@ -25,11 +29,14 @@ class LED : public SubSystem
 		{ 
 			SubSystem::initialize(frequency, offset);
 
-			for(int i = 24; i < 32; i++)
-			{
-				pinMode(i, OUTPUT);
-				digitalWrite(i, LOW);				
-			}
+			pinMode(REDLED, OUTPUT);
+			digitalWrite(REDLED, LOW);				
+
+			pinMode(YELLOWLED, OUTPUT);
+			digitalWrite(YELLOWLED, LOW);				
+
+			pinMode(GREENLED, OUTPUT);
+			digitalWrite(GREENLED, LOW);				
 		}
 		
 		void setPatternType(const LEDPattern patternType)
@@ -44,11 +51,11 @@ class LED : public SubSystem
 			{
 				if (_readyLEDState)
 				{
-					digitalWrite(31, HIGH);
+					//digitalWrite(31, HIGH);
 				}
 				else
 				{
-					digitalWrite(31, LOW);
+					//digitalWrite(31, LOW);
 				}
 				
 				_readyLEDState = !_readyLEDState;
@@ -56,57 +63,33 @@ class LED : public SubSystem
 				//Process any light patterns that are needed
 				switch (_activePattern)
 				{
-					case LEDPatternOff:
+					case PatternOff:
 					{
 						//No pattern active.
 						break;
 					}
 					
-					case LEDPatternInsideOut:
+					case PatternChase:
 					{
-						//sweep from the center of the quad to the edge of the arms.
+						//leds will chase each other...  2 on 1 off..
 						if (_patternState == 0)
 						{
-							digitalWrite(24, HIGH);
-							digitalWrite(26, HIGH);
-							digitalWrite(28, HIGH);
-							
-							digitalWrite(25, LOW);
-							digitalWrite(27, LOW);
-							digitalWrite(29, LOW);
+							digitalWrite(REDLED, HIGH);				
+							digitalWrite(YELLOWLED, LOW);				
+							digitalWrite(GREENLED, LOW);
 						}
 						else if (_patternState == 1)
 						{
-							digitalWrite(24, HIGH);
-							digitalWrite(26, HIGH);
-							digitalWrite(28, HIGH);
-							
-							digitalWrite(25, HIGH);
-							digitalWrite(27, HIGH);
-							digitalWrite(29, HIGH);
+							digitalWrite(REDLED, LOW);				
+							digitalWrite(YELLOWLED, HIGH);				
+							digitalWrite(GREENLED, LOW);
 						}
 						else if (_patternState == 2)
 						{
-							digitalWrite(24, LOW);
-							digitalWrite(26, LOW);
-							digitalWrite(28, LOW);
-							
-							digitalWrite(25, HIGH);
-							digitalWrite(27, HIGH);
-							digitalWrite(29, HIGH);
-						}
-						else if (_patternState == 3)
-						{
-							digitalWrite(24, LOW);
-							digitalWrite(26, LOW);
-							digitalWrite(28, LOW);
-							
-							digitalWrite(25, LOW);
-							digitalWrite(27, LOW);
-							digitalWrite(29, LOW);
-						}
-						else if (_patternState == 4)
-						{
+							digitalWrite(REDLED, LOW);				
+							digitalWrite(YELLOWLED, LOW);				
+							digitalWrite(GREENLED, HIGH);
+
 							_patternState = -1;
 						}
 						
@@ -115,51 +98,43 @@ class LED : public SubSystem
 						break;
 					}
 					
-					case LEDPatternOutsideIn:
+					case PatternSweep:
 					{
 						//Sweep from the outside of the quad towards the center
 						if (_patternState == 0)
 						{
-							digitalWrite(24, LOW);
-							digitalWrite(26, LOW);
-							digitalWrite(28, LOW);
-							
-							digitalWrite(25, HIGH);
-							digitalWrite(27, HIGH);
-							digitalWrite(29, HIGH);
+							digitalWrite(REDLED, HIGH);				
+							digitalWrite(YELLOWLED, LOW);				
+							digitalWrite(GREENLED, LOW);
 						}
 						else if (_patternState == 1)
 						{
-							digitalWrite(24, HIGH);
-							digitalWrite(26, HIGH);
-							digitalWrite(28, HIGH);
-							
-							digitalWrite(25, HIGH);
-							digitalWrite(27, HIGH);
-							digitalWrite(29, HIGH);
+							digitalWrite(REDLED, LOW);				
+							digitalWrite(YELLOWLED, HIGH);				
+							digitalWrite(GREENLED, LOW);
 						}
 						else if (_patternState == 2)
 						{
-							digitalWrite(24, HIGH);
-							digitalWrite(26, HIGH);
-							digitalWrite(28, HIGH);
-							
-							digitalWrite(25, LOW);
-							digitalWrite(27, LOW);
-							digitalWrite(29, LOW);
+							digitalWrite(REDLED, LOW);				
+							digitalWrite(YELLOWLED, LOW);				
+							digitalWrite(GREENLED, HIGH);
 						}
 						else if (_patternState == 3)
 						{
-							digitalWrite(24, LOW);
-							digitalWrite(26, LOW);
-							digitalWrite(28, LOW);
-							
-							digitalWrite(25, LOW);
-							digitalWrite(27, LOW);
-							digitalWrite(29, LOW);
+							//Nothing in this state.  Keep it like it was.
 						}
 						else if (_patternState == 4)
 						{
+							digitalWrite(REDLED, LOW);				
+							digitalWrite(YELLOWLED, HIGH);				
+							digitalWrite(GREENLED, LOW);
+						}
+						else if (_patternState == 5)
+						{
+							digitalWrite(REDLED, HIGH);				
+							digitalWrite(YELLOWLED, LOW);				
+							digitalWrite(GREENLED, LOW);
+							
 							_patternState = -1;
 						}
 						

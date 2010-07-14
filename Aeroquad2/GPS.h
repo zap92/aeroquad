@@ -9,13 +9,13 @@ class GPSHardware : public HardwareComponent
 	protected:
 		unsigned long _lastFix;
 		
-		unsigned long _lng;
-		unsigned long _lat;
+	 	long _lng;
+		long _lat;
 		
-		unsigned long _alt;
+		int _alt;
 		
-		unsigned long _groundSpeed;
-		unsigned long _groundCourse;
+		int _groundSpeed;
+		int _groundCourse;
 		
 		unsigned int _numberOfSatellites;
 		GPSFixType _fixState;
@@ -47,7 +47,7 @@ class GPSHardware : public HardwareComponent
 		
 		virtual const GPSFixType fixType()
 		{
-			return FixNone;
+			return _fixState;
 		}
 		
 		const unsigned long lastFix()
@@ -55,20 +55,31 @@ class GPSHardware : public HardwareComponent
 			return _lastFix;
 		}
 		
-		const unsigned long longitude()
+		const long longitude()
 		{
 			return _lng;
 		}
 		
-		const unsigned long latitude()
+		const long latitude()
 		{
 			return _lat;
 		}
 		
-		const unsigned long altitude()
+		const int altitude()
 		{
 			return _alt;	
 		}
+		
+		const int groundSpeed()
+		{
+			return _groundSpeed;
+		}
+		
+		const int groundCourse()
+		{
+			return _groundCourse;
+		}
+		
 };
 
 class MTKGPSHardware : public GPSHardware
@@ -138,9 +149,9 @@ class MTKGPSHardware : public GPSHardware
 		    		case 0x05: //ID Custom
 					{
 		     			j=0;
-						_lng = _join4Bytes(&_buffer[j]); // lon*10000000
+						_lng = _join4Bytes(&_buffer[j]); // lon*1000000
 						j+=4;
-						_lat = _join4Bytes(&_buffer[j]); // lat*10000000
+						_lat = _join4Bytes(&_buffer[j]); // lat*1000000
 						j+=4;
 						_alt = _join4Bytes(&_buffer[j]);
 						j+=4;
@@ -331,6 +342,22 @@ class GPS : public SubSystem
 						_gpsHardware->process(currentTime, _serialPort->read());
 					}
 				}
+				
+				/*serialcoms.debugPrint("!G:");
+				serialcoms.debugPrint(this->fixType());
+				serialcoms.debugPrint(",");			
+				serialcoms.debugPrint(this->lastFix());
+				serialcoms.debugPrint(",");
+				serialcoms.debugPrint(this->latitude());
+				serialcoms.debugPrint(",");
+				serialcoms.debugPrint(this->longitude());
+				serialcoms.debugPrint(",");
+				serialcoms.debugPrint(this->altitude());
+				serialcoms.debugPrint(",");
+				serialcoms.debugPrint(this->groundSpeed());
+				serialcoms.debugPrint(",");
+				serialcoms.debugPrint(this->groundCourse());
+				serialcoms.debugPrintln("");*/
 			}
 		}
 		
@@ -339,7 +366,7 @@ class GPS : public SubSystem
 		{
 			if (_gpsHardware)
 			{
-				if (millis() - _gpsHardware->lastFix() < 2000)
+				if (millis() - _gpsHardware->lastFix() <= 2000)
 				{
 					return _gpsHardware->fixType();
 				}
@@ -368,7 +395,7 @@ class GPS : public SubSystem
 			}
 		}
 		
-		const unsigned long longitude()
+		const long longitude()
 		{
 			if (_gpsHardware)
 			{
@@ -380,7 +407,7 @@ class GPS : public SubSystem
 			}
 		}
 		
-		const unsigned long latitude()
+		const long latitude()
 		{
 			if (_gpsHardware)
 			{
@@ -392,7 +419,7 @@ class GPS : public SubSystem
 			}
 		}
 		
-		const unsigned long altitude()
+		const int altitude()
 		{
 			if (_gpsHardware)
 			{
@@ -403,15 +430,30 @@ class GPS : public SubSystem
 				return 0;
 			}	
 		}
-
-/*unsigned long _groundSpeed;
-unsigned long _groundCourse;
-
-unsigned int _numberOfSatellites;
-GPSFixType _fixState;
-
-unsigned long _time;*/
 		
+		const int groundSpeed()
+		{
+			if (_gpsHardware)
+			{
+				return _gpsHardware->groundSpeed();
+			}
+			else
+			{
+				return 0;
+			}	
+		}
+		
+		const int groundCourse()
+		{
+			if (_gpsHardware)
+			{
+				return _gpsHardware->groundCourse();
+			}
+			else
+			{
+				return 0;
+			}	
+		}
 };
 
 

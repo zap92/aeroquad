@@ -2,8 +2,26 @@
 #include "HardwareComponent.h"
 
 
+class PowerSensor : public AnalogInHardwareComponent
+{
+	public:
+		PowerSensor() : AnalogInHardwareComponent(2)
+		{
+			
+		}
+		
+		virtual void initialize()
+		{
+			AnalogInHardwareComponent::initialize();
+		}	
+				
+		virtual void process(const unsigned long currentTime)
+		{
+			AnalogInHardwareComponent::process(currentTime);
+		}
+};
 
-
+/*
 #define PRESSURE_MINIMUM 94190.0
 #define PRESSURE_MAXIMUM 103100.0
 #define PRESSURE_HEIGHT_MAXIMUM 610.0
@@ -37,7 +55,7 @@ class PressureSensor : public HardwareComponent
 			return _currentHeight;
 		}
 };
-
+*/
 /*#define BARO_CSB 47
 #define BARO_DRDY 46
 #define PRESSURE_MSB_REGISTER 0x1F   //Pressure 3 MSB
@@ -112,7 +130,7 @@ class SPIPressureSensor : public PressureSensor, SPIDevice
 		}
 };*/
 
-
+/*
 class HeightSensor : public HardwareComponent
 {
 	protected:
@@ -165,18 +183,18 @@ class AnalogInHeightSensor : public HeightSensor
 			HeightSensor::process(currentTime);
 		}
 };
-
+*/
 class Sensors : public SubSystem
 {
 	private:
-		PressureSensor *_pressureSensor;
-		HeightSensor *_heightSensor;
+//		PressureSensor *_pressureSensor;
+//		HeightSensor *_heightSensor;
+		PowerSensor *_powerSensor;
 		
 	public:
 		
-		typedef enum { PressureSensorNone = 0, PressureSensorSPI} PressureSensorType;
+		typedef enum { PressureSensorNone = 0, PressureSensorBMP085} PressureSensorType;
 		typedef enum { HeightSensorNone = 0, HeightSensorAnalogIn} HeightSensorType;
-		typedef enum { CompassNone = 0, CompassHMC5843} CompassType;
 			
 		Sensors() : SubSystem()
 		{				
@@ -187,16 +205,16 @@ class Sensors : public SubSystem
 			SubSystem::initialize(frequency, offset);
 						
 			//Read and process pressure reading
-			if (_pressureSensor)
+			/*if (_pressureSensor)
 			{
 				_pressureSensor->initialize();
-			}
+			}*/
 			
 			//Read and process height reading
-			if (_heightSensor)
+			/*if (_heightSensor)
 			{
 				_heightSensor->initialize();
-			}
+			}*/
 		}
 		
 		void process(const unsigned long currentTime)
@@ -204,16 +222,16 @@ class Sensors : public SubSystem
 			if (this->_canProcess(currentTime))
 			{
 				//Read and process pressure reading
-				if (_pressureSensor)
+				/*if (_pressureSensor)
 				{
 					_pressureSensor->process(currentTime);
-				}
+				}*/
 				
 				//Read and process height reading
-				if (_heightSensor)
+				/*if (_heightSensor)
 				{
 					_heightSensor->process(currentTime);
-				}
+				}*/
 				
 				//TODO
 				//Read and process current and voltage
@@ -261,20 +279,20 @@ class Sensors : public SubSystem
 		//Altitude
 		const float heightFromPressure()
 		{
-			if (_pressureSensor)
+			/*if (_pressureSensor)
 			{
 				return _pressureSensor->getHeight();
-			}
+			}*/
 			
 			return 0.0;
 		}
 		
 		const float heightFromUltrasonic()
 		{
-			if (_heightSensor)
+			/*if (_heightSensor)
 			{
 				return _heightSensor->getHeight();
-			}
+			}*/
 			
 			return 0.0;
 		}
