@@ -3,12 +3,11 @@
 #define BAUD 115200
 #define MAXASSIGNEDSERIALPORTS 4
 
-class SerialComs : public SubSystem
+class SerialComs : public SubSystem, public Print
 {
 	private:
   		unsigned int _serialPortCount;
 		HardwareSerial *_serialPorts[MAXASSIGNEDSERIALPORTS];
-		bool _serialPortDebugFlag[MAXASSIGNEDSERIALPORTS];
 
 		unsigned char _lastTelemetryType[MAXASSIGNEDSERIALPORTS];
 		unsigned char _fastTransferOn[MAXASSIGNEDSERIALPORTS];
@@ -61,12 +60,11 @@ class SerialComs : public SubSystem
 			_serialPortCount = 0;
 		}
 		
-		void assignSerialPort(HardwareSerial *serialPort, bool isDebug = false)
+		void assignSerialPort(HardwareSerial *serialPort)
 		{
 			if (_serialPortCount <= MAXASSIGNEDSERIALPORTS)
 			{
 				_serialPorts[_serialPortCount] = serialPort;
-				_serialPortDebugFlag[_serialPortCount] = isDebug;
 				
 				_serialPortCount++;
 			}
@@ -133,80 +131,11 @@ class SerialComs : public SubSystem
 			}
   		}
 
-		void debugPrint(const char* value)
+		void write(uint8_t dataToWrite)
 		{
 			for (unsigned int i = 0; i < _serialPortCount; i++)
 			{
-				if (_serialPortDebugFlag[i])
-				{
-					_serialPorts[i]->print(value);
-				}
-			}
-		}
-		
-		void debugPrint(const float value)
-		{
-			for (unsigned int i = 0; i < _serialPortCount; i++)
-			{
-				if (_serialPortDebugFlag[i])
-				{
-					_serialPorts[i]->print(value);
-				}
-			}
-		}
-		
-		void debugPrint(const int value)
-		{
-			for (unsigned int i = 0; i < _serialPortCount; i++)
-			{
-				if (_serialPortDebugFlag[i])
-				{
-					_serialPorts[i]->print(value);
-				}
-			}
-		}
-		
-		void debugPrint(const unsigned int value)
-		{
-			for (unsigned int i = 0; i < _serialPortCount; i++)
-			{
-				if (_serialPortDebugFlag[i])
-				{
-					_serialPorts[i]->print(value);
-				}
-			}
-		}
-		
-		void debugPrint(const long value)
-		{
-			for (unsigned int i = 0; i < _serialPortCount; i++)
-			{
-				if (_serialPortDebugFlag[i])
-				{
-					_serialPorts[i]->print(value);
-				}
-			}
-		}
-		
-		void debugPrint(const unsigned long value)
-		{
-			for (unsigned int i = 0; i < _serialPortCount; i++)
-			{
-				if (_serialPortDebugFlag[i])
-				{
-					_serialPorts[i]->print(value);
-				}
-			}
-		}
-
-		void debugPrintln(const char* value)
-		{
-			for (unsigned int i = 0; i < _serialPortCount; i++)
-			{
-				if (_serialPortDebugFlag[i])
-				{
-					_serialPorts[i]->println(value);
-				}
+				_serialPorts[i]->print(dataToWrite);
 			}
 		}
 };

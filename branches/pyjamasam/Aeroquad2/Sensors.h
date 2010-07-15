@@ -354,25 +354,25 @@ class SPIPressureSensor : public PressureSensor, SPIDevice
 
 */
 
-class HeightSensor : public AnalogInHardwareComponent
+class HeightSensor : public HardwareComponent
 {
 	protected:
 		float _currentHeight;
 		
 	public:
-		HeightSensor() : AnalogInHardwareComponent(1)
+		HeightSensor() : HardwareComponent()
 		{
 			_currentHeight = 0.0;
 		}
 
 		virtual void initialize()
 		{
-			AnalogInHardwareComponent::initialize();
+			HardwareComponent::initialize();
 		}	
 		
 		virtual void process(const unsigned long currentTime)
 		{
-			AnalogInHardwareComponent::process(currentTime);	
+			HardwareComponent::process(currentTime);	
 		}
 		
 		const float getHeight()
@@ -392,9 +392,14 @@ class MaxBotixMaxSonarHeightSensor : public HeightSensor
 		
 		void process(const unsigned long currentTime)
 		{	
-			
 			//This sensor is using the Aux pin on the Oilpan IMU board.  
 			//get a static instance to that
+			const float *currentReadings = OilpanIMU::getInstance()->getCurrentReadings();
+			
+			//The sensor reads in Inches.  Lets convert them to CM and then to M
+			//Data is in the 7th value.
+			_currentHeight = (currentReadings[7] * 2.54) / 100.0f;
+			
 			HeightSensor::process(currentTime);
 		}
 };
@@ -408,7 +413,6 @@ class Sensors : public SubSystem
 
 		
 	public:
-		
 		typedef enum { PressureSensorNone = 0, PressureSensorBMP085} PressureSensorType;
 		typedef enum { HeightSensorNone = 0, MaxBotixMaxSonar } HeightSensorType;
 		typedef enum { PowerSensorNone = 0 } PowerSensorType;
@@ -454,7 +458,7 @@ class Sensors : public SubSystem
 				if (_heightSensor)
 				{
 					_heightSensor->process(currentTime);
-				}								
+				}
 			}
 		}
 		
@@ -470,7 +474,8 @@ class Sensors : public SubSystem
 				
 				default:
 				{
-					serialcoms.debugPrintln("ERROR: Unknown Pressure Sensor type selected.");
+					serialcoms.print("ERROR: Unknown Pressure Sensor type selected.");
+					serialcoms.println();
 					break;
 				}
 			}
@@ -488,7 +493,8 @@ class Sensors : public SubSystem
 				
 				default:
 				{
-					serialcoms.debugPrintln("ERROR: Unknown Pressure Sensor type selected.");
+					serialcoms.print("ERROR: Unknown Pressure Sensor type selected.");
+					serialcoms.println();
 					break;
 				}
 			}
@@ -506,7 +512,8 @@ class Sensors : public SubSystem
 				
 				default:
 				{
-					serialcoms.debugPrintln("ERROR: Unknown Height Sensor type selected.");
+					serialcoms.print("ERROR: Unknown Height Sensor type selected.");
+					serialcoms.println();
 					break;
 				}
 			}
@@ -517,24 +524,40 @@ class Sensors : public SubSystem
 		{
 			if (_pressureSensor)
 			{
-				_pressureSensor->getTemperature();
+				return _pressureSensor->getTemperature();
 			}
+			
+			return 0.0f;
 		}
 		
 		const long getPressure()
 		{
 			if (_pressureSensor)
 			{
-				_pressureSensor->getPressure();
+				return _pressureSensor->getPressure();
 			}
+			
+			return 0.0f;
 		}
 		
 		const float getAltitudeUsingPressure()
 		{
 			if (_pressureSensor)
 			{
-				_pressureSensor->getAltitude();
+				return _pressureSensor->getAltitude();
 			}
+			
+			return 0.0f;
+		}
+		
+		const float getAltitudeUsingHeightSensor()
+		{
+			if (_heightSensor)
+			{
+				return _heightSensor->getHeight();
+			}
+			
+			return 0.0f;
 		}	
 		
 };

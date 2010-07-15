@@ -1,51 +1,58 @@
 #include "SubSystem.h"
 #include "HardwareComponent.h"
 
-class MotorOrientationType
-{
-	public:
-		typedef enum { QuadPlusMotor = 0, QuadXMotor = 1, OctoMotor = 2, TriMotor = 4 } OrientationType;
-};
-
 class MotorHardware : public HardwareComponent
 {
+	private:
+		unsigned int _motorCount;
 	public:
 		static const int MinimumMotorCommand = 1100;
 		static const int MaximumMotorCommand = 2000;
-	
-	private:
-		MotorOrientationType::OrientationType _orientationType;
-	
+		
 	protected:
-		int _motorOutput[8];
+		unsigned int _motorOutput[8];
 		bool _armed;
 		
 		void zeroOutputs() 
 		{
-			for (int i = 0; i < 8; i++)
+			//Push every output down below where anything should happen
+			for (int i = 0; i < _motorCount; i++)
 			{
-				_motorOutput[i] = 10;
+				_motorOutput[i] = 800;
 			}
 		}
 		
 		virtual void writeOutputs()
 		{
-			
+			//default implimentation does nothing
 		}
 		
 	public:
-		MotorHardware() : HardwareComponent()
+		MotorHardware(unsigned int motorCount) : HardwareComponent()
 		{
+			_motorCount = (int)fmin(motorCount, 8);
 			_armed = true;
 		}
 
 		virtual void initialize()
 		{
+			this->zeroOutputs();
 			HardwareComponent::initialize();
 		}	
 		
 		virtual void process(const unsigned long currentTime)
 		{
+			if (_armed)
+			{
+				//Push the outputs out
+				this->writeOutputs();
+			}
+			else
+			{
+				//Force the outputs to zero to ensure they are off
+				this->zeroOutputs();
+				this->writeOutputs();
+			}
 			HardwareComponent::process(currentTime);	
 		}
 		
@@ -67,117 +74,74 @@ class MotorHardware : public HardwareComponent
 			}
 		}
 		
-		void setOrientationType(const MotorOrientationType::OrientationType orientationType)
+		void setMotorOutput(const unsigned int motorIndex, const unsigned int motorCommand)
 		{
-			_orientationType = orientationType;
-		}
-		
-		const MotorOrientationType::OrientationType orientationType()
-		{
-			return _orientationType;
+			if (motorIndex < _motorCount)
+			{
+				_motorOutput[motorIndex] = motorCommand;
+			}
 		}
 };
 
-class MotorControlOnboard : public MotorHardware
+//Uses the APM RC output library to drive the outputs
+class MotorHardwareAPM : public MotorHardware
 {
-	private:
-		unsigned int _motorPins[8];
-		
 	protected:
 		void writeOutputs()
 		{
-			for (int i = 0; i < 8;i ++)
-			{
-				int rawOutputValue = constrain(_motorOutput[i], MinimumMotorCommand, MaximumMotorCommand);
-				int analogOutputValue = map(rawOutputValue, 1000, 2000, 0, 255);
-			
-				analogWrite(_motorPins[i], analogOutputValue);
-			}	
+			APM_RC.OutputCh(0, _motorOutput[0]);    // Right motor (+) / Right-Back motor (X)
+			APM_RC.OutputCh(1, _motorOutput[1]);    // Left motor (+) / Left-Front motor (X)
+			APM_RC.OutputCh(2, _motorOutput[2]);   // Front motor (+) / Right-Front motor (X)
+			APM_RC.OutputCh(3, _motorOutput[3]);   // Back motor (+) / Left-Back motor (X) 
+			  
+			// InstantPWM
+			APM_RC.Force_Out0_Out1();
+			APM_RC.Force_Out2_Out3();
 		}
 		
 	public:
-		MotorControlOnboard() : MotorHardware()
+		MotorHardwareAPM() : MotorHardware(4)
 		{
-			//Pins used by the shield for motor output
-			_motorPins[0] = 2;
-			_motorPins[1] = 3;
-			_motorPins[2] = 4;
-			_motorPins[3] = 5;
-			_motorPins[4] = 6;
-			_motorPins[5] = 7;
-			_motorPins[6] = 8;
-			_motorPins[7] = 9;
+			
+		}
+};
+
+//For just debuggging the output that should go to the motors
+class MotorhardwareDebugSerial : public MotorHardware
+{
+	protected:
+		void writeOutputs()
+		{
+			serialcoms.print(_motorOutput[0]);
+			serialcoms.print(",");
+			serialcoms.print(_motorOutput[1]);
+			serialcoms.print(",");
+			serialcoms.print(_motorOutput[2]);
+			serialcoms.print(",");
+			serialcoms.print(_motorOutput[3]);
+			
+			serialcoms.println();
 		}
 		
-		void initialize()
+	public:
+		MotorhardwareDebugSerial() : MotorHardware(4)
 		{
-			MotorHardware::initialize();
 			
-			this->zeroOutputs();
-			this->writeOutputs();
-		}
-		
-		void process(const unsigned long currentTime)
-		{
-			unsigned int throttleCommand = receiver.channelValue(ReceiverHardware::Channel3);
-			
-			int flightControlPitchCommand = flightcontrol.pitchCommand();
-			int flightControlRollCommand = flightcontrol.rollCommand();
-			int flightControlYawCommand = flightcontrol.yawCommand();
-			
-			this->zeroOutputs();
-			
-			if (_armed)
-			{
-				switch (this->orientationType())
-				{
-					case MotorOrientationType::QuadPlusMotor:
-					{
-						//Front
-						_motorOutput[4] = (throttleCommand - flightControlPitchCommand + flightControlYawCommand);
-					
-						//Back
-						_motorOutput[5] = (throttleCommand + flightControlPitchCommand + flightControlYawCommand);
-					
-						//Left
-						_motorOutput[6] = (throttleCommand + flightControlRollCommand - flightControlYawCommand);
-					
-						//Right
-						_motorOutput[7] = (throttleCommand - flightControlRollCommand - flightControlYawCommand);
-						break;
-					}
-				
-					case MotorOrientationType::QuadXMotor:
-					{
-						//Front Right
-						_motorOutput[4] = throttleCommand - flightControlPitchCommand - flightControlRollCommand - flightControlYawCommand;
-						
-						//Front Left
-						_motorOutput[5] = throttleCommand - flightControlPitchCommand + flightControlRollCommand + flightControlYawCommand;
-						
-						//Back Right
-						_motorOutput[6] = throttleCommand + flightControlPitchCommand - flightControlRollCommand + flightControlYawCommand;
-						
-						//Back Left
-						_motorOutput[7] = throttleCommand + flightControlPitchCommand + flightControlRollCommand - flightControlYawCommand;
-						break;
-					}
-				}
-			}
-			
-			this->writeOutputs();
-			
-			MotorHardware::process(currentTime);
 		}
 };
 
 class Motors : public SubSystem
 {
+	public:
+		typedef enum { HardwareTypeAPM = 0, HardwareTypeDebugSerial } HardwareType;
+		typedef enum { QuadPlusMotor = 0, QuadXMotor } OrientationType;
+	
 	private:
 		MotorHardware *_motorHardware;
-	
+		OrientationType _orientationType;
+		
 	public:
-		typedef enum { HardwareTypeOnboard = 0, HardwareTypeI2C = 1} HardwareType;
+		
 		Motors() : SubSystem()
 		{
 			
@@ -186,18 +150,6 @@ class Motors : public SubSystem
 		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
-		}
-		
-		void setHardwareType(const HardwareType hardwareType)
-		{
-			switch (hardwareType)
-			{
-				case HardwareTypeOnboard:
-				{
-					_motorHardware = new MotorControlOnboard();
-					break;
-				}
-			}
 			
 			if (_motorHardware)
 			{
@@ -205,44 +157,42 @@ class Motors : public SubSystem
 			}
 		}
 		
-		void setOrientationType(const MotorOrientationType::OrientationType orientationType)
+		void setHardwareType(const HardwareType hardwareType)
 		{
-			if (_motorHardware)
+			switch (hardwareType)
 			{
-				_motorHardware->setOrientationType(orientationType);
+				case HardwareTypeAPM:
+				{
+					_motorHardware = new MotorHardwareAPM();
+					break;
+				}
+				
+				case HardwareTypeDebugSerial:
+				{
+					_motorHardware = new MotorhardwareDebugSerial();
+					break;
+				}
 			}
 		}
 		
-		const MotorOrientationType::OrientationType orientationType()
+		void setOrientationType(const OrientationType orientationType)
 		{
-			if (_motorHardware)
-			{
-				return _motorHardware->orientationType();
-			}
-			else
-			{
-				return MotorOrientationType::QuadPlusMotor;
-			}
+			_orientationType = orientationType;
 		}
-		
+				
 		void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{
 				if (_motorHardware)
 				{
-					int rollTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel1);
+					/*int rollTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel1);
 					int pitchTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel2);
 					int throttleTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel3);
-					int yawTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel4);
-					
-					//DEBUGSERIALPRINT(throttleTransmitterCommand);
-					//DEBUGSERIALPRINT(",");
-					//DEBUGSERIALPRINT(yawTransmitterCommand);
-					//DEBUGSERIALPRINTLN("");
-					
+					int yawTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel4);*/
+										
 					//Check for some basic "Command" stick positions
-					if (throttleTransmitterCommand < 1100)
+					/*if (throttleTransmitterCommand < 1100)
 					{
 						if (yawTransmitterCommand < 1100)
 						{
@@ -254,7 +204,47 @@ class Motors : public SubSystem
 							//Throttle/Yaw stick is int he bottom right position.  Arm the motors
 							_motorHardware->arm();
 						}
+					}*/
+					
+					//details given to us by each of the main subsystems (navigation is enabled, and flightcontrol)
+					int navigationRollCommand = 0;
+					int navigationPitchCommand = 0;
+					int navigationYawCommand = 0;
+					int navigationThrottleCommand = 0;
+					
+					//if (flightcontrol.navigationIsEnabled)
+					//{
+					//	navigationRollCommand = navigation.getRollCommand();
+					//	navigationPitchCommand = navigation.getPitchCommand();
+					//	navigationYawCommand = navigation.getYawCommand();
+					//	navigationThrottleCommand = navigation.getThrottleCommand();
+					//}
+					
+					//Main control system.
+					int flightControlRollCommand = flightcontrol.getRollCommand();
+					int flightControlPitchCommand = flightcontrol.getPitchCommand();
+					int flightControlYawCommand = flightcontrol.getYawCommand();
+					int flightControlThrottleCommand = flightcontrol.getThrottleCommand();
+					
+					//Calculate the mix for each of the motors.
+					switch (_orientationType)
+					{
+						case QuadPlusMotor:
+						{
+							break;
+						}
+						
+						case QuadXMotor:
+						{
+							break;
+						}
 					}
+					
+					_motorHardware->setMotorOutput(0,flightControlRollCommand);
+					_motorHardware->setMotorOutput(1,flightControlPitchCommand);
+					_motorHardware->setMotorOutput(2,flightControlYawCommand);
+					_motorHardware->setMotorOutput(3,flightControlThrottleCommand);
+																				
 					
 					_motorHardware->process(currentTime);
 				}

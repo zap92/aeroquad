@@ -312,6 +312,13 @@ class GPS : public SubSystem
 					_gpsHardware = new MTKGPSHardware();
 					break;
 				}
+				
+				default:
+				{
+					serialcoms.print("ERROR: Unknown GPS Hardware type selected.");
+					serialcoms.println();
+					break;
+				}
 			}
 		}
 

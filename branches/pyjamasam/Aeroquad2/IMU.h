@@ -164,7 +164,7 @@ class OilpanIMU : public IMUHardware
 			
 			//Aux input (using it for bottom facing ultrasonic range sensor)			
 			_inputConfigurations[7].zeroLevel = 0;					//in mv
-		 	_inputConfigurations[7].sensitivity = 9.765625;		//in mv/in
+		 	_inputConfigurations[7].sensitivity = 9.765625;			//in mv/in
 			_inputConfigurations[7].inputInUse = true; 
 			_inputConfigurations[7].hardwarePin = 7;
  	
@@ -230,8 +230,6 @@ class OilpanIMU : public IMUHardware
 			
 			//Call the generic IMU Hardware process method
 			IMUHardware::process(currentTime);
-			
-			Serial.println(_lastReadings[7] * 2.54);
 		}
 		
 		//This is called via an Interrupt to pull the data from the ADC.
@@ -1277,7 +1275,8 @@ class IMU : public SubSystem
 				}
 				default:
 				{
-					serialcoms.debugPrintln("ERROR: Unknown IMU Hardware type selected.");
+					serialcoms.print("ERROR: Unknown IMU Hardware type selected.");
+					serialcoms.println();
 					break;
 				}
 			}
@@ -1295,7 +1294,8 @@ class IMU : public SubSystem
 				
 				default:
 				{
-					serialcoms.debugPrintln("ERROR: Unknown Suplimental Yaw Source type selected.");	
+					serialcoms.print("ERROR: Unknown Suplimental Yaw Source type selected.");	
+					serialcoms.println();
 					break;
 				}
 			}
@@ -1337,7 +1337,8 @@ class IMU : public SubSystem
 								
 				default:
 				{
-					serialcoms.debugPrintln("ERROR: Unknown IMU Filter type selected.");
+					serialcoms.print("ERROR: Unknown IMU Filter type selected.");
+					serialcoms.println();
 					break;
 				}
 			}
