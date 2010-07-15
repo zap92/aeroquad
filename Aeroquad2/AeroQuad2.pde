@@ -3,8 +3,13 @@
 
 #define VERSION "0.1"
 
+#include <APM_RC.h>
+
 #include "LanguageExtensions.h"
 #include "HardwareComponent.h"
+
+#include "LED.h"
+LED led;
 
 #include "SerialComs.h"
 SerialComs serialcoms;
@@ -24,6 +29,7 @@ Receiver receiver;
 
 #include "Navigation.h"
 Navigation navigation;
+*/
 
 #include "FlightControl.h"
 FlightControl flightcontrol;
@@ -31,18 +37,15 @@ FlightControl flightcontrol;
 #import "Motors.h"
 Motors motors;
 
-#import "Camera.h"
+/*#import "Camera.h"
 Camera camera;*/
-
-#include "LED.h"
-LED led;
 
 void setup()
 {	
 	{
 		//Assign the 1st and 3rd serial ports for serial telemetry
-		serialcoms.assignSerialPort(&Serial, true);		//Use for any debugging output
-		serialcoms.assignSerialPort(&Serial3);			//Telemetry output to Xbee
+		serialcoms.assignSerialPort(&Serial);				//Use for any debugging output
+		serialcoms.assignSerialPort(&Serial3);				//Telemetry output to Xbee
 		
 		//Run serial telemetry at 10hz offset 50ms (100ms cycle time)
 		serialcoms.initialize(100, 50);
@@ -62,8 +65,8 @@ void setup()
 	{
 		imu.setHardwareType(IMU::ArduPilotOilPan);
 		imu.setSuplimentalYawSource(IMU::HMC5843);
-		//imu.setFilterType(IMU::SimpleAccellOnly);		//Works fine.  In all its noisy glory
-		//imu.setFilterType(IMU::Complimentry);			//Works fine, but not a very good filter
+		//imu.setFilterType(IMU::SimpleAccellOnly);			//Works fine.  In all its noisy glory
+		//imu.setFilterType(IMU::Complimentry);				//Works fine, but not a very good filter
 		//imu.setFilterType(IMU::DCM);						//Implimentation doesn't quite work yet.  Returns 0's all the time
 		//imu.setFilterType(IMU::Quaternion);				//Implimentation not yet complete.  Not working
 		imu.setFilterType(IMU::Kalman);						//Works fine.
@@ -83,28 +86,41 @@ void setup()
 		sensors.initialize(20,0);
 	}
 	
-	/*//Run the receiver at 50hz
-	receiver.initialize(20,0);
-	receiver.setHardwareType(Receiver::HardwareTypeI2C);
-	//receiver.setHardwareType(Receiver::HardwareTypeFake);
-	receiver.disable();
+	{
+		//Run the receiver at 50hz
+		//receiver.initialize(20,0);
+		//receiver.setHardwareType(Receiver::HardwareTypeI2C);
+		//receiver.setHardwareType(Receiver::HardwareTypeFake);
+		//receiver.disable();
+	}
 	
-	//Run flight control at 50hz
-	flightcontrol.initialize(20,0);
-	flightcontrol.enableAutoLevel();
-	flightcontrol.enableHeadingHold();
-	flightcontrol.disable();
-
-	//Run the camera at 10hz offset 50ms
-	camera.initialize(100, 50);
-	camera.disable();
+	{
+		//flightcontrol.enableAutoLevel();
+		//flightcontrol.enableHeadingHold();
+		
+		//Run flight control at 50hz (20ms cycle time)
+		flightcontrol.initialize(20,0);
+	}
 	
-	//Run the motors at 50hz
-	motors.initialize(20,0);
-	motors.setHardwareType(Motors::HardwareTypeOnboard);
-	motors.setOrientationType(MotorOrientationType::QuadPlusMotor);
-	motors.disable();
-	*/
+	{		
+		//Run the navigation at 25hz (40ms cycle time)
+		//navigation.initialize(40, 0);	
+	}
+	
+	{
+		motors.setOrientationType(Motors::QuadPlusMotor);			//Quad Motors in a + configuration
+		//motors.setOrientationType(Motors::QuadXMotor);				//Quad Motors in a - configuration
+		motors.setHardwareType(Motors::HardwareTypeDebugSerial);
+		motors.setHardwareType(Motors::HardwareTypeAPM);
+		
+		//Run the motors at 50hz
+		motors.initialize(20,0);
+	}
+	
+	{
+		//Run the camera at 10hz offset 50ms
+		//camera.initialize(100, 50);
+	}
 	
 	{
 		led.setPatternType(LED::PatternSweep);
@@ -114,7 +130,8 @@ void setup()
 	}
 	
 	//Setup Done.
-	serialcoms.debugPrintln("!"VERSION);
+	serialcoms.print("!"VERSION);
+	serialcoms.println();
 }
 
 
@@ -128,17 +145,24 @@ void loop()
 	previousTime - currentTime;
 	
 	//process all the "inputs" to the system
-	gps.process(currentTime);
-	//receiver.process(currentTime);
-	sensors.process(currentTime);
-	imu.process(currentTime);
+	{
+		gps.process(currentTime);
+		//receiver.process(currentTime);
+		sensors.process(currentTime);
+		imu.process(currentTime);
+	}
 	
 	//process flight control
-	//flightcontrol.process(currentTime);
+	{
+		flightcontrol.process(currentTime);
+		//navigation.process(currentTime);
+	}
 	
 	//process all the "outputs" from the system
-	//motors.process(currentTime);
-	//camera.process(currentTime);
+	{
+		motors.process(currentTime);
+		//camera.process(currentTime);
+	}
 	
 	//process accessory sub systems
 	led.process(currentTime);

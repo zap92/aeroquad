@@ -3,99 +3,56 @@
 class FlightControl : public SubSystem
 {
 	public:
-		typedef enum { PIDTypeRoll = 0, PIDTypePitch = 1, PIDTypeYaw = 2, PIDTypeRollAngle = 3, PIDTypePitchAngle = 4, PIDTypeHeading = 5 } PIDType;
-	
+		typedef enum { FlightControlTypeRateControl = 0, FlightControlTypeAtitudeControl, FlightControlTypeAutonomous } FlightControlType; 
 	private:
-		int _pitchCommand;
-		int _rollCommand;
-		int _yawCommand;
+		unsigned int _pitchCommand;
+		unsigned int _rollCommand;
+		unsigned int _yawCommand;
+		unsigned int _throttleCommand;
 		
-		int _windupGuard;
-		int _autoLevelTriggerLimit;
+		bool _autoLevelEnabled;
+		bool _headingHoldEnabled;
 		
-		struct PIDdata {
-		  float P, I, D;
-		  float lastPosition;
-		  float integratedError;
-		} _PIDs[6];
+		FlightControlType _flightControlType;
 		
-		bool _autoLevel;
-		bool _headingHold;
-		
-		const int _updatePID(const float targetPosition, const float currentPosition, struct PIDdata *PIDparameters)
-		{
-		  	float error;
-			float dTerm;
-
-		  	error = targetPosition - currentPosition;
-
-			PIDparameters->integratedError += error;
-			PIDparameters->integratedError = constrain(PIDparameters->integratedError, -_windupGuard, _windupGuard);
-			
-			dTerm = PIDparameters->D * (currentPosition - PIDparameters->lastPosition);
-			PIDparameters->lastPosition = currentPosition;
-			return (PIDparameters->P * error) + (PIDparameters->I * (PIDparameters->integratedError)) + dTerm;
-		}
-		
+		int _tickDirection;
+				
 	public:
 		FlightControl() : SubSystem()
 		{
-			_autoLevel = false;
-			_headingHold = false;
+			_autoLevelEnabled = false;
+			_headingHoldEnabled = false;
+			
+			_flightControlType = FlightControlTypeRateControl;		//Good old standby.  Rate control mode.
+			
+			//Just for testing to ensure the commands make it all the way through to the motors
+			_tickDirection = 10;
+			_rollCommand = _yawCommand = _pitchCommand = _throttleCommand = 100;
 		}
 		
 		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
-			
-			_PIDs[FlightControl::PIDTypeRoll].P = 3.15;
-			_PIDs[FlightControl::PIDTypeRoll].I = 0;
-			_PIDs[FlightControl::PIDTypeRoll].D = 0;
-			
-			_PIDs[FlightControl::PIDTypePitch].P = 3.15;
-			_PIDs[FlightControl::PIDTypePitch].I = 0;
-			_PIDs[FlightControl::PIDTypePitch].D = 0;
-			
-			_PIDs[FlightControl::PIDTypeYaw].P = 5;
-			_PIDs[FlightControl::PIDTypeYaw].I = 0;
-			_PIDs[FlightControl::PIDTypeYaw].D = 0;
-			
-			_PIDs[FlightControl::PIDTypeRollAngle].P = 3.15;
-			_PIDs[FlightControl::PIDTypeRollAngle].I = 0;
-			_PIDs[FlightControl::PIDTypeRollAngle].D = 0;
-			
-			_PIDs[FlightControl::PIDTypePitchAngle].P = 3.15;
-			_PIDs[FlightControl::PIDTypePitchAngle].I = 0;
-			_PIDs[FlightControl::PIDTypePitchAngle].D = 0;
-			
-			_PIDs[FlightControl::PIDTypeHeading].P = 3.15;
-			_PIDs[FlightControl::PIDTypeHeading].I = 0;
-			_PIDs[FlightControl::PIDTypeHeading].D = 0;
-			
-			_windupGuard = 1000;
-			_autoLevelTriggerLimit = 100;
 		}
-		
-		//PID accessors
-		void setPidParameters(const float P, const float I, const float D, PIDType pidType)
-		{
-			_PIDs[pidType].P = P;
-			_PIDs[pidType].I = I;
-			_PIDs[pidType].D = D;
-		}
-		
-		void getPidParameters(float *P, float *I, float *D, PIDType pidType)
-		{
-			if (P) *P = _PIDs[pidType].P;
-			if (I) *I = _PIDs[pidType].I;
-			if (D) *D = _PIDs[pidType].D;
-		}
-		
+				
 		void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{
-				int rollTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel1);
+				//Testing code.  Checking to see if commands make it all the way to the motors
+				_throttleCommand += _tickDirection;
+				_rollCommand = _yawCommand = _pitchCommand = _throttleCommand;
+				
+				if (_rollCommand > 1000)
+				{
+					_tickDirection *= -1;
+				}
+				else if (_rollCommand < 100)
+				{
+					_tickDirection *= -1;
+				}
+				
+				/*int rollTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel1);
 				int pitchTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel2);
 				int yawTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel4);
 				
@@ -153,61 +110,70 @@ class FlightControl : public SubSystem
 				
 				_rollCommand = _updatePID(rollTransmitterCommand + rollAdjust, currentScaledRollRate, &_PIDs[FlightControl::PIDTypeRoll]);
 				_pitchCommand = _updatePID(pitchTransmitterCommand + pitchAdjust, currentScaledPitchRate, &_PIDs[FlightControl::PIDTypePitch]);
-				_yawCommand = _updatePID(yawTransmitterCommand + yawAdjust, currentScaledYawRate, &_PIDs[FlightControl::PIDTypeYaw]);				
-				
-				/*DEBUGSERIALPRINT(_rollCommand);
-				DEBUGSERIALPRINT(",");
-				DEBUGSERIALPRINT(_yawCommand);
-				DEBUGSERIALPRINT(",");
-				DEBUGSERIALPRINT(_yawCommand);
-				DEBUGSERIALPRINTLN("");*/
+				_yawCommand = _updatePID(yawTransmitterCommand + yawAdjust, currentScaledYawRate, &_PIDs[FlightControl::PIDTypeYaw]);				*/
 			}
 		}
 		
-		//Setters for the flight control options
+		//Accessors for the flight control options
 		void enableAutoLevel()
 		{
-			_autoLevel = true;
+			_autoLevelEnabled = true;
 		}
 		
 		void disableAutoLevel()
 		{
-			_autoLevel = false;
+			_autoLevelEnabled = false;
 		}
 		
 		const bool autoLevel()
 		{
-			return _autoLevel;
+			return _autoLevelEnabled;
 		}
 		
 		void enableHeadingHold()
 		{
-			_headingHold = true;
+			_headingHoldEnabled = true;
 		}
 		
 		void disableHeadingHold()
 		{
-			_headingHold = false;
+			_headingHoldEnabled = false;
 		}
 		
 		const bool headingHold()
 		{
-			return _headingHold;
+			return _headingHoldEnabled;
 		}
 		
+		void setFlightControlType(FlightControlType flightControlType)
+		{
+			_flightControlType = flightControlType;
+		}
+		
+		const FlightControlType getFlightControlType()
+		{
+			return _flightControlType;
+		}
+
+		
 		//Accessors for the flight control data
-		const int pitchCommand()
+		const unsigned int getPitchCommand()
 		{
 			return _pitchCommand;
 		}
 		
-		const int rollCommand()
+		const unsigned int getRollCommand()
 		{
 			return _rollCommand;
 		}
 		
-		const int yawCommand()
+		const unsigned int getYawCommand()
 		{
 			return _yawCommand;
+		}
+		
+		const unsigned int getThrottleCommand()
+		{
+			return _throttleCommand;
 		}
 };
