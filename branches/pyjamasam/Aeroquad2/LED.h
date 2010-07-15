@@ -7,7 +7,7 @@
 class LED : public SubSystem
 {
 	public:
-		typedef enum { PatternOff = 0, PatternChase, PatternSweep } LEDPattern;
+		typedef enum { PatternOff = 0, PatternChase, PatternSweep, PatternAlternate } LEDPattern;
 		
 	private: 
 		bool _readyLEDState;
@@ -140,6 +140,27 @@ class LED : public SubSystem
 						
 						_patternState++;
 						
+						break;
+					}
+					
+					case PatternAlternate:
+					{
+						if (_patternState == 0)
+						{
+							digitalWrite(REDLED, HIGH);				
+							digitalWrite(YELLOWLED, LOW);				
+							digitalWrite(GREENLED, HIGH);
+						}
+						else if (_patternState == 1)
+						{
+							digitalWrite(REDLED, LOW);				
+							digitalWrite(YELLOWLED, HIGH);				
+							digitalWrite(GREENLED, LOW);
+							
+							_patternState = -1;
+						}
+						
+						_patternState++;
 						break;
 					}
 				}

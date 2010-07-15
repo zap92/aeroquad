@@ -7,6 +7,7 @@
 
 #include "LanguageExtensions.h"
 #include "HardwareComponent.h"
+#include "PID.h"
 
 #include "LED.h"
 LED led;
@@ -97,6 +98,11 @@ void setup()
 	{
 		//flightcontrol.enableAutoLevel();
 		//flightcontrol.enableHeadingHold();
+		//flightcontrol.enableAltitudeHold();
+		
+		//flightcontrol.setFlightControlType(FlightControl::FlightControlTypeAcrobatic);
+		flightcontrol.setFlightControlType(FlightControl::FlightControlTypeStable);
+		//flightcontrol.setFlightControlType(FlightControl::FlightControlTypeAutonomous);
 		
 		//Run flight control at 50hz (20ms cycle time)
 		flightcontrol.initialize(20,0);
@@ -110,8 +116,8 @@ void setup()
 	{
 		motors.setOrientationType(Motors::QuadPlusMotor);			//Quad Motors in a + configuration
 		//motors.setOrientationType(Motors::QuadXMotor);				//Quad Motors in a - configuration
-		motors.setHardwareType(Motors::HardwareTypeDebugSerial);
-		motors.setHardwareType(Motors::HardwareTypeAPM);
+		//motors.setHardwareType(Motors::HardwareTypeDebugSerial);
+		//motors.setHardwareType(Motors::HardwareTypeAPM);
 		
 		//Run the motors at 50hz
 		motors.initialize(20,0);
@@ -122,9 +128,7 @@ void setup()
 		//camera.initialize(100, 50);
 	}
 	
-	{
-		led.setPatternType(LED::PatternSweep);
-		
+	{		
 		//Run the LEDs at 10hz offset 75ms (100ms cycle time)
 		led.initialize(100, 75);		
 	}
