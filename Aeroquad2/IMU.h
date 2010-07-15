@@ -347,9 +347,6 @@ class HMC5843Compass : public SuplimentalYawSource
 };
 	
 
-
-
-
 class IMUFilter
 {
 	protected:
@@ -1089,20 +1086,12 @@ public:
 		
 			//Filter Pitch
 			_predict(&_pitchFilterData, _processedRateInRadians[IMUFilterPitch], dt);
-			_update(&_pitchFilterData, rawPitchAngle);
-						
-			//Here we calculate yaw using the filtered  roll and pitch values
-			rawYawAngle = this->_correctYawReading(_rollFilterData.x_angle, _pitchFilterData.x_angle);
-			//Make sure the Yaw angle is a full 360 so it doesn't wrap around to negative numbers (thus killing the filter for a hair)
-			if (rawYawAngle < 0)
-			{
-				rawYawAngle += 6.28318531;
-			}								
+			_update(&_pitchFilterData, rawPitchAngle);									
 		}				
 		
 		_processedAngleInRadians[IMUFilterRoll] = _rollFilterData.x_angle;
 		_processedAngleInRadians[IMUFilterPitch] = _pitchFilterData.x_angle;				
-		_processedAngleInRadians[IMUFilterYaw] = rawYawAngle;
+		_processedAngleInRadians[IMUFilterYaw] = this->_correctYawReading(_rollFilterData.x_angle, _pitchFilterData.x_angle);
 		
 		_processedAngleInDegrees[IMUFilterRoll] = ToDeg(_processedAngleInRadians[IMUFilterAxisX]);
 		_processedAngleInDegrees[IMUFilterPitch] = ToDeg(_processedAngleInRadians[IMUFilterAxisY]);
@@ -1369,13 +1358,13 @@ class IMU : public SubSystem
 						//Pitch is defined as the angle between the aircraft's longitudinal axis and the local horizontal plane (positive for nose up). 
 						//Roll is defined as the angle about the longitudinal axis between the local horizontal plane and the actual flight orientation (positive for right wing down).
 						
-						/*serialcoms.debugPrint("!:");
-						serialcoms.debugPrint(_imuFilter->currentRollAngleInRadians());
-						serialcoms.debugPrint(",");			
-						serialcoms.debugPrint(_imuFilter->currentPitchAngleInRadians());
-						serialcoms.debugPrint(",");
-						serialcoms.debugPrint(_imuFilter->currentYawAngleInRadians());
-						serialcoms.debugPrintln("");*/
+						/*serialcoms.print("!:");
+						serialcoms.print(_imuFilter->currentRollAngleInRadians());
+						serialcoms.print(",");			
+						serialcoms.print(_imuFilter->currentPitchAngleInRadians());
+						serialcoms.print(",");
+						serialcoms.print(_imuFilter->currentYawAngleInRadians());
+						serialcoms.println();*/
 					}
 					
 					
@@ -1520,7 +1509,7 @@ class IMU : public SubSystem
 			return 0;
 		}
 		
-		const float currentPitchYawInRadians()
+		const float currentYawAngleInRadians()
 		{
 			if (_imuFilter)
 			{
