@@ -28,20 +28,25 @@ class ReceiverHardware : public HardwareComponent
 		}
 };
 
+class ReceiverHardwareAPM : public ReceiverHardware
+{
+	
+};
+
 class Receiver : public SubSystem
 {
 	private:
 		ReceiverHardware *_receiverHardware;
 		
 	public:
-		typedef enum { HardwareTypeOnboard = 0 } HardwareType;
+		typedef enum { HardwareTypeAPM = 0 } HardwareType;
 		
 		Receiver() : SubSystem()
 		{
 			
 		}
 		
-		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
+		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
 			
@@ -55,11 +60,14 @@ class Receiver : public SubSystem
 		{
 			switch (hardwareType)
 			{
-				
+				case HardwareTypeAPM:
+				{
+					_receiverHardware = new ReceiverHardwareAPM();
+				}
 			}
 		}
 		
-		void process(const unsigned long currentTime)
+		virtual void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{
@@ -72,11 +80,11 @@ class Receiver : public SubSystem
 		
 		//Accessor for current channel value
 		//This will return a -500 <-> 500 range.  It converts the 1000-2000 range from the RX hardware to a sanner value
-		const unsigned int normalizedChannelValue(ReceiverHardware::ChannelIndex channelIndex)
+		const int normalizedChannelValue(ReceiverHardware::ChannelIndex channelIndex)
 		{
 			if (_receiverHardware)
 			{
-				unsigned int rawReceiverValue = _receiverHardware->channelValue(channelIndex);
+				unsigned int rawReceiverValue = _receiverHardware->rawChannelValue(channelIndex);
 				return map(rawReceiverValue, 1000, 2000, -500, 500);
 			}
 			else

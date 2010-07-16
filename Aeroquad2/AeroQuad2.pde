@@ -4,6 +4,7 @@
 #define VERSION "0.1"
 
 #include <APM_RC.h>
+#include <APM_ADC.h>
 
 #include "LanguageExtensions.h"
 #include "HardwareComponent.h"
@@ -15,6 +16,9 @@ LED led;
 #include "SerialComs.h"
 SerialComs serialcoms;
 
+#include "Receiver.h"
+Receiver receiver;
+
 #include "GPS.h"
 GPS gps;
 
@@ -24,11 +28,7 @@ IMU imu;
 #include "Sensors.h"
 Sensors sensors;
 
-/*
-#include "Receiver.h"
-Receiver receiver;
-
-#include "Navigation.h"
+/*#include "Navigation.h"
 Navigation navigation;
 */
 
@@ -43,6 +43,9 @@ Camera camera;*/
 
 void setup()
 {	
+	APM_ADC.Init();
+	APM_RC.Init();
+	
 	{
 		//Assign the 1st and 3rd serial ports for serial telemetry
 		serialcoms.assignSerialPort(&Serial);				//Use for any debugging output
@@ -50,6 +53,13 @@ void setup()
 		
 		//Run serial telemetry at 10hz offset 50ms (100ms cycle time)
 		serialcoms.initialize(100, 50);
+	}
+	
+	{		
+		receiver.setHardwareType(Receiver::HardwareTypeAPM);
+		
+		//Run the receiver at 50hz (20ms cycle time)
+		receiver.initialize(20,0);
 	}
 	
 	{
@@ -87,13 +97,6 @@ void setup()
 		sensors.initialize(20,0);
 	}
 	
-	{
-		//Run the receiver at 50hz
-		//receiver.initialize(20,0);
-		//receiver.setHardwareType(Receiver::HardwareTypeI2C);
-		//receiver.setHardwareType(Receiver::HardwareTypeFake);
-		//receiver.disable();
-	}
 	
 	{
 		//flightcontrol.enableAutoLevel();
@@ -150,8 +153,8 @@ void loop()
 	
 	//process all the "inputs" to the system
 	{
+		receiver.process(currentTime);
 		gps.process(currentTime);
-		//receiver.process(currentTime);
 		sensors.process(currentTime);
 		imu.process(currentTime);
 	}

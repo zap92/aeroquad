@@ -25,7 +25,7 @@ class LED : public SubSystem
 			_patternState = 0;
 		}
 		
-		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
+		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
 
@@ -45,7 +45,7 @@ class LED : public SubSystem
 			_patternState = 0;
 		}
 		
-		void process(const unsigned long currentTime)
+		virtual void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{

@@ -52,7 +52,7 @@ class FlightControl : public SubSystem
 			led.setPatternType(LED::PatternAlternate);
 		}
 		
-		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
+		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
 						
@@ -66,14 +66,14 @@ class FlightControl : public SubSystem
 			_yawAnglePID.setParameters(12,0,0,2000);
 		}
 				
-		void process(const unsigned long currentTime)
+		virtual void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{
-				int throttleTransmitterCommand = 0; 	//receiver.channelValue(ReceiverHardware::Channel3);
-				int rollTransmetterCommand = 0; 			//receiver.channelValue(ReceiverHardware::Channel4);
-				int pitchTransmetterCommand = 0;		//receiver.channelValue(ReceiverHardware::Channel1);
-				int yawTransmetterCommand = 0;		//receiver.channelValue(ReceiverHardware::Channel2);
+				int throttleTransmitterCommand = receiver.normalizedChannelValue(ReceiverHardware::Channel3);
+				int rollTransmetterCommand = receiver.normalizedChannelValue(ReceiverHardware::Channel4);
+				int pitchTransmetterCommand = receiver.normalizedChannelValue(ReceiverHardware::Channel1);
+				int yawTransmetterCommand = receiver.normalizedChannelValue(ReceiverHardware::Channel2);
 				
 				float outputRollCommand = 0;
 				float outputPitchCommand = 0;
@@ -166,14 +166,14 @@ class FlightControl : public SubSystem
 				//TODO: Altitude Hold
 				
 				//TODO: Scale the outputs to the 1000-2000 numbers that motor control requires.
-				serialcoms.print(outputRollCommand);
+				/*serialcoms.print(outputRollCommand);
 				serialcoms.print(",");
 				serialcoms.print(outputPitchCommand);
 				serialcoms.print(",");
 				serialcoms.print(outputYawCommand);
 				serialcoms.print(",");
 				serialcoms.print(outputThrottleCommand);
-				serialcoms.println();																
+				serialcoms.println();*/
 			}
 		}
 		
@@ -248,6 +248,7 @@ class FlightControl : public SubSystem
 					_autoLevelEnabled = true;
 					
 					//Heading hold can be enabled if so desired.
+					//Altitude hold can be enabled if so desired.
 									
 					led.setPatternType(LED::PatternChase);
 					break;
@@ -265,29 +266,29 @@ class FlightControl : public SubSystem
 			}
 		}
 		
-		const FlightControlType getFlightControlType()
+		const FlightControlType flightControlType()
 		{
 			return _flightControlType;
 		}
 
 		
 		//Accessors for the flight control command data
-		const unsigned int getPitchCommand()
+		const unsigned int pitchCommand()
 		{
 			return _pitchCommand;
 		}
 		
-		const unsigned int getRollCommand()
+		const unsigned int rollCommand()
 		{
 			return _rollCommand;
 		}
 		
-		const unsigned int getYawCommand()
+		const unsigned int yawCommand()
 		{
 			return _yawCommand;
 		}
 		
-		const unsigned int getThrottleCommand()
+		const unsigned int throttleCommand()
 		{
 			return _throttleCommand;
 		}

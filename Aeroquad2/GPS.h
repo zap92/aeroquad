@@ -173,12 +173,12 @@ class MTKGPSHardware : public GPSHardware
 		}
 	
 	public:
-		unsigned int baudRate()
+		virtual unsigned int baudRate()
 		{
 			return 38400;
 		}
 		
-		void initialize(HardwareSerial *serialPort)
+		virtual void initialize(HardwareSerial *serialPort)
 		{
 			GPSHardware::initialize(serialPort);
 			
@@ -189,7 +189,7 @@ class MTKGPSHardware : public GPSHardware
 			this->_resetStateMachine();
 		}
 		
-		void process(const unsigned long currentTime, const byte dataByte)
+		virtual void process(const unsigned long currentTime, const byte dataByte)
 		{
 			GPSHardware::process(currentTime, dataByte);	
 			
@@ -322,7 +322,7 @@ class GPS : public SubSystem
 			}
 		}
 
-		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
+		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset); 
 
@@ -337,7 +337,7 @@ class GPS : public SubSystem
 			}
 		}
 
-  		void process(const unsigned long currentTime)
+  		virtual void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{
