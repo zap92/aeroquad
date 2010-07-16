@@ -87,7 +87,7 @@ class MotorHardware : public HardwareComponent
 class MotorHardwareAPM : public MotorHardware
 {
 	protected:
-		void writeOutputs()
+		virtual void writeOutputs()
 		{
 			APM_RC.OutputCh(0, _motorOutput[0]);    // Right motor (+) / Right-Back motor (X)
 			APM_RC.OutputCh(1, _motorOutput[1]);    // Left motor (+) / Left-Front motor (X)
@@ -110,7 +110,7 @@ class MotorHardwareAPM : public MotorHardware
 class MotorhardwareDebugSerial : public MotorHardware
 {
 	protected:
-		void writeOutputs()
+		virtual void writeOutputs()
 		{
 			serialcoms.print(_motorOutput[0]);
 			serialcoms.print(",");
@@ -147,7 +147,7 @@ class Motors : public SubSystem
 			
 		}
 		
-		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
+		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
 			
@@ -180,7 +180,7 @@ class Motors : public SubSystem
 			_orientationType = orientationType;
 		}
 				
-		void process(const unsigned long currentTime)
+		virtual void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{
@@ -221,10 +221,10 @@ class Motors : public SubSystem
 					//}
 					
 					//Main control system.
-					int flightControlRollCommand = flightcontrol.getRollCommand();
-					int flightControlPitchCommand = flightcontrol.getPitchCommand();
-					int flightControlYawCommand = flightcontrol.getYawCommand();
-					int flightControlThrottleCommand = flightcontrol.getThrottleCommand();
+					int flightControlRollCommand = flightcontrol.rollCommand();
+					int flightControlPitchCommand = flightcontrol.pitchCommand();
+					int flightControlYawCommand = flightcontrol.yawCommand();
+					int flightControlThrottleCommand = flightcontrol.throttleCommand();
 					
 					//Calculate the mix for each of the motors.
 					switch (_orientationType)
@@ -245,7 +245,6 @@ class Motors : public SubSystem
 					_motorHardware->setMotorOutput(2,flightControlYawCommand);
 					_motorHardware->setMotorOutput(3,flightControlThrottleCommand);
 																				
-					
 					_motorHardware->process(currentTime);
 				}
 			}

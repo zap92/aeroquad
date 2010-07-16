@@ -32,7 +32,7 @@ class AnalogInHardwareComponent : public HardwareComponent
 {
 	private:
 		float _referenceVoltage;
-		int _dacPrecision;
+		int _adcPrecision;
 		
 	protected:
 		float _lastReadings[MAXINPUTCOUNT];
@@ -55,7 +55,7 @@ class AnalogInHardwareComponent : public HardwareComponent
 		{
 			static float tmpf;	        //temporary variable
 			
-			float dacMvValue = this->getReferenceVoltage() / (pow(2,this->getDacPrecision()) - 1);
+			float dacMvValue = this->referenceVoltage() / (pow(2,this->adcPrecision()) - 1);
 			
 			for (int i = 0; i <= _inputCount; i++)
 			{
@@ -78,7 +78,7 @@ class AnalogInHardwareComponent : public HardwareComponent
 		AnalogInHardwareComponent(const unsigned int inputCount) : HardwareComponent()
 		{
 			this->_referenceVoltage = 5.0;
-			this->_dacPrecision = 10;
+			this->_adcPrecision = 10;
 			
 			_inputCount = inputCount;
 			
@@ -97,19 +97,19 @@ class AnalogInHardwareComponent : public HardwareComponent
 		{
 			_referenceVoltage = referenceVoltage;
 		}
-		const float getReferenceVoltage()
+		const float referenceVoltage()
 		{
 			return _referenceVoltage;
 		}
 
-		void setDacPrecision(const int dacPrecision)
+		void setAdcPrecision(const int adcPrecision)
 		{
-			_dacPrecision = dacPrecision;
+			_adcPrecision = adcPrecision;
 		}
 
-		const int getDacPrecision()
+		const int adcPrecision()
 		{
-			return _dacPrecision;
+			return _adcPrecision;
 		}
 		
 		virtual const int readRawValue(const unsigned int axis)
@@ -119,6 +119,14 @@ class AnalogInHardwareComponent : public HardwareComponent
 		
 		virtual void process(const unsigned long currentTime)
 		{
+			for (int i = 0; i < _inputCount; i++)
+			{
+				if (_inputConfigurations[i].inputInUse)
+				{
+					_rawReadings[i] = this->readRawValue(_inputConfigurations[i].hardwarePin);
+				}
+			}
+			
 			this->_scaleRawReadingsToEngineeringValues();		
 			HardwareComponent::process(currentTime);
 		}

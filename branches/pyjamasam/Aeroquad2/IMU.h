@@ -21,7 +21,7 @@ class IMUHardware : public AnalogInHardwareComponent
 			AnalogInHardwareComponent::process(currentTime);
 		}
 		
-		const float* getCurrentReadings()
+		const float* currentReadings()
 		{
 			return _lastReadings;
 		}
@@ -31,7 +31,7 @@ class IMUHardware : public AnalogInHardwareComponent
 		virtual void calibrateZero()
 		{
 			int zeroLevelSamples[ZEROLEVELSAMPLECOUNT];
-			float dacMvValue = this->getReferenceVoltage() / (pow(2,this->getDacPrecision()) - 1);
+			float dacMvValue = this->referenceVoltage() / (pow(2,this->adcPrecision()) - 1);
 
 			//Calibrate each axis of gyro (Because they can drift over time)
 			for (int i = IMUGyroX; i <= IMUGyroZ; i++)
@@ -56,59 +56,12 @@ class IMUHardware : public AnalogInHardwareComponent
 };
 
 class OilpanIMU : public IMUHardware
-{
-	private:
-		static const int _AdcChipSelect = 33;
-		
-		//Holder variables for the ADC readings
-		unsigned char _adc_cmd[9];
-		volatile long _adc_value[8];
-		volatile unsigned char _adc_counter[8];
-		
-		//This IMU has a interrupt so we need a singleton pattern to get back to it when the interrupt fires
-		static OilpanIMU *_staticInstance;
-		
-		
-		unsigned char _ADC_SPI_transfer(unsigned char data)
-		{
-		  /* Wait for empty transmit buffer */
-		  while ( !( UCSR2A & (1<<UDRE2)) );
-		  /* Put data into buffer, sends the data */
-		  UDR2 = data;
-		  /* Wait for data to be received */
-		  while ( !(UCSR2A & (1<<RXC2)) );
-		  /* Get and return received data from buffer */
-		  return UDR2;
-		}
-		
-		
+{	
 	public:
-		static OilpanIMU* getInstance()
-		{
-			return _staticInstance;
-		}
-		
-		OilpanIMU() : IMUHardware(8 /*number of inputs that this device has*/)
-		{
-			_staticInstance = this;
-			
-			//SPI Commands needed to read the DAC
-			_adc_cmd[0] = 0x87;
-			_adc_cmd[1] = 0xC7;
-			_adc_cmd[2] = 0x97;
-			_adc_cmd[3] = 0xD7;
-			_adc_cmd[4] = 0xA7;
-			_adc_cmd[5] = 0xE7;
-			_adc_cmd[6] = 0xB7;
-			_adc_cmd[7] = 0xF7;
-			_adc_cmd[8] = 0x00;
-			
-			
-			memset((void*)&_adc_value, 0, 8);
-			memset((void*)&_adc_counter,0,8);
-			
+		OilpanIMU() : IMUHardware(6/*number of inputs that this device has*/)
+		{	
 			this->setReferenceVoltage(3300);
-			this->setDacPrecision(12);
+			this->setAdcPrecision(12);
 		}
 		
 		virtual void initialize()
@@ -153,118 +106,13 @@ class OilpanIMU : public IMUHardware
 		 	_inputConfigurations[IMUAcclZ].sensitivity = 310;				//in mv/G
 			_inputConfigurations[IMUAcclZ].inputInUse = true; 
 			_inputConfigurations[IMUAcclZ].hardwarePin = 6;
-			
-
-			//Temp input
-			_inputConfigurations[6].zeroLevel = 1375;			//in mv
-		 	_inputConfigurations[6].sensitivity = 4.4;				//in mv/oC
-			_inputConfigurations[6].inputInUse = true; 
-			_inputConfigurations[6].hardwarePin = 3;
-			_inputConfigurations[6].invert = true;
-			
-			//Aux input (using it for bottom facing ultrasonic range sensor)			
-			_inputConfigurations[7].zeroLevel = 0;					//in mv
-		 	_inputConfigurations[7].sensitivity = 9.765625;			//in mv/in
-			_inputConfigurations[7].inputInUse = true; 
-			_inputConfigurations[7].hardwarePin = 7;
- 	
-			//Since the Oilpan uses a dedicated DAC lets setup what we need to get it running.
-			//This all comes from the APM_ADC code provided by DIYDrones
-			{
-				// Disable device (Chip select is active low)
-				pinMode(_AdcChipSelect,OUTPUT);
-				digitalWrite(_AdcChipSelect,HIGH); 
-
-				// Setup Serial Port2 in SPI mode
-				UBRR2 = 0;   
-				DDRH |= (1<<PH2);  // SPI clock XCK2 (PH2) as output. This enable SPI Master mode
-				// Set MSPI mode of operation and SPI data mode 0.
-				UCSR2C = (1<<UMSEL21)|(1<<UMSEL20); //|(0<<UCPHA2)|(0<<UCPOL2);
-				// Enable receiver and transmitter.
-				UCSR2B = (1<<RXEN2)|(1<<TXEN2);
-				// Set Baud rate
-				UBRR2 = 2; // SPI clock running at 2.6MHz
-
-
-				// Enable Timer2 Overflow interrupt to capture ADC data
-				TIMSK2 = 0;  // Disable interrupts 
-				TCCR2A = 0;  // normal counting mode 
-				TCCR2B = _BV(CS21)|_BV(CS22);     // Set prescaler of 256
-				TCNT2 = 0;
-				TIFR2 = _BV(TOV2);  // clear pending interrupts; 
-				TIMSK2 =  _BV(TOIE2) ; // enable the overflow interrupt
-			}
 		} 		
 		
-	 	virtual const int readRawValue(const unsigned int axis)
-		{
-			//All we need to do here is just grab the value from the variable that holds it
-			int result;
-
-			cli();  // We stop interrupts to read the variables
-			if (_adc_counter[axis]>0)
-			{
-				result = _adc_value[axis]/_adc_counter[axis];
-			}
-			else
-			{
-				result = 0;
-			}
-			_adc_value[axis] = 0;    // Initialize for next reading
-			_adc_counter[axis] = 0;
-			sei();						//turn interrupts back on
-			
-			return result;
-		}
-		
-		
-		virtual void process(const unsigned long currentTime)
-		{
-			for (int i = 0; i < _inputCount; i++)
-			{
-				if (_inputConfigurations[i].inputInUse)
-				{
-					_rawReadings[i] = this->readRawValue(_inputConfigurations[i].hardwarePin);
-				}
-			}						
-			
-			//Call the generic IMU Hardware process method
-			IMUHardware::process(currentTime);
-		}
-		
-		//This is called via an Interrupt to pull the data from the ADC.
-		//We are running this at 400hz via a timer so it can oversample the data
-		void fetchReadings()
-		{
-			uint8_t ch;
-			unsigned int adc_tmp;
-
-			//Bit_Set(PORTC,0); // To test performance with a scope
-			Bit_Clear(PORTC,4);             // Enable Chip Select (PIN PC4)
-			_ADC_SPI_transfer(_adc_cmd[0]);       // Command to read the first channel
-
-			for (ch=0;ch<8;ch++)
-			{
-				adc_tmp = _ADC_SPI_transfer(0)<<8;    // Read first byte
-				adc_tmp |= _ADC_SPI_transfer(_adc_cmd[ch+1]);  // Read second byte and send next command
-				_adc_value[ch] += adc_tmp>>3;     // Shift to 12 bits
-				_adc_counter[ch]++;               // Number of samples
-			}
-
-			Bit_Set(PORTC,4);                // Disable Chip Select (PIN PH6)
-			//Bit_Clear(PORTC,0); // To test performance
+	 	virtual const int readRawValue(const unsigned int channel)
+		{			
+			return APM_ADC.Ch(channel);
 		}
 };
-
-OilpanIMU *OilpanIMU::_staticInstance = NULL;
-//Timer used to trigger the frequency that we read the ADC
-ISR (TIMER2_OVF_vect)
-{
-	OilpanIMU::getInstance()->fetchReadings();
-	
-	//reset the timer
-	TCNT2 = 104;        // 400 Hz
-}
 
 class SuplimentalYawSource : public HardwareComponent
 {
@@ -287,7 +135,7 @@ class SuplimentalYawSource : public HardwareComponent
 			HardwareComponent::process(currentTime);	
 		}
 		
-		const int* getCurrentReadings()
+		const int* currentReadings()
 		{
 			return _lastReadings;
 		}
@@ -549,12 +397,12 @@ class SimpleAccellOnlyIMUFilter : public IMUFilter
 			
 		}
 		
-		void initialize()
+		virtual void initialize()
 		{
 			IMUFilter::initialize();
 		}
 		
-		void filter(const unsigned long currentTime)
+		virtual void filter(const unsigned long currentTime)
 		{
 			IMUFilter::filter(currentTime);
 			
@@ -608,14 +456,14 @@ class ComplimentryMUFilter : public IMUFilter
 			previousAngle_roll = previousAngle_pitch = previousAngle_yaw = 0;			 
 		}
 		
-		void initialize()
+		virtual void initialize()
 		{
 		    timeConstantCF = 4;
 		
 			IMUFilter::initialize();
 		}
 		
-		void filter(const unsigned long currentTime)
+		virtual void filter(const unsigned long currentTime)
 		{			
 			IMUFilter::filter(currentTime);
 			
@@ -809,7 +657,7 @@ class DCMIMUFilter : public IMUFilter
 			
 		}
 		
-		void initialize()
+		virtual void initialize()
 		{
 			IMUFilter::initialize();
 			
@@ -902,7 +750,7 @@ class DCMIMUFilter : public IMUFilter
 			}
 		}
 		
-		void filter(const unsigned long currentTime)
+		virtual void filter(const unsigned long currentTime)
 		{
 			IMUFilter::filter(currentTime);
 			
@@ -1053,7 +901,7 @@ public:
 		
 	}
 	
-	void initialize()
+	virtual void initialize()
 	{
 		IMUFilter::initialize();
 		
@@ -1061,7 +909,7 @@ public:
 		_init(&_pitchFilterData, 0.001, 0.003, 0.03);		
 	}
 	
-	void filter(const unsigned long currentTime)
+	virtual void filter(const unsigned long currentTime)
 	{
 		IMUFilter::filter(currentTime);
 
@@ -1233,7 +1081,7 @@ class IMU : public SubSystem
 			_suplimentalYawSource = NULL;
 		}
 		
-		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
+		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 	
 			SubSystem::initialize(frequency, offset);
 
@@ -1333,7 +1181,7 @@ class IMU : public SubSystem
 			}
 		}
 		
-		void process(const unsigned long currentTime)
+		virtual void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{
@@ -1348,10 +1196,10 @@ class IMU : public SubSystem
 
 					if (_imuFilter)
 					{
-						_imuFilter->setCurrentReadings(_imuHardware->getCurrentReadings());
+						_imuFilter->setCurrentReadings(_imuHardware->currentReadings());
 						if (_suplimentalYawSource)
 						{
-							_imuFilter->setSuplimentalYawReadings(_suplimentalYawSource->getCurrentReadings());
+							_imuFilter->setSuplimentalYawReadings(_suplimentalYawSource->currentReadings());
 						}
 						_imuFilter->filter(currentTime);
 						

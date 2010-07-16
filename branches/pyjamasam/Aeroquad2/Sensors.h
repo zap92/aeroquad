@@ -44,17 +44,17 @@ class PressureSensor : public HardwareComponent
 			HardwareComponent::process(currentTime);	
 		}
 		
-		const long getTemperature()
+		const long temperature()
 		{
 			return _currentTemperature;
 		}
 		
-		const long getPressure()
+		const long pressure()
 		{
 				return _currentPressure;
 		}
 		
-		const float getAltitude()
+		const float altitude()
 		{
 			float tmp_float = (_currentPressure/101325.0);
     		tmp_float = pow(tmp_float,0.190295);
@@ -354,30 +354,27 @@ class SPIPressureSensor : public PressureSensor, SPIDevice
 
 */
 
-class HeightSensor : public HardwareComponent
+class HeightSensor : public AnalogInHardwareComponent
 {
-	protected:
-		float _currentHeight;
-		
 	public:
-		HeightSensor() : HardwareComponent()
+		HeightSensor() : AnalogInHardwareComponent(1)
 		{
-			_currentHeight = 0.0;
+			
 		}
 
 		virtual void initialize()
 		{
-			HardwareComponent::initialize();
+			AnalogInHardwareComponent::initialize();
 		}	
 		
 		virtual void process(const unsigned long currentTime)
 		{
-			HardwareComponent::process(currentTime);	
+			AnalogInHardwareComponent::process(currentTime);	
 		}
 		
-		const float getHeight()
+		const float height()
 		{
-			return _currentHeight;
+			return _lastReadings[0];
 		}
 };
 
@@ -385,22 +382,25 @@ class HeightSensor : public HardwareComponent
 class MaxBotixMaxSonarHeightSensor : public HeightSensor
 {
 	public:		
+		MaxBotixMaxSonarHeightSensor() : HeightSensor()
+		{
+			this->setReferenceVoltage(3300);
+			this->setAdcPrecision(12);
+		}
+		
 		virtual void initialize()
 		{
 			HeightSensor::initialize();
+			
+			_inputConfigurations[0].zeroLevel = 0;					//mv
+			_inputConfigurations[0].sensitivity = 384.473425;		//mv/m	(9.765625; 			//mv/in)
+			_inputConfigurations[0].inputInUse = true; 
+			_inputConfigurations[0].hardwarePin = 7;
 		}
 		
-		void process(const unsigned long currentTime)
-		{	
-			//This sensor is using the Aux pin on the Oilpan IMU board.  
-			//get a static instance to that
-			const float *currentReadings = OilpanIMU::getInstance()->getCurrentReadings();
-			
-			//The sensor reads in Inches.  Lets convert them to CM and then to M
-			//Data is in the 7th value.
-			_currentHeight = (currentReadings[7] * 2.54) / 100.0f;
-			
-			HeightSensor::process(currentTime);
+		virtual const int readRawValue(const unsigned int channel)
+		{
+			return APM_ADC.Ch(channel);
 		}
 };
 
@@ -421,7 +421,7 @@ class Sensors : public SubSystem
 		{				
 		}
 		
-		void initialize(const unsigned int frequency, const unsigned int offset = 0) 
+		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
 		{ 
 			SubSystem::initialize(frequency, offset);
 									
@@ -441,7 +441,7 @@ class Sensors : public SubSystem
 			}
 		}
 		
-		void process(const unsigned long currentTime)
+		virtual void process(const unsigned long currentTime)
 		{
 			if (this->_canProcess(currentTime))
 			{				
@@ -458,6 +458,9 @@ class Sensors : public SubSystem
 				if (_heightSensor)
 				{
 					_heightSensor->process(currentTime);
+					
+					serialcoms.print(_heightSensor->height());
+					serialcoms.println();
 				}
 			}
 		}
@@ -520,41 +523,41 @@ class Sensors : public SubSystem
 		}
 				
 		//accessors for sensor values
-		const long getTemperature()
+		const long temperature()
 		{
 			if (_pressureSensor)
 			{
-				return _pressureSensor->getTemperature();
+				return _pressureSensor->temperature();
 			}
 			
 			return 0.0f;
 		}
 		
-		const long getPressure()
+		const long pressure()
 		{
 			if (_pressureSensor)
 			{
-				return _pressureSensor->getPressure();
+				return _pressureSensor->pressure();
 			}
 			
 			return 0.0f;
 		}
 		
-		const float getAltitudeUsingPressure()
+		const float altitudeUsingPressure()
 		{
 			if (_pressureSensor)
 			{
-				return _pressureSensor->getAltitude();
+				return _pressureSensor->altitude();
 			}
 			
 			return 0.0f;
 		}
 		
-		const float getAltitudeUsingHeightSensor()
+		const float altitudeUsingHeightSensor()
 		{
 			if (_heightSensor)
 			{
-				return _heightSensor->getHeight();
+				return _heightSensor->height();
 			}
 			
 			return 0.0f;
