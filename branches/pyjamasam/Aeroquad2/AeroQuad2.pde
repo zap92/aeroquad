@@ -10,11 +10,13 @@
 #include "HardwareComponent.h"
 #include "PID.h"
 
+#include "SerialComs.h"
+
 #include "LED.h"
 LED led;
 
-#include "SerialComs.h"
-SerialComs serialcoms;
+#include "Settings.h"
+Settings settings;
 
 #include "Receiver.h"
 Receiver receiver;
@@ -22,11 +24,12 @@ Receiver receiver;
 #include "GPS.h"
 GPS gps;
 
+#include "Sensors.h"
+Sensors sensors;
+
 #include "IMU.h"
 IMU imu;
 
-#include "Sensors.h"
-Sensors sensors;
 
 /*#include "Navigation.h"
 Navigation navigation;
@@ -38,8 +41,8 @@ FlightControl flightcontrol;
 #import "Motors.h"
 Motors motors;
 
-/*#import "Camera.h"
-Camera camera;*/
+#import "Camera.h"
+Camera camera;
 
 void setup()
 {	
@@ -48,11 +51,16 @@ void setup()
 	
 	{
 		//Assign the 1st and 3rd serial ports for serial telemetry
-		serialcoms.assignSerialPort(&Serial);				//Use for any debugging output
-		serialcoms.assignSerialPort(&Serial3);				//Telemetry output to Xbee
+		serialcoms.assignSerialPort(&Serial, true);				//Use USB serial for any debugging output
+		serialcoms.assignSerialPort(&Serial3);					//Telemetry output to Xbee
 		
 		//Run serial telemetry at 10hz offset 50ms (100ms cycle time)
 		serialcoms.initialize(100, 50);
+	}
+	
+	{
+		//Prepare the settings system for use
+		settings.initialize();
 	}
 	
 	{		
@@ -60,6 +68,7 @@ void setup()
 		
 		//Run the receiver at 50hz (20ms cycle time)
 		receiver.initialize(20,0);
+		receiver.calibrate();
 	}
 	
 	{
@@ -98,11 +107,7 @@ void setup()
 	}
 	
 	
-	{
-		//flightcontrol.enableAutoLevel();
-		//flightcontrol.enableHeadingHold();
-		//flightcontrol.enableAltitudeHold();
-		
+	{		
 		//flightcontrol.setFlightControlType(FlightControl::FlightControlTypeAcrobatic);
 		flightcontrol.setFlightControlType(FlightControl::FlightControlTypeStable);
 		//flightcontrol.setFlightControlType(FlightControl::FlightControlTypeAutonomous);
@@ -127,8 +132,8 @@ void setup()
 	}
 	
 	{
-		//Run the camera at 10hz offset 50ms
-		//camera.initialize(100, 50);
+		//Run the camera at 50hz offset 50ms (cycleTime)
+		camera.initialize(20, 50);
 	}
 	
 	{		
@@ -145,6 +150,7 @@ void setup()
 static unsigned long currentTime = 0;
 static unsigned long previousTime = currentTime;
 static unsigned int deltaTime = 0;
+
 void loop()
 {
 	currentTime = millis();
@@ -167,8 +173,8 @@ void loop()
 	
 	//process all the "outputs" from the system
 	{
-		motors.process(currentTime);
-		//camera.process(currentTime);
+		//motors.process(currentTime);
+		camera.process(currentTime);
 	}
 	
 	//process accessory sub systems

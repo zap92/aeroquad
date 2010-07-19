@@ -86,7 +86,8 @@ class OilpanIMU : public IMUHardware
 			_inputConfigurations[IMUGyroZ].zeroLevel = 1370;			//in mv
 			_inputConfigurations[IMUGyroZ].sensitivity = 2.2;				//in mV/deg/ms
 			_inputConfigurations[IMUGyroZ].inputInUse = true; 
-			_inputConfigurations[IMUGyroZ].hardwarePin = 0;			
+			_inputConfigurations[IMUGyroZ].hardwarePin = 0;	
+			_inputConfigurations[IMUGyroZ].invert = true;		
 			
 			
 			//X,Y,Z Accels
@@ -321,33 +322,33 @@ class IMUFilter
 		}
 		
 		//Accessors for the processed values
-		const float currentRollRateInDegrees()
+		const float rollRateInDegrees()
 		{
 			return _processedRateInDegrees[IMUFilterRoll];
 		}
 		
-		const float currentPitchRateInDegrees()
+		const float pitchRateInDegrees()
 		{
 			return _processedRateInDegrees[IMUFilterPitch];
 		}
 		
-		const float currentYawRateInDegrees()
+		const float yawRateInDegrees()
 		{
 			return _processedRateInDegrees[IMUFilterYaw];
 		}
 		
 		
-		const float currentRollRateInRadians()
+		const float rollRateInRadians()
 		{
 			return _processedRateInRadians[IMUFilterRoll];
 		}
 		
-		const float currentPitchRateInRadians()
+		const float pitchRateInRadians()
 		{
 			return _processedRateInRadians[IMUFilterPitch];
 		}
 		
-		const float currentYawRateInRadians()
+		const float yawRateInRadians()
 		{
 			return _processedRateInRadians[IMUFilterYaw];
 		}
@@ -355,33 +356,33 @@ class IMUFilter
 		
 		
 		
-		const float currentRollAngleInDegrees()
+		const float rollAngleInDegrees()
 		{		
 			return _processedAngleInDegrees[IMUFilterRoll];
 		}
 		
-		const float currentPitchAngleInDegrees()
+		const float pitchAngleInDegrees()
 		{			
 			return _processedAngleInDegrees[IMUFilterPitch];
 		}
 		
-		const float currentYawAngleInDegrees()
+		const float yawAngleInDegrees()
 		{
 			return _processedAngleInDegrees[IMUFilterYaw];
 		}
 				
 		
-		const float currentRollAngleInRadians()
+		const float rollAngleInRadians()
 		{			
 			return _processedAngleInRadians[IMUFilterRoll];
 		}
 		
-		const float currentPitchAngleInRadians()
+		const float pitchAngleInRadians()
 		{		
 			return _processedAngleInRadians[IMUFilterPitch];
 		}
 		
-		const float currentYawAngleInRadians()
+		const float yawAngleInRadians()
 		{
 			return _processedAngleInRadians[IMUFilterYaw];
 		}	
@@ -1068,6 +1069,9 @@ class IMU : public SubSystem
 		SuplimentalYawSource *_suplimentalYawSource;
 		IMUFilter *_imuFilter;
 		
+		float _altitudeRateOfChange;
+		float _lastAltitude;
+		float _lastAltitudeTime;
 		
 	public:
 		typedef enum { ArduPilotOilPan } HardwareType;
@@ -1079,6 +1083,9 @@ class IMU : public SubSystem
 			_imuHardware = NULL;
 			_imuFilter = NULL;
 			_suplimentalYawSource = NULL;
+			
+			_altitudeRateOfChange = 0;
+			_lastAltitudeTime = 0;
 		}
 		
 		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
@@ -1112,8 +1119,8 @@ class IMU : public SubSystem
 				}
 				default:
 				{
-					serialcoms.print("ERROR: Unknown IMU Hardware type selected.");
-					serialcoms.println();
+					serialcoms.debugPrint("ERROR: Unknown IMU Hardware type selected.");
+					serialcoms.debugPrintln();
 					break;
 				}
 			}
@@ -1131,8 +1138,8 @@ class IMU : public SubSystem
 				
 				default:
 				{
-					serialcoms.print("ERROR: Unknown Suplimental Yaw Source type selected.");	
-					serialcoms.println();
+					serialcoms.debugPrint("ERROR: Unknown Suplimental Yaw Source type selected.");	
+					serialcoms.debugPrintln();
 					break;
 				}
 			}
@@ -1174,8 +1181,8 @@ class IMU : public SubSystem
 								
 				default:
 				{
-					serialcoms.print("ERROR: Unknown IMU Filter type selected.");
-					serialcoms.println();
+					serialcoms.debugPrint("ERROR: Unknown IMU Filter type selected.");
+					serialcoms.debugPrintln();
 					break;
 				}
 			}
@@ -1203,19 +1210,16 @@ class IMU : public SubSystem
 						}
 						_imuFilter->filter(currentTime);
 						
-						//Pitch is defined as the angle between the aircraft's longitudinal axis and the local horizontal plane (positive for nose up). 
-						//Roll is defined as the angle about the longitudinal axis between the local horizontal plane and the actual flight orientation (positive for right wing down).
+						//Process the altitude so that we can find out its rate of change (in m/s)
+						float currentAltitude = this->altitudeInMeters();
+						float altitudeChange = currentAltitude - _lastAltitude;
 						
-						/*serialcoms.print("!:");
-						serialcoms.print(_imuFilter->currentRollAngleInRadians());
-						serialcoms.print(",");			
-						serialcoms.print(_imuFilter->currentPitchAngleInRadians());
-						serialcoms.print(",");
-						serialcoms.print(_imuFilter->currentYawAngleInRadians());
-						serialcoms.println();*/
+						_altitudeRateOfChange = altitudeChange / (currentTime - _lastAltitudeTime);
+						
+						_lastAltitude = currentAltitude;
+						_lastAltitudeTime = currentTime;
 					}
-					
-					
+										
 					/*int rollTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel1);
 					int pitchTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel2);
 					int throttleTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel3);
@@ -1244,61 +1248,61 @@ class IMU : public SubSystem
 		}
 				
 		//Accessors for the processed values
-		const float currentRollRateInDegrees()
+		const float rollRateInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentRollRateInDegrees();
+				return _imuFilter->rollRateInDegrees();
 			}
 			
 			return 0;
 		}
 		
-		const float currentPitchRateInDegrees()
+		const float pitchRateInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentPitchRateInDegrees();
+				return _imuFilter->pitchRateInDegrees();
 			}
 			
 			return 0;	
 		}
 		
-		const float currentYawRateInDegrees()
+		const float yawRateInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentYawRateInDegrees();
+				return _imuFilter->yawRateInDegrees();
 			}
 			
 			return 0;
 		}
 		
-		const float currentRollRateInRadians()
+		const float rollRateInRadians()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentRollRateInRadians();
+				return _imuFilter->rollRateInRadians();
 			}
 			
 			return 0;
 		}
 		
-		const float currentPitchRateInRadians()
+		const float pitchRateInRadians()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentPitchRateInRadians();
+				return _imuFilter->pitchRateInRadians();
 			}
 			
 			return 0;	
 		}
 		
-		const float currentYawRateInRadians()
+		const float yawRateInRadians()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentYawRateInRadians();
+				return _imuFilter->yawRateInRadians();
 			}
 			
 			return 0;
@@ -1307,63 +1311,73 @@ class IMU : public SubSystem
 		
 		
 		
-		const float currentRollAngleInDegrees()
+		const float rollAngleInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentRollAngleInDegrees();
+				return _imuFilter->rollAngleInDegrees();
 			}
 			
 			return 0;
 		}
 		
-		const float currentPitchAngleInDegrees()
+		const float pitchAngleInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentPitchAngleInDegrees();
+				return _imuFilter->pitchAngleInDegrees();
 			}
 			
 			return 0;
 		}
 		
-		const float currentYawAngleInDegrees()
+		const float yawAngleInDegrees()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentYawAngleInDegrees();
+				return _imuFilter->yawAngleInDegrees();
 			}
 			
 			return 0;
 		}
 		
-		const float currentRollAngleInRadians()
+		const float rollAngleInRadians()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentRollAngleInRadians();
+				return _imuFilter->rollAngleInRadians();
 			}
 			
 			return 0;
 		}
 		
-		const float currentPitchAngleInRadians()
+		const float pitchAngleInRadians()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentPitchAngleInRadians();
+				return _imuFilter->pitchAngleInRadians();
 			}
 			
 			return 0;
 		}
 		
-		const float currentYawAngleInRadians()
+		const float yawAngleInRadians()
 		{
 			if (_imuFilter)
 			{
-				return _imuFilter->currentYawAngleInRadians();
+				return _imuFilter->yawAngleInRadians();
 			}
 			
 			return 0;
+		}
+		
+		const float altitudeInMeters()
+		{
+			return ((gps.altitude()/100.0f) + sensors.altitudeUsingPressure()) / 2;
+		}
+		
+		const float altitudeRateInMeters()
+		{
+			return _altitudeRateOfChange;
 		}
 };

@@ -112,15 +112,14 @@ class MotorhardwareDebugSerial : public MotorHardware
 	protected:
 		virtual void writeOutputs()
 		{
-			serialcoms.print(_motorOutput[0]);
-			serialcoms.print(",");
-			serialcoms.print(_motorOutput[1]);
-			serialcoms.print(",");
-			serialcoms.print(_motorOutput[2]);
-			serialcoms.print(",");
-			serialcoms.print(_motorOutput[3]);
-			
-			serialcoms.println();
+			serialcoms.debugPrint(_motorOutput[0]);
+			serialcoms.debugPrint(",");
+			serialcoms.debugPrint(_motorOutput[1]);
+			serialcoms.debugPrint(",");
+			serialcoms.debugPrint(_motorOutput[2]);
+			serialcoms.debugPrint(",");
+			serialcoms.debugPrint(_motorOutput[3]);
+			serialcoms.debugPrintln();
 		}
 		
 	public:

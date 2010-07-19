@@ -82,8 +82,6 @@ class PID
 			}
 			else
 			{
-  				
-
 	  			// Calculate error integral and limit integrated_error to +/-windup_guard  
 				_integeratedError += error;
 				_integeratedError = constrain(_integeratedError, -_windupGuard, _windupGuard);

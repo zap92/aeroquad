@@ -315,8 +315,8 @@ class GPS : public SubSystem
 				
 				default:
 				{
-					serialcoms.print("ERROR: Unknown GPS Hardware type selected.");
-					serialcoms.println();
+					serialcoms.debugPrint("ERROR: Unknown GPS Hardware type selected.");
+					serialcoms.debugPrintln();
 					break;
 				}
 			}
@@ -350,21 +350,21 @@ class GPS : public SubSystem
 					}
 				}
 				
-				/*serialcoms.debugPrint("!G:");
-				serialcoms.debugPrint(this->fixType());
-				serialcoms.debugPrint(",");			
-				serialcoms.debugPrint(this->lastFix());
-				serialcoms.debugPrint(",");
-				serialcoms.debugPrint(this->latitude());
-				serialcoms.debugPrint(",");
-				serialcoms.debugPrint(this->longitude());
-				serialcoms.debugPrint(",");
-				serialcoms.debugPrint(this->altitude());
-				serialcoms.debugPrint(",");
-				serialcoms.debugPrint(this->groundSpeed());
-				serialcoms.debugPrint(",");
-				serialcoms.debugPrint(this->groundCourse());
-				serialcoms.debugPrintln("");*/
+				/*serialcoms.print("!G:");
+				serialcoms.print(this->fixType());
+				serialcoms.print(",");			
+				serialcoms.print(this->lastFix());
+				serialcoms.print(",");
+				serialcoms.print(this->latitude());
+				serialcoms.print(",");
+				serialcoms.print(this->longitude());
+				serialcoms.print(",");
+				serialcoms.print(this->altitude()/100.0f);
+				serialcoms.print(",");
+				serialcoms.print(this->groundSpeed()/100.0f);
+				serialcoms.print(",");
+				serialcoms.print(this->groundCourse());
+				serialcoms.println("");*/
 			}
 		}
 		
