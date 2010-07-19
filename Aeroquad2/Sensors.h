@@ -458,9 +458,6 @@ class Sensors : public SubSystem
 				if (_heightSensor)
 				{
 					_heightSensor->process(currentTime);
-					
-					serialcoms.print(_heightSensor->height());
-					serialcoms.println();
 				}
 			}
 		}
@@ -477,8 +474,8 @@ class Sensors : public SubSystem
 				
 				default:
 				{
-					serialcoms.print("ERROR: Unknown Pressure Sensor type selected.");
-					serialcoms.println();
+					serialcoms.debugPrint("ERROR: Unknown Pressure Sensor type selected.");
+					serialcoms.debugPrintln();
 					break;
 				}
 			}
@@ -496,8 +493,8 @@ class Sensors : public SubSystem
 				
 				default:
 				{
-					serialcoms.print("ERROR: Unknown Pressure Sensor type selected.");
-					serialcoms.println();
+					serialcoms.debugPrint("ERROR: Unknown Pressure Sensor type selected.");
+					serialcoms.debugPrintln();
 					break;
 				}
 			}
@@ -515,8 +512,8 @@ class Sensors : public SubSystem
 				
 				default:
 				{
-					serialcoms.print("ERROR: Unknown Height Sensor type selected.");
-					serialcoms.println();
+					serialcoms.debugPrint("ERROR: Unknown Height Sensor type selected.");
+					serialcoms.debugPrintln();
 					break;
 				}
 			}

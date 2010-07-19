@@ -98,13 +98,13 @@ class Waypoint
 static const int Waypoint::IgnoreHeading = -99;
 
 //presently we support a maximum of 200 waypoints
-#define MAXIMUMWAYPOINTS 200
 class Navigation : public Subsystem
 {
 	private:
 		Waypoint *_homeWaypoint;
 		
-		Waypoint *_waypoints[MAXIMUMWAYPOINTS];
+		Waypoint *_activeWaypoint;
+		
 		unsigned int _waypointCount;
 		unsigned int _activeWaypointIndex;
 		
