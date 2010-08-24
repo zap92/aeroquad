@@ -1,6 +1,7 @@
 #ifndef __SUBSYSTEM_H__
 #define __SUBSYSTEM_H__
 
+//#define NUMBER_OF_STATISTICS_SAMPLES 50
 class SubSystem
 {
 	
@@ -10,68 +11,37 @@ private:
 	protected:
 		unsigned int _enabled;
 		unsigned long _lastRunTime;
-
-		unsigned int _frequency;
+		
+		unsigned long _processingStartTime;
+				
+		unsigned int _previousRunTimeSampleCount;
+		float _previousRunTimeTotal;
+		
+		unsigned int _frequency;				
 
 	public:
-		static SubSystem* getInstance()
-		{
-			return _staticInstance;
-		}
+		static SubSystem* getInstance();
 		
-		SubSystem() 
-		{
-			_enabled = 0;
-			_lastRunTime = 0;
-			_frequency = 0;
-			
-			_staticInstance = this;
-		}
+		SubSystem();
 
-		virtual void initialize(const unsigned int frequency, const unsigned int offset) 
-		{ 
-			_frequency = frequency;
-			_lastRunTime = offset;
-			_enabled = 1;
-		}
-
-		void enable()
-		{
-			_enabled = 1;
-		}
-
-		void disable()
-		{
-			_enabled = 0;
-		}
-
-		unsigned int enabled()
-		{
-			return _enabled;
-		}
-
-		unsigned int _canProcess(const unsigned long currentTime)
-		{
-			if (_enabled == 1)
-			{
-				if (currentTime > (_lastRunTime + _frequency))
-				{
-					 _lastRunTime = currentTime;
-					 return 1;
-				}
-			}   
-			return 0;
-		}
-
-		virtual void process(const unsigned long currentTime) 
-		{
+		virtual void initialize(const unsigned int frequency, const unsigned int offset);
+		virtual void process(const unsigned long currentTime);
 		
-		}
+		void recordProcessingStartTime();
+		void recordProcessingEndTime();
+		
+		const float averageProcessingTime();
+		
+		void enable();
+		void disable();
+		
+		unsigned int enabled();
+
+		unsigned int _canProcess(const unsigned long currentTime);
 };
 
-SubSystem* SubSystem::_staticInstance = NULL;
-
 #endif
+
 
 
 
