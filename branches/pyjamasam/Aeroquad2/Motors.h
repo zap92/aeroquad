@@ -1,132 +1,64 @@
+#ifndef __MOTORS_H__
+#define __MOTORS_H__
+
 #include "SubSystem.h"
 #include "HardwareComponent.h"
+
+#include "SerialComs.h"
 
 class MotorHardware : public HardwareComponent
 {
 	private:
 		unsigned int _motorCount;
-	public:
-		static const int MinimumMotorCommand = 1100;
-		static const int MaximumMotorCommand = 2000;
+		
+		static const int _disarmedMotorCommand = 1000;
+		static const int _minimumMotorCommand = _disarmedMotorCommand + 100;
+		static const int _maximumMotorCommand = 2000;
 		
 	protected:
 		unsigned int _motorOutput[8];
 		bool _armed;
 		
-		void zeroOutputs() 
-		{
-			//Push every output down below where anything should happen
-			for (int i = 0; i < _motorCount; i++)
-			{
-				_motorOutput[i] = 800;
-			}
-		}
+		void zeroOutputs();
 		
-		virtual void writeOutputs()
-		{
-			//default implimentation does nothing
-		}
+		virtual void writeOutputs();
 		
 	public:
-		MotorHardware(unsigned int motorCount) : HardwareComponent()
-		{
-			_motorCount = (int)fmin(motorCount, 8);
-			_armed = true;
-		}
+		MotorHardware(unsigned int motorCount);
 
-		virtual void initialize()
-		{
-			this->zeroOutputs();
-			HardwareComponent::initialize();
-		}	
+		virtual void initialize();		
+		virtual void process(const unsigned long currentTime);
+		void processForESCCalibration();
 		
-		virtual void process(const unsigned long currentTime)
-		{
-			if (_armed)
-			{
-				//Push the outputs out
-				this->writeOutputs();
-			}
-			else
-			{
-				//Force the outputs to zero to ensure they are off
-				this->zeroOutputs();
-				this->writeOutputs();
-			}
-			HardwareComponent::process(currentTime);	
-		}
+		void arm();
+		void disarm();
 		
-		void arm()
-		{
-			if (!_armed)
-			{	
-				this->zeroOutputs();
-				_armed = true;
-			}
-		}
+		const bool armed();
 		
-		void disarm()
-		{
-			if (_armed)
-			{	
-				this->zeroOutputs();
-				_armed = false;
-			}
-		}
+		void setMotorOutput(const unsigned int motorIndex, const int motorCommand);
 		
-		void setMotorOutput(const unsigned int motorIndex, const unsigned int motorCommand)
-		{
-			if (motorIndex < _motorCount)
-			{
-				_motorOutput[motorIndex] = motorCommand;
-			}
-		}
+		void setAllMotorOutputToMax();
+		void setAllMotorOutputToDisarmed();
 };
 
 //Uses the APM RC output library to drive the outputs
 class MotorHardwareAPM : public MotorHardware
 {
 	protected:
-		virtual void writeOutputs()
-		{
-			APM_RC.OutputCh(0, _motorOutput[0]);    // Right motor (+) / Right-Back motor (X)
-			APM_RC.OutputCh(1, _motorOutput[1]);    // Left motor (+) / Left-Front motor (X)
-			APM_RC.OutputCh(2, _motorOutput[2]);   // Front motor (+) / Right-Front motor (X)
-			APM_RC.OutputCh(3, _motorOutput[3]);   // Back motor (+) / Left-Back motor (X) 
-			  
-			// InstantPWM
-			APM_RC.Force_Out0_Out1();
-			APM_RC.Force_Out2_Out3();
-		}
+		virtual void writeOutputs();
 		
 	public:
-		MotorHardwareAPM() : MotorHardware(4)
-		{
-			
-		}
+		MotorHardwareAPM();
 };
 
 //For just debuggging the output that should go to the motors
 class MotorhardwareDebugSerial : public MotorHardware
 {
 	protected:
-		virtual void writeOutputs()
-		{
-			serialcoms.debugPrint(_motorOutput[0]);
-			serialcoms.debugPrint(",");
-			serialcoms.debugPrint(_motorOutput[1]);
-			serialcoms.debugPrint(",");
-			serialcoms.debugPrint(_motorOutput[2]);
-			serialcoms.debugPrint(",");
-			serialcoms.debugPrint(_motorOutput[3]);
-			serialcoms.debugPrintln();
-		}
+		virtual void writeOutputs();
 		
 	public:
-		MotorhardwareDebugSerial() : MotorHardware(4)
-		{
-			
-		}
+		MotorhardwareDebugSerial();
 };
 
 class Motors : public SubSystem
@@ -139,113 +71,22 @@ class Motors : public SubSystem
 		MotorHardware *_motorHardware;
 		OrientationType _orientationType;
 		
-	public:
+	public:		
+		Motors();
 		
-		Motors() : SubSystem()
-		{
-			
-		}
+		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0);
+		virtual void process(const unsigned long currentTime);	
 		
-		virtual void initialize(const unsigned int frequency, const unsigned int offset = 0) 
-		{ 
-			SubSystem::initialize(frequency, offset);
-			
-			if (_motorHardware)
-			{
-				_motorHardware->initialize();
-			}
-		}
+		const bool armed();	
 		
-		void setHardwareType(const HardwareType hardwareType)
-		{
-			switch (hardwareType)
-			{
-				case HardwareTypeAPM:
-				{
-					_motorHardware = new MotorHardwareAPM();
-					break;
-				}
-				
-				case HardwareTypeDebugSerial:
-				{
-					_motorHardware = new MotorhardwareDebugSerial();
-					break;
-				}
-			}
-		}
+		void setHardwareType(const HardwareType hardwareType);		
+		void setOrientationType(const OrientationType orientationType);
 		
-		void setOrientationType(const OrientationType orientationType)
-		{
-			_orientationType = orientationType;
-		}
-				
-		virtual void process(const unsigned long currentTime)
-		{
-			if (this->_canProcess(currentTime))
-			{
-				if (_motorHardware)
-				{
-					/*int rollTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel1);
-					int pitchTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel2);
-					int throttleTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel3);
-					int yawTransmitterCommand = receiver.channelValue(ReceiverHardware::Channel4);*/
-										
-					//Check for some basic "Command" stick positions
-					/*if (throttleTransmitterCommand < 1100)
-					{
-						if (yawTransmitterCommand < 1100)
-						{
-							//Throttle/Yaw Stick is in the bottom left position.  Disarm the motors
-							_motorHardware->disarm();
-						}
-						else if (yawTransmitterCommand > 1900)
-						{
-							//Throttle/Yaw stick is int he bottom right position.  Arm the motors
-							_motorHardware->arm();
-						}
-					}*/
-					
-					//details given to us by each of the main subsystems (navigation is enabled, and flightcontrol)
-					int navigationRollCommand = 0;
-					int navigationPitchCommand = 0;
-					int navigationYawCommand = 0;
-					int navigationThrottleCommand = 0;
-					
-					//if (flightcontrol.navigationIsEnabled)
-					//{
-					//	navigationRollCommand = navigation.getRollCommand();
-					//	navigationPitchCommand = navigation.getPitchCommand();
-					//	navigationYawCommand = navigation.getYawCommand();
-					//	navigationThrottleCommand = navigation.getThrottleCommand();
-					//}
-					
-					//Main control system.
-					int flightControlRollCommand = flightcontrol.rollCommand();
-					int flightControlPitchCommand = flightcontrol.pitchCommand();
-					int flightControlYawCommand = flightcontrol.yawCommand();
-					int flightControlThrottleCommand = flightcontrol.throttleCommand();
-					
-					//Calculate the mix for each of the motors.
-					switch (_orientationType)
-					{
-						case QuadPlusMotor:
-						{
-							break;
-						}
-						
-						case QuadXMotor:
-						{
-							break;
-						}
-					}
-					
-					_motorHardware->setMotorOutput(0,flightControlRollCommand);
-					_motorHardware->setMotorOutput(1,flightControlPitchCommand);
-					_motorHardware->setMotorOutput(2,flightControlYawCommand);
-					_motorHardware->setMotorOutput(3,flightControlThrottleCommand);
-																				
-					_motorHardware->process(currentTime);
-				}
-			}
-		}
+		MotorHardware *motorHardware();
 };
+
+extern Motors motors;
+
+const ArduinoShellCallback::callbackReturn _calibrateESCs(ArduinoShell &shell, const int argc, const char* argv[]);
+
+#endif //#ifndef __MOTORS_H__
