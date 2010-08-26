@@ -82,6 +82,8 @@ void ReceiverHardware::calibrationComplete()
 	//Store out our channel min and max values so we can load them from EEPROM later
 	settings.setReceiverCalibrationMax(_channelMax);
 	settings.setReceiverCalibrationMin(_channelMin);
+	
+	settings.save();
 }
 
 

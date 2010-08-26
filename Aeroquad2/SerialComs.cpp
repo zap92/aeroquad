@@ -494,7 +494,12 @@ void ArduinoShell::process()
 			}
 		}
 	}				
-}			
+}		
+
+const float ArduinoShell::getArgumentAsFloat(const char * arg)
+{		
+	return atof(arg);	
+}	
 
 ArduinoShell Serial3Shell(&Serial3);
 
@@ -535,7 +540,7 @@ void SerialComs::initialize(const unsigned int frequency, const unsigned int off
 	Serial.begin(BAUD);
 	
 	//Serial port 3 is used for the shell
-	Serial3Shell.begin(BAUD);			
+	Serial3Shell.begin(BAUD);				
 	
 	this->enable();
 }

@@ -3,8 +3,6 @@
 #include "LanguageExtensions.h"
 #include "Settings.h"
 
-#include "SerialComs.h"
-
 unsigned int Settings::_KIRSP_cal_CRC16(unsigned char *CRC16_Data_Array, unsigned int CRC16_Data_Array_Len)
 {
 	static unsigned char KIRSP_CRC16_Hi_Byte  = 0xFF;  // Do not modify
@@ -58,7 +56,7 @@ unsigned int Settings::_KIRSP_cal_CRC16(unsigned char *CRC16_Data_Array, unsigne
 	return y;
 } // end of KIRSP_cal_CRC16 function
 
-void Settings::_reCalculateCheckSum()
+void Settings::_recalculateChecksum()
 {
 	//Don't include the version, length, or CRC in the CRC calc
 	unsigned int newChecksum = _KIRSP_cal_CRC16((unsigned char*)&_settingsDataStore + HOUSEKEEPINGSIZE, sizeof(_settingsDataStoreStructure) - HOUSEKEEPINGSIZE);
@@ -66,8 +64,9 @@ void Settings::_reCalculateCheckSum()
 	_settingsDataStore.checksum = newChecksum;
 }
 
-void Settings::_save()
+void Settings::save()
 {
+	this->_recalculateChecksum();
 	eeprom_write_block((unsigned char*)&_settingsDataStore, (void*)SETTINGS_LOCATION, sizeof(_settingsDataStoreStructure));
 }
 
@@ -130,7 +129,12 @@ void Settings::initialize()
 				setupDefaults();
 			}
 		}
-	}
+	}		
+	
+	serialcoms.shell()->registerKeyword("listPIDs", "listPIDs", _listPIDs );
+	serialcoms.shell()->registerKeyword("setPID", "setPID", _setPID );
+	serialcoms.shell()->registerKeyword("getPID", "getPID", _getPID );
+	serialcoms.shell()->registerKeyword("saveParameters", "saveParameters", _saveParameters );
 }
 
 void Settings::setupDefaults()
@@ -142,7 +146,7 @@ void Settings::setupDefaults()
 	int minDefaults[] = {1000,1000,1000,1000,1000,1000,1000,1000};
 	SETTING_TYPE_INT_ARRAY_DEFAULT(ReceiverCalibrationMin, minDefaults);
 	
-	PIDParameters params = {1.0,0.0,1.0,2000};
+	PIDParameters params = {1.0, 0.0, 0.0, 2000};
 	SETTING_TYPE_PID_DEFAULT(RollRatePIDParameters, params);
 	SETTING_TYPE_PID_DEFAULT(PitchRatePIDParameters, params);
 	SETTING_TYPE_PID_DEFAULT(YawRatePIDParameters, params);
@@ -153,8 +157,8 @@ void Settings::setupDefaults()
 	SETTING_TYPE_PID_DEFAULT(HeadingPIDParameters, params);
 	SETTING_TYPE_PID_DEFAULT(AltitudePIDParameters, params);
 	
-	_reCalculateCheckSum();
-	_save();
+	_recalculateChecksum();
+	save();
 }
 
 SETTING_TYPE_INT_ARRAY_IMPLIMENTATION(ReceiverCalibrationMax);
@@ -173,3 +177,141 @@ SETTING_TYPE_PID_IMPLIMENTATION(AltitudePIDParameters);
 
 Settings settings;
 
+const ArduinoShellCallback::callbackReturn _listPIDs(ArduinoShell &shell, const int argc, const char* argv[])
+{
+	shell << "PIDs" << endl;
+	shell << "---" << endl;
+	
+	shell << " - RollRate" << endl;
+	shell << " - PitchRate" << endl;
+	shell << " - YawRate" << endl;
+	shell << " - ThrottleRate" << endl;
+	
+	shell << " - RollAngle" << endl;
+	shell << " - PitchAngle" << endl;
+	shell << " - Heading" << endl;
+	shell << " - Altitude" << endl;
+	
+	return ArduinoShellCallback::Success;	
+}
+
+const ArduinoShellCallback::callbackReturn _getPID(ArduinoShell &shell, const int argc, const char* argv[])
+{
+	if (argc != 1)
+	{		
+		return ArduinoShellCallback::InvalidParameterCount;		
+	}
+	else
+	{
+		const Settings::PIDParameters *pidSettings = NULL;
+		if (strcasecmp(argv[0], "RollRate") == 0)
+		{
+			pidSettings = settings.getRollRatePIDParameters();			
+		}
+		else if (strcasecmp(argv[0], "PitchRate") == 0)
+		{
+			pidSettings = settings.getPitchRatePIDParameters();			
+		}
+		else if (strcasecmp(argv[0], "YawRate") == 0)
+		{
+			pidSettings = settings.getYawRatePIDParameters();			
+		}
+		else if (strcasecmp(argv[0], "ThrottleRate") == 0)
+		{
+			pidSettings = settings.getThrottleRatePIDParameters();			
+		}
+		
+		else if (strcasecmp(argv[0], "RollAngle") == 0)
+		{
+			pidSettings = settings.getRollAnglePIDParameters();			
+		}
+		else if (strcasecmp(argv[0], "PitchAngle") == 0)
+		{
+			pidSettings = settings.getPitchAnglePIDParameters();			
+		}
+		else if (strcasecmp(argv[0], "Heading") == 0)
+		{
+			pidSettings = settings.getHeadingPIDParameters();			
+		}
+		else if (strcasecmp(argv[0], "Altitude") == 0)
+		{
+			pidSettings = settings.getAltitudePIDParameters();			
+		}
+		
+		if (pidSettings)
+		{
+			shell << "P: " << pidSettings->P << ", I: " << 	pidSettings->I << ", D: " << pidSettings->D << endl;	
+		}
+		else
+		{
+			shell << "ERROR: Unknown parameter" << endl;		
+		}
+		
+		return ArduinoShellCallback::Success;	
+	}
+}
+
+const ArduinoShellCallback::callbackReturn _setPID(ArduinoShell &shell, const int argc, const char* argv[])
+{
+	if (argc != 4)
+	{
+		return ArduinoShellCallback::InvalidParameterCount;	
+	}
+	else
+	{
+		Settings::PIDParameters pidSettings;
+		
+		pidSettings.P = shell.getArgumentAsFloat(argv[1]);
+		pidSettings.I = shell.getArgumentAsFloat(argv[2]);
+		pidSettings.D = shell.getArgumentAsFloat(argv[3]);
+		
+		if (strcasecmp(argv[0], "RollRate") == 0)
+		{
+			settings.setRollRatePIDParameters(&pidSettings);	
+		}
+		else if (strcasecmp(argv[0], "PitchRate") == 0)
+		{
+			settings.setPitchRatePIDParameters(&pidSettings);			
+		}
+		else if (strcasecmp(argv[0], "YawRate") == 0)
+		{
+			settings.setYawRatePIDParameters(&pidSettings);			
+		}
+		else if (strcasecmp(argv[0], "ThrottleRate") == 0)
+		{
+			settings.setThrottleRatePIDParameters(&pidSettings);			
+		}
+		
+		else if (strcasecmp(argv[0], "RollAngle") == 0)
+		{
+			settings.setRollAnglePIDParameters(&pidSettings);			
+		}
+		else if (strcasecmp(argv[0], "PitchAngle") == 0)
+		{
+			settings.setPitchAnglePIDParameters(&pidSettings);			
+		}
+		else if (strcasecmp(argv[0], "Heading") == 0)
+		{
+			settings.setHeadingPIDParameters(&pidSettings);			
+		}
+		else if (strcasecmp(argv[0], "Altitude") == 0)
+		{
+			settings.setAltitudePIDParameters(&pidSettings);			
+		}
+		else
+		{
+				shell << "ERROR: Unknown parameter" << endl;	
+				return ArduinoShellCallback::Success;				
+		}
+				
+		shell << argv[0] << " PID set to P: " << pidSettings.P << ", I: " << pidSettings.I << ", D: " << pidSettings.D << endl;	
+	}
+
+	return ArduinoShellCallback::Success;	
+}
+
+const ArduinoShellCallback::callbackReturn _saveParameters(ArduinoShell &shell, const int argc, const char* argv[])
+{
+	settings.save();	
+	return ArduinoShellCallback::Success;
+}

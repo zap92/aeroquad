@@ -14,9 +14,9 @@ void FlightControl::_processAcrobaticFlight(const unsigned long currentTime)
 	_throttleCommand = receiver.channelValue(ReceiverHardware::Channel3);
 	
 	//use some pids to get the command we need to apply to a channel.
-	_rollCommand = _rollRatePID.update(receiver.channelValueAsRateInRadians(ReceiverHardware::Channel1), imu.rollRateInRadians());
-	_pitchCommand = _pitchRatePID.update(receiver.channelValueAsRateInRadians(ReceiverHardware::Channel2), imu.pitchRateInRadians());
-	_yawCommand = _yawRatePID.update(receiver.channelValueAsRateInRadians(ReceiverHardware::Channel4), imu.yawRateInRadians());
+	_rollCommand = _rollRatePID.update(receiver.channelValueAsRateInRadians(ReceiverHardware::Channel1), imu.rollRateInRadians(), currentTime);
+	_pitchCommand = _pitchRatePID.update(receiver.channelValueAsRateInRadians(ReceiverHardware::Channel2), imu.pitchRateInRadians(), currentTime);
+	_yawCommand = _yawRatePID.update(receiver.channelValueAsRateInRadians(ReceiverHardware::Channel4), imu.yawRateInRadians(), currentTime);
 	
 	//normalize the resaultant channel commands to somthing thats common (for the motor controls (0-1000))	
 	_throttleCommand += 500.0;
@@ -28,10 +28,10 @@ void FlightControl::_processAcrobaticFlight(const unsigned long currentTime)
 }
 
 
-void FlightControl::_processStableRollAndPitch(const float expectedRollAngle, const float expectedPitchAngle)
+void FlightControl::_processStableRollAndPitch(const float expectedRollAngle, const float expectedPitchAngle, const unsigned long currentTime)
 {
-	_rollCommand = _rollAnglePID.update(receiver.channelValueAsAngleInRadians(ReceiverHardware::Channel1), expectedRollAngle);
-	_pitchCommand = _pitchAnglePID.update(receiver.channelValueAsAngleInRadians(ReceiverHardware::Channel2), expectedPitchAngle);
+	_rollCommand = _rollAnglePID.update(receiver.channelValueAsAngleInRadians(ReceiverHardware::Channel1), expectedRollAngle, currentTime);
+	_pitchCommand = _pitchAnglePID.update(receiver.channelValueAsAngleInRadians(ReceiverHardware::Channel2), expectedPitchAngle, currentTime);
 	
 	//Normalize the channel commands to somthing thats common (for the motor controls (0-1000))
 	//TODO: 
@@ -42,7 +42,7 @@ void FlightControl::_processStableFlight(const unsigned long currentTime)
 	//Roll and pitch are angle based, yaw stays rate based (cause we can't actualy do angle based for yaw) but includes heading hold now
 	//and throttle becomes altitude based with hold
 	//Software is assisting flight now
-	this->_processStableRollAndPitch(imu.rollAngleInRadians(), imu.pitchAngleInRadians());
+	this->_processStableRollAndPitch(imu.rollAngleInRadians(), imu.pitchAngleInRadians(), currentTime);
 	
 	
 	//Process Yaw and deal with heading hold if needed
@@ -52,7 +52,7 @@ void FlightControl::_processStableFlight(const unsigned long currentTime)
 	if (fabs(transmitterYawRateInRadians) > 0.122173048) // 7 deg/s  (this is the dead zone when moving the stick)
 	{
 		//Pilot is requesting Yaw command (disabling heading hole and letting the quad yaw to the pilots desired heading)
-		_yawCommand = _yawRatePID.update(transmitterYawRateInRadians, imu.yawRateInRadians());	
+		_yawCommand = _yawRatePID.update(transmitterYawRateInRadians, imu.yawRateInRadians(), currentTime);	
 		
 		//Capture when the last time a yaw command was used.
 		//This is used to trigger the heading hold after a short time delay (to allow a final bit of "coast" before it locks on)
@@ -75,12 +75,12 @@ void FlightControl::_processStableFlight(const unsigned long currentTime)
 			}
 
 			//We are still rate based.  Untill the next processing cycle after we lock on to a heading
-			_yawCommand = _yawRatePID.update(transmitterYawRateInRadians, imu.yawRateInRadians());
+			_yawCommand = _yawRatePID.update(transmitterYawRateInRadians, imu.yawRateInRadians(), currentTime);
 		}
 		else
 		{
 			//We have a heading to hold so we switch to an angle based PID to now try and keep that heading.
-			_yawCommand = _headingPID.update(_headingHoldSetPoint, imu.yawAngleInRadians());	
+			_yawCommand = _headingPID.update(_headingHoldSetPoint, imu.yawAngleInRadians(), currentTime);	
 		}
 	}
 	
@@ -88,14 +88,14 @@ void FlightControl::_processStableFlight(const unsigned long currentTime)
 	//Process throttle and deal with altitude hold if needed
 	float transmitterThrottleRateInMeters = receiver.channelValueAsRateInMeters(ReceiverHardware::Channel3);
 	
-	//Throttle is a rate, case we can't always "center" based on the stick like we can with roll and pitch (would ne north all the time)
+	//Throttle is a rate
 	if (fabs(transmitterThrottleRateInMeters) > 0.01) 
 	{
-		//Pilot is requesting Yaw command (disabling heading hole and letting the quad yaw to the pilots desired heading)
-		_yawCommand = _throttleRatePID.update(transmitterThrottleRateInMeters, imu.altitudeRateInMeters());
+		//Pilot is requesting throttle command
+		_yawCommand = _throttleRatePID.update(transmitterThrottleRateInMeters, imu.altitudeRateInMeters(), currentTime);
 		
-		//Capture when the last time a yaw command was used.
-		//This is used to trigger the heading hold after a short time delay (to allow a final bit of "coast" before it locks on)
+		//Capture when the last time a throttle command was used.
+		//This is used to trigger the altitude hold after a short time delay (to allow a final bit of "coast" before it locks on)
 		_lastThrottleCommandTime = currentTime;							
 		_altitudeHoldActive = false;
 	}
@@ -114,12 +114,12 @@ void FlightControl::_processStableFlight(const unsigned long currentTime)
 			}
 		
 			//We are still rate based.  Untill the next processing cycle after we lock on to a altitude
-			_throttleCommand = _throttleRatePID.update(transmitterThrottleRateInMeters, imu.altitudeRateInMeters());
+			_throttleCommand = _throttleRatePID.update(transmitterThrottleRateInMeters, imu.altitudeRateInMeters(), currentTime);
 		}
 		else
 		{
 			//We have an altitude to hold so we switch to an altitude based PID to now try and keep that altitude.
-			_throttleCommand = _altitudePID.update(_altitudeHoldSetPoint, imu.altitudeInMeters());	
+			_throttleCommand = _altitudePID.update(_altitudeHoldSetPoint, imu.altitudeInMeters(), currentTime);	
 		}
 	}
 }
@@ -128,7 +128,7 @@ void FlightControl::_processAutonomousFlight(const unsigned long currentTime)
 {
 	//Navigation subsystem does most of the work.  We just aim to keep the quad stable
 	//So infact its farily simple for the purposes of flight control.
-	this->_processStableRollAndPitch(imu.rollAngleInRadians(), imu.pitchAngleInRadians());
+	this->_processStableRollAndPitch(imu.rollAngleInRadians(), imu.pitchAngleInRadians(), currentTime);
 }
 		
 FlightControl::FlightControl() : SubSystem()
@@ -150,32 +150,32 @@ void FlightControl::initialize(const unsigned int frequency, const unsigned int 
 	SubSystem::initialize(frequency, offset);
 	
 	//Pull in all the pid settings.
-	const Settings::PIDParameters *pidSettings = settings.getRollRatePIDParameters();
-	_rollRatePID.setParameters(pidSettings->P,pidSettings->I,pidSettings->D,pidSettings->windupGuard);
+	Settings::PIDParameters *pidSettings = settings.getRollRatePIDParameters();
+	_rollRatePID.setParameters(&pidSettings->P,&pidSettings->I,&pidSettings->D,&pidSettings->windupGuard);
 	
 	pidSettings = settings.getRollAnglePIDParameters();
-	_rollAnglePID.setParameters(pidSettings->P,pidSettings->I,pidSettings->D,pidSettings->windupGuard);
+	_rollAnglePID.setParameters(&pidSettings->P,&pidSettings->I,&pidSettings->D,&pidSettings->windupGuard);
 	
 	
 	pidSettings = settings.getPitchRatePIDParameters();
-	_pitchRatePID.setParameters(pidSettings->P,pidSettings->I,pidSettings->D,pidSettings->windupGuard);
+	_pitchRatePID.setParameters(&pidSettings->P,&pidSettings->I,&pidSettings->D,&pidSettings->windupGuard);
 	
 	pidSettings = settings.getPitchAnglePIDParameters();
-	_pitchAnglePID.setParameters(pidSettings->P,pidSettings->I,pidSettings->D,pidSettings->windupGuard);
+	_pitchAnglePID.setParameters(&pidSettings->P,&pidSettings->I,&pidSettings->D,&pidSettings->windupGuard);
 	
 	
 	pidSettings = settings.getYawRatePIDParameters();
-	_yawRatePID.setParameters(pidSettings->P,pidSettings->I,pidSettings->D,pidSettings->windupGuard);
+	_yawRatePID.setParameters(&pidSettings->P,&pidSettings->I,&pidSettings->D,&pidSettings->windupGuard);
 	
 	pidSettings = settings.getHeadingPIDParameters();
-	_headingPID.setParameters(pidSettings->P,pidSettings->I,pidSettings->D,pidSettings->windupGuard);
+	_headingPID.setParameters(&pidSettings->P,&pidSettings->I,&pidSettings->D,&pidSettings->windupGuard);
 	
 	
 	pidSettings = settings.getThrottleRatePIDParameters();
-	_throttleRatePID.setParameters(pidSettings->P,pidSettings->I,pidSettings->D,pidSettings->windupGuard);
+	_throttleRatePID.setParameters(&pidSettings->P,&pidSettings->I,&pidSettings->D,&pidSettings->windupGuard);
 	
 	pidSettings = settings.getAltitudePIDParameters();
-	_altitudePID.setParameters(pidSettings->P,pidSettings->I,pidSettings->D,pidSettings->windupGuard);
+	_altitudePID.setParameters(&pidSettings->P,&pidSettings->I,&pidSettings->D,&pidSettings->windupGuard);
 }
 		
 void FlightControl::process(const unsigned long currentTime)
