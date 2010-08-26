@@ -83,9 +83,9 @@ void setup()
 		imu.setSuplimentalYawSource(IMU::HMC5843);
 		//imu.setFilterType(IMU::SimpleAccellOnly);			//Works fine.  In all its noisy glory
 		//imu.setFilterType(IMU::Complimentry);				//Works fine, but not a very good filter
-		//imu.setFilterType(IMU::DCM);						//Implimentation doesn't quite work yet.  Returns 0's all the time
-		//imu.setFilterType(IMU::Quaternion);				//Implimentation not yet complete.  Not working
-		imu.setFilterType(IMU::Kalman);						//Works fine.
+		//imu.setFilterType(IMU::DCM);								//Implimentation doesn't quite work yet.  Returns 0's all the time
+		//imu.setFilterType(IMU::Quaternion);						//Implimentation not yet complete.  Not working
+		imu.setFilterType(IMU::Kalman);								//Works fine.
 		
 		//Run the IMU at 100hz (10ms cycle time)
 		imu.initialize(10,0);

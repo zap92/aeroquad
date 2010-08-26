@@ -46,6 +46,7 @@ void MotorHardware::process(const unsigned long currentTime)
 		this->zeroOutputs();
 		this->writeOutputs();
 	}
+	
 	HardwareComponent::process(currentTime);	
 }
 

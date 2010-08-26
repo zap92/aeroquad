@@ -1,6 +1,8 @@
 #ifndef __SETTINGS_H__
 #define __SETTINGS_H__
 
+#include "SerialComs.h"
+
 #include <avr/eeprom.h>
 
 //Some fancy macros to make it easier to read and write settings
@@ -16,9 +18,7 @@
 
 #define SETTING_TYPE_FLOAT_IMPLIMENTATION(name) void Settings::set##name(const float newData)\
 { \
-	_settingsDataStore._##name = newData;\
-	_reCalculateCheckSum();\
-	_save();\
+	_settingsDataStore._##name = newData;\	
 }\
 const float Settings::get##name()\
 {\
@@ -37,19 +37,16 @@ const float Settings::get##name()\
 		_settingsDataStore._##name.windupGuard = defaultData.windupGuard;\
 }
 
-#define SETTING_TYPE_PID_DEFINATION(name) void set##name(const PIDParameters *newData); const Settings::PIDParameters *get##name();
+#define SETTING_TYPE_PID_DEFINATION(name) void set##name(const PIDParameters *newData); Settings::PIDParameters *get##name();
 
 #define SETTING_TYPE_PID_IMPLIMENTATION(name) void Settings::set##name(const Settings::PIDParameters *newData)\
 { \
 	_settingsDataStore._##name.P = newData->P;\
 	_settingsDataStore._##name.I = newData->I;\
 	_settingsDataStore._##name.D = newData->D;\
-	_settingsDataStore._##name.windupGuard = newData->windupGuard;\
-	\
-	_reCalculateCheckSum();\
-	_save();\
+	_settingsDataStore._##name.windupGuard = newData->windupGuard;\	
 }\
-const Settings::PIDParameters *Settings::get##name()\
+Settings::PIDParameters *Settings::get##name()\
 {\
 	return &_settingsDataStore._##name;\
 }
@@ -75,9 +72,7 @@ const Settings::PIDParameters *Settings::get##name()\
 	for (int i = 0; i < arraySize; i++) \
 	{\
 		_settingsDataStore._##name[i] = newData[i];\
-	}\
-	_reCalculateCheckSum();\
-	_save();\
+	}\	
 }\
 const int *Settings::get##name()\
 {\
@@ -103,8 +98,7 @@ class Settings
 			float D;
 			
 			float windupGuard;
-		};
-	
+		};					
 	
 	private:
 		bool _online;
@@ -134,9 +128,7 @@ class Settings
 
 		unsigned int _KIRSP_cal_CRC16(unsigned char *CRC16_Data_Array, unsigned int CRC16_Data_Array_Len);
 
-		void _reCalculateCheckSum();
-  
-		void _save();
+		void _recalculateChecksum();  		
 
 	public:	
   		Settings(unsigned int spaceAllowedToUse = 1024);
@@ -157,8 +149,16 @@ class Settings
 		SETTING_TYPE_PID_DEFINATION(PitchAnglePIDParameters);
 		SETTING_TYPE_PID_DEFINATION(HeadingPIDParameters);
 		SETTING_TYPE_PID_DEFINATION(AltitudePIDParameters);
+		
+		void save();
 };
 
 extern Settings settings;
+
+const ArduinoShellCallback::callbackReturn _listPIDs(ArduinoShell &shell, const int argc, const char* argv[]);
+const ArduinoShellCallback::callbackReturn _setPID(ArduinoShell &shell, const int argc, const char* argv[]);
+const ArduinoShellCallback::callbackReturn _getPID(ArduinoShell &shell, const int argc, const char* argv[]);
+const ArduinoShellCallback::callbackReturn _saveParameters(ArduinoShell &shell, const int argc, const char* argv[]);
+
 
 #endif //#ifndef __SETTINGS_H__

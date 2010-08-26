@@ -67,6 +67,8 @@ class ArduinoShell
 		
 		void registerKeyword(const char* keyword, const char* helpText, ArduinoShellKeywordCallback callback, bool streamingOutput = false);				
 		void process();
+		
+		const float getArgumentAsFloat(const char * arg);
 };
 
 extern ArduinoShell Serial3Shell;

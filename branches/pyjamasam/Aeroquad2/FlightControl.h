@@ -40,7 +40,7 @@ class FlightControl : public SubSystem
 		PID	_altitudePID;
 		
 		void _processAcrobaticFlight(const unsigned long currentTime);				
-		void _processStableRollAndPitch(const float expectedRollAngle, const float expectedPitchAngle);		
+		void _processStableRollAndPitch(const float expectedRollAngle, const float expectedPitchAngle, const unsigned long currentTime);		
 		void _processStableFlight(const unsigned long currentTime);
 		
 		void _processAutonomousFlight(const unsigned long currentTime);
