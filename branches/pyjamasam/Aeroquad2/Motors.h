@@ -25,6 +25,8 @@ class MotorHardware : public HardwareComponent
 		
 	public:
 		MotorHardware(unsigned int motorCount);
+		
+		const unsigned int getMotorCount();
 
 		virtual void initialize();		
 		virtual void process(const unsigned long currentTime);
@@ -36,6 +38,8 @@ class MotorHardware : public HardwareComponent
 		const bool armed();
 		
 		void setMotorOutput(const unsigned int motorIndex, const int motorCommand);
+		const unsigned int* getMotorOutput();
+		
 		
 		void setAllMotorOutputToMax();
 		void setAllMotorOutputToDisarmed();
@@ -88,5 +92,6 @@ class Motors : public SubSystem
 extern Motors motors;
 
 const ArduinoShellCallback::callbackReturn _calibrateESCs(ArduinoShell &shell, const int argc, const char* argv[]);
+const ArduinoShellCallback::callbackReturn _monitorMotors(ArduinoShell &shell, const int argc, const char* argv[]);
 
 #endif //#ifndef __MOTORS_H__

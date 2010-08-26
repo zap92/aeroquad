@@ -240,7 +240,7 @@ const ArduinoShellCallback::callbackReturn _getPID(ArduinoShell &shell, const in
 		
 		if (pidSettings)
 		{
-			shell << "P: " << pidSettings->P << ", I: " << 	pidSettings->I << ", D: " << pidSettings->D << endl;	
+			shell << "P: " << pidSettings->P << ", I: " << 	pidSettings->I << ", D: " << pidSettings->D << ", Windup Guard: " << pidSettings->windupGuard << endl;	
 		}
 		else
 		{
@@ -253,7 +253,7 @@ const ArduinoShellCallback::callbackReturn _getPID(ArduinoShell &shell, const in
 
 const ArduinoShellCallback::callbackReturn _setPID(ArduinoShell &shell, const int argc, const char* argv[])
 {
-	if (argc != 4)
+	if (argc != 5)
 	{
 		return ArduinoShellCallback::InvalidParameterCount;	
 	}
@@ -264,6 +264,7 @@ const ArduinoShellCallback::callbackReturn _setPID(ArduinoShell &shell, const in
 		pidSettings.P = shell.getArgumentAsFloat(argv[1]);
 		pidSettings.I = shell.getArgumentAsFloat(argv[2]);
 		pidSettings.D = shell.getArgumentAsFloat(argv[3]);
+		pidSettings.windupGuard = shell.getArgumentAsFloat(argv[4]);
 		
 		if (strcasecmp(argv[0], "RollRate") == 0)
 		{
@@ -304,7 +305,7 @@ const ArduinoShellCallback::callbackReturn _setPID(ArduinoShell &shell, const in
 				return ArduinoShellCallback::Success;				
 		}
 				
-		shell << argv[0] << " PID set to P: " << pidSettings.P << ", I: " << pidSettings.I << ", D: " << pidSettings.D << endl;	
+		shell << argv[0] << " PID set to P: " << pidSettings.P << ", I: " << pidSettings.I << ", D: " << pidSettings.D << ", Windup Guard: " << pidSettings.windupGuard << endl;	
 	}
 
 	return ArduinoShellCallback::Success;	
@@ -312,6 +313,12 @@ const ArduinoShellCallback::callbackReturn _setPID(ArduinoShell &shell, const in
 
 const ArduinoShellCallback::callbackReturn _saveParameters(ArduinoShell &shell, const int argc, const char* argv[])
 {
+	if (motors.armed())
+	{
+		shell << "ERROR: Unable to calibrate the IMU while motors are armed." << endl;		
+	}
+	else
+	}
 	settings.save();	
 	return ArduinoShellCallback::Success;
 }

@@ -27,6 +27,11 @@ MotorHardware::MotorHardware(unsigned int motorCount) : HardwareComponent()
 	_armed = false;
 }
 
+const unsigned int MotorHardware::getMotorCount()
+{
+	return _motorCount;	
+}
+
 void MotorHardware::initialize()
 {
 	this->zeroOutputs();
@@ -85,6 +90,11 @@ void MotorHardware::setMotorOutput(const unsigned int motorIndex, const int moto
 		//Ensure that we don't have a value past the max a motor can actually support
 		_motorOutput[motorIndex] = constrain(_minimumMotorCommand + constrain(motorCommand, 0, 1000), _minimumMotorCommand, _maximumMotorCommand);
 	}
+}
+
+const unsigned int* MotorHardware::getMotorOutput()
+{
+	return 	_motorOutput;	
 }
 
 void MotorHardware::setAllMotorOutputToMax()
@@ -154,6 +164,7 @@ void Motors::initialize(const unsigned int frequency, const unsigned int offset)
 	}
 	
 	serialcoms.shell()->registerKeyword("calibrateESCs", "calibrateESCs", _calibrateESCs);
+	serialcoms.shell()->registerKeyword("monitorMotors", "monitorMotors", _monitorMotors, true);	
 }
 
 void Motors::setHardwareType(const HardwareType hardwareType)
@@ -240,7 +251,7 @@ void Motors::process(const unsigned long currentTime)
 				
 				case QuadXMotor:
 				{							
-					// Right-Front motor		(CCW)				
+					// Right-Front motor	(CCW)				
 					mixedMotorCommand0 = flightControlThrottleCommand - flightControlRollCommand  + flightControlPitchCommand - flightControlYawCommand;
 					
 					// Right-Back motor		(CW)
@@ -250,7 +261,7 @@ void Motors::process(const unsigned long currentTime)
 					mixedMotorCommand2 = flightControlThrottleCommand + flightControlRollCommand + flightControlPitchCommand + flightControlYawCommand;
 					
 					// Left-Back motor		(CW)
-					mixedMotorCommand3 = 	flightControlThrottleCommand + flightControlRollCommand - flightControlPitchCommand - flightControlYawCommand;				
+					mixedMotorCommand3 = flightControlThrottleCommand + flightControlRollCommand - flightControlPitchCommand - flightControlYawCommand;				
 					break;
 				}
 			}
@@ -332,6 +343,35 @@ const ArduinoShellCallback::callbackReturn _calibrateESCs(ArduinoShell &shell, c
 		shell << "Error: No motor hardware to calibrate" << endl;
 	}
 
+	return ArduinoShellCallback::Success;
+}
+
+const ArduinoShellCallback::callbackReturn _monitorMotors(ArduinoShell &shell, const int argc, const char* argv[])
+{
+	MotorHardware *motorHardware = motors.motorHardware();
+	
+	if (motorHardware)
+	{
+		const unsigned int motorCount = motorHardware->getMotorCount();
+		const unsigned int *motorOutput = motorHardware->getMotorOutput();
+		
+		for (unsigned int i = 0; i < motorCount; i++)
+		{
+			if (i > 0)
+			{
+				shell << ",";		
+			}
+			
+			shell << motorOutput[i];
+		}	
+		
+		shell << endl;	
+	}
+	else
+	{
+		shell << "Error: No motor hardware to monitor" << endl;
+	}
+	
 	return ArduinoShellCallback::Success;
 }
 
