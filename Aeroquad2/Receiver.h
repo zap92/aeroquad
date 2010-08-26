@@ -44,14 +44,14 @@ class ReceiverHardwareAPM : public ReceiverHardware
 
 
 
-//We supoort a maximum of 2.0943951 radians/s (120 degrees/s) using the sticks.
-#define MAXIMUM_STICK_RATE_IN_RADIANS_PER_SECOND 2.0943951
+//We supoort a maximum of 6.28318531 radians/s (360 degrees/s) using the sticks.
+#define MAXIMUM_STICK_RATE_IN_RADIANS_PER_SECOND 6.28318531
 
-//We support up to a 45 degree angle using the sticks.
-#define MAXIMUM_STICK_ANGLE_IN_RADIANS 0.785398163
+//We support up to a 60 degree angle using the sticks.
+#define MAXIMUM_STICK_ANGLE_IN_RADIANS 1.04719755
 
-//We support a maximum of 2 meters/second using the sticks.
-#define MAXIMUM_STICK_RATE_IN_METERS_PER_SECOND 2.0f
+//We support a maximum of 1 meter/second using the sticks.
+#define MAXIMUM_STICK_RATE_IN_METERS_PER_SECOND 1.0f
 
 
 class Receiver : public SubSystem

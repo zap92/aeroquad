@@ -128,46 +128,41 @@ const int32_t BMP085PressureSensor::_readRawPressure()
 void BMP085PressureSensor::_processReadings()
 {
 	//Based on the code from page 13 of the datasheet														
-	long x1, x2, x3, b3, b5, b6, p, tmp;
-	unsigned long b4, b7;
-	
-	//Calculate the true temperature
-	x1 = ((long)_rawTemperature - _calibrationAC6) * _calibrationAC5 >> 15;
-	x2 = ((long) _calibrationMC << 11) / (x1 + _calibrationMD);
-	b5 = x1 + x2;
-	_currentTemperature = (b5 + 8) >> 4;			  			  			
-		  			
-		//Calculate the true pressure
-	b6 = b5 - 4000;
-	x1 = (_calibrationB2 * (b6 * b6 >> 12)) >> 11; 
-	x2 = _calibrationAC2 * b6 >> 11;
-	x3 = x1 + x2;			
-	tmp = _calibrationAC1;
-	tmp = (tmp*4 + x3) << _samplingMode;
-	b3 = (tmp+2)/4;
-	x1 = _calibrationAC3 * b6 >> 13;
-	x2 = (_calibrationB1 * (b6 * b6 >> 12)) >> 16;
-	x3 = ((x1 + x2) + 2) >> 2;
-	b4 = (_calibrationAC4 * (uint32_t) (x3 + 32768)) >> 15;
-	b7 = ((unsigned long) _rawPressure - b3) * (50000 >> _samplingMode);
-	p = b7 < 0x80000000 ? (b7 * 2) / b4 : (b7 / b4) * 2;
-	
-	x1 = (p >> 8) * (p >> 8);
-	x1 = (x1 * 3038) >> 16;
-	x2 = (-7357 * p) >> 16;
-	
-	_currentPressure = p + ((x1 + x2 + 3791) >> 4);
+	int32_t x1, x2, x3, b3, b5, b6, p;
+    uint32_t b4, b7;
+
+    x1 = (_rawTemperature - _calibrationAC6) * _calibrationAC5 >> 15;
+    x2 = ((int32_t) _calibrationMC << 11) / (x1 + _calibrationMD);
+    b5 = x1 + x2;
+    _currentTemperature = (b5 + 8) >> 4;
+    
+    b6 = b5 - 4000;
+    x1 = (_calibrationB2 * (b6 * b6 >> 12)) >> 11; 
+    x2 = _calibrationAC2 * b6 >> 11;
+    x3 = x1 + x2;
+    b3 = ((((int32_t) _calibrationAC1 * 4 + x3) << _samplingMode) + 2) >> 2;
+    x1 = _calibrationAC3 * b6 >> 13;
+    x2 = (_calibrationB1 * (b6 * b6 >> 12)) >> 16;
+    x3 = ((x1 + x2) + 2) >> 2;
+    b4 = (_calibrationAC4 * (uint32_t) (x3 + 32768)) >> 15;
+    b7 = ((uint32_t) _rawPressure - b3) * (50000 >> _samplingMode);
+    p = b7 < 0x80000000 ? (b7 * 2) / b4 : (b7 / b4) * 2;
+    
+    x1 = (p >> 8) * (p >> 8);
+    x1 = (x1 * 3038) >> 16;
+    x2 = (-7357 * p) >> 16;
+    _currentPressure = p + ((x1 + x2 + 3791) >> 4);
 }
 	
 
 
 BMP085PressureSensor::BMP085PressureSensor() : PressureSensor()
 {
-		_samplingMode = 3;				//Over Sampling
-		_state = 0;
-		
-		_rawTemperature = 0;
-		_rawPressure = 0;			
+	_samplingMode = 3;				//Over Sampling
+	_state = 0;
+	
+	_rawTemperature = 0;
+	_rawPressure = 0;			
 }
 
 void BMP085PressureSensor::initialize()

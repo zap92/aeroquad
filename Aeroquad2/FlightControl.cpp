@@ -18,23 +18,15 @@ void FlightControl::_processAcrobaticFlight(const unsigned long currentTime)
 	_pitchCommand = _pitchRatePID.update(receiver.channelValueAsRateInRadians(ReceiverHardware::Channel2), imu.pitchRateInRadians(), currentTime);
 	_yawCommand = _yawRatePID.update(receiver.channelValueAsRateInRadians(ReceiverHardware::Channel4), imu.yawRateInRadians(), currentTime);
 	
-	//normalize the resaultant channel commands to somthing thats common (for the motor controls (0-1000))	
-	_throttleCommand += 500.0;
-	
-	//Scale the outputs from the PID loops up a bit.  The rest of the tuning will be performed via the PID settings.
-	_rollCommand *= 100.0;
-	_pitchCommand *= 100.0;
-	_yawCommand *= 100.0;						
+	//normalize the resaultant throttle command to somthing thats common (for the motor controls (0-1000))	
+	_throttleCommand += 500.0;							
 }
 
 
 void FlightControl::_processStableRollAndPitch(const float expectedRollAngle, const float expectedPitchAngle, const unsigned long currentTime)
 {
 	_rollCommand = _rollAnglePID.update(receiver.channelValueAsAngleInRadians(ReceiverHardware::Channel1), expectedRollAngle, currentTime);
-	_pitchCommand = _pitchAnglePID.update(receiver.channelValueAsAngleInRadians(ReceiverHardware::Channel2), expectedPitchAngle, currentTime);
-	
-	//Normalize the channel commands to somthing thats common (for the motor controls (0-1000))
-	//TODO: 
+	_pitchCommand = _pitchAnglePID.update(receiver.channelValueAsAngleInRadians(ReceiverHardware::Channel2), expectedPitchAngle, currentTime);	
 }
 
 void FlightControl::_processStableFlight(const unsigned long currentTime)
@@ -237,7 +229,7 @@ void FlightControl::setFlightControlType(FlightControl::FlightControlType flight
 		{
 			//Complete autonomous control.  Full assistance enabled
 			//Some other restrictions kick in though.  TX commands aren't actually used at all.
-			//Navigation subsystem does all the work to move the quad around.
+			//Navigation subsystem does all the work to move the quad around.			
 			
 			led.setPatternType(LED::PatternSweep);
 			break;

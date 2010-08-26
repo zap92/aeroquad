@@ -75,20 +75,20 @@ void OilpanIMU::initialize()
 	//Setup sensor details
 	//X,Y,Z Gyros
 	
-	//With the settings below gyros give us deg/ms
+	//With the settings below gyros give us deg/s
 	_inputConfigurations[IMUGyroX].zeroLevel = 1370;			//in mv
-	_inputConfigurations[IMUGyroX].sensitivity = 2.2;				//in mV/deg/ms
+	_inputConfigurations[IMUGyroX].sensitivity = 2.2;				//in mV/deg/s
 	_inputConfigurations[IMUGyroX].inputInUse = true; 
 	_inputConfigurations[IMUGyroX].hardwarePin = 2;	
 	_inputConfigurations[IMUGyroX].invert = true;		
 				
 	_inputConfigurations[IMUGyroY].zeroLevel = 1370;			//in mv
-	_inputConfigurations[IMUGyroY].sensitivity = 2.2;				//in mV/deg/ms
+	_inputConfigurations[IMUGyroY].sensitivity = 2.2;				//in mV/deg/s
 	_inputConfigurations[IMUGyroY].inputInUse = true; 
 	_inputConfigurations[IMUGyroY].hardwarePin = 1;			
 	
 	_inputConfigurations[IMUGyroZ].zeroLevel = 1370;			//in mv
-	_inputConfigurations[IMUGyroZ].sensitivity = 2.2;				//in mV/deg/ms
+	_inputConfigurations[IMUGyroZ].sensitivity = 2.2;				//in mV/deg/s
 	_inputConfigurations[IMUGyroZ].inputInUse = true; 
 	_inputConfigurations[IMUGyroZ].hardwarePin = 0;	
 	_inputConfigurations[IMUGyroZ].invert = true;		
@@ -113,7 +113,7 @@ void OilpanIMU::initialize()
 	_inputConfigurations[IMUAcclZ].hardwarePin = 6;
 } 		
 
-	const int OilpanIMU::readRawValue(const unsigned int channel)
+const int OilpanIMU::readRawValue(const unsigned int channel)
 {			
 	return APM_ADC.Ch(channel);
 }
@@ -267,10 +267,11 @@ void IMUFilter::filter(const unsigned long currentTime)
 	
 	//Copy over the gyro rates.  If the subclassed filters overwrite then so be it, but this is the default			
 	
-	//Pitch is defined as moving AROUND the X axis
+	//Roll is defined as moving AROUND the Y axis
+	
 	_processedRateInDegrees[IMUFilterRoll] = _gyroRaw[IMUFilterAxisY];
 	
-	//Roll is defined as moving AROUND the Y axis
+	//Pitch is defined as moving AROUND the X axis
 	_processedRateInDegrees[IMUFilterPitch] = _gyroRaw[IMUFilterAxisX];
 	
 	//YAW is defined as moving AROUND the Z axis
@@ -397,7 +398,6 @@ void SimpleAccellOnlyIMUFilter::filter(const unsigned long currentTime)
 
 //Working
 //Based on the code by RoyB at: http://www.rcgroups.com/forums/showpost.php?p=12082524&postcount=1286    
-
 ComplimentryMUFilter::ComplimentryMUFilter() : IMUFilter()
 {
     filterTerm0_roll = filterTerm0_pitch = filterTerm0_yaw = 0;
@@ -977,8 +977,8 @@ void IMU::initialize(const unsigned int frequency, const unsigned int offset)
 		_imuFilter->initialize();
 	}
 	
-	serialcoms.shell()->registerKeyword("monitorIMU", "monitorIMU", _monitorIMU, true);
 	serialcoms.shell()->registerKeyword("calibrateIMU", "calibrateIMU", _calibrateIMU);
+	serialcoms.shell()->registerKeyword("monitorIMU", "monitorIMU", _monitorIMU, true);	
 }
 
 void IMU::setHardwareType(const HardwareType hardwareType)
@@ -1086,7 +1086,7 @@ void IMU::process(const unsigned long currentTime)
 				float currentAltitude = this->altitudeInMeters();
 				float altitudeChange = currentAltitude - _lastAltitude;
 				
-				_altitudeRateOfChange = altitudeChange / (currentTime - _lastAltitudeTime);
+				_altitudeRateOfChange = altitudeChange / (float)(currentTime - _lastAltitudeTime);
 				
 				_lastAltitude = currentAltitude;
 				_lastAltitudeTime = currentTime;
