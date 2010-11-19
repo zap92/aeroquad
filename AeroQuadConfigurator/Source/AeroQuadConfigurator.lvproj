@@ -168,7 +168,7 @@
 2.5.0.0
 Copyright 2010 AeroQuad</Property>
 				<Property Name="App_fileVersion.major" Type="Int">2</Property>
-				<Property Name="App_fileVersion.minor" Type="Int">5</Property>
+				<Property Name="App_fileVersion.minor" Type="Int">6</Property>
 				<Property Name="App_INI_aliasGUID" Type="Str">{0E512C75-3384-479B-B8B3-5B0BF1B031D9}</Property>
 				<Property Name="App_INI_GUID" Type="Str">{95AB525D-9CC0-48EA-84D7-D36AB922FE00}</Property>
 				<Property Name="App_INI_itemID" Type="Ref">/My Computer/AeroQuadConfigurator.ini</Property>
@@ -189,7 +189,7 @@ Copyright 2010 AeroQuad</Property>
 				<Property Name="Destination[2].path" Type="Path">../Executable</Property>
 				<Property Name="DestinationCount" Type="Int">3</Property>
 				<Property Name="Exe_iconItemID" Type="Ref">/My Computer/Icon/Config-Tools.ico</Property>
-				<Property Name="Source[0].itemID" Type="Str">{C848D100-4BAC-4A05-9845-9D5C7CA4F4EE}</Property>
+				<Property Name="Source[0].itemID" Type="Str">{159448B1-17E2-4EC1-950C-9C98889BC80B}</Property>
 				<Property Name="Source[0].type" Type="Str">Container</Property>
 				<Property Name="Source[1].destinationIndex" Type="Int">0</Property>
 				<Property Name="Source[1].itemID" Type="Ref">/My Computer/AeroQuadConfigurator.vi</Property>
