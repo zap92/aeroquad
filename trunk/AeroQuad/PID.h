@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - October 2010
+  AeroQuad v2.1 - November 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -28,7 +28,7 @@ float updatePID(float targetPosition, float currentPosition, struct PIDdata *PID
   PIDparameters->integratedError += error * G_Dt;
   PIDparameters->integratedError = constrain(PIDparameters->integratedError, -windupGuard, windupGuard);
   
-  dTerm = PIDparameters->D * (currentPosition - PIDparameters->lastPosition);
+  dTerm = PIDparameters->D * (currentPosition - PIDparameters->lastPosition) / G_Dt;
   PIDparameters->lastPosition = currentPosition;
   return (PIDparameters->P * error) + (PIDparameters->I * (PIDparameters->integratedError)) + dTerm;
 }
@@ -37,4 +37,6 @@ void zeroIntegralError() {
   for (axis = ROLL; axis < LASTLEVELAXIS; axis++)
     PID[axis].integratedError = 0;
 }
+
+
 

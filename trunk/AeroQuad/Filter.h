@@ -1,8 +1,8 @@
 /*
-  AeroQuad v2.1 - October 2010
+  AeroQuad v2.1 - November 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
-  An Open Source Arduino based quadrocopter.
+  An Open Source Arduino based multicopter.
  
   This program is free software: you can redistribute it and/or modify 
   it under the terms of the GNU General Public License as published by 
@@ -19,15 +19,22 @@
 */
 
 // Low pass filter, kept as regular C function for speed
-float smooth(float currentData, float previousData, float smoothFactor) {
-  return (previousData * (1.0 - smoothFactor) + (currentData * smoothFactor));
+float smooth(float currentData, float previousData, float smoothFactor, float dT_scaledAroundOne) {  //time scale factor
+ if (smoothFactor != 1.0) { //only apply time compensated filter if smoothFactor is applied
+  return (previousData * (1.0 - (smoothFactor * dT_scaledAroundOne)) + (currentData * (smoothFactor * dT_scaledAroundOne))); 
+  //return (previousData * (1.0 - smoothFactor) + (currentData * smoothFactor)); 
+ }
+    else {
+       return currentData; //if smoothFactor == 1.0, do not calculate, just bypass!
+     }
 }
+
 
 // ***********************************************************************
 // *********************** Median Filter Class ***************************
 // ***********************************************************************
 // Median filter currently not used, but kept if needed for the future
-// To declar use: MedianFilter filterSomething;
+// To declare use: MedianFilter filterSomething;
 
 class MedianFilter {
 public: 
@@ -68,3 +75,5 @@ public:
     return data[(DATASIZE)>>1]; // return data value in middle of sorted array
   } 
 };
+
+

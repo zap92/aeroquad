@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - October 2010
+  AeroQuad v2.1 - November 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -143,6 +143,7 @@ public:
     magX = ((float)measuredMagX * magScale[XAXIS] + magOffset[XAXIS]) * cosPitch + ((float)measuredMagY * magScale[YAXIS] + magOffset[YAXIS]) * sinRoll * sinPitch + ((float)measuredMagZ * magScale[ZAXIS] + magOffset[ZAXIS]) * cosRoll * sinPitch;
     magY = ((float)measuredMagY * magScale[YAXIS] + magOffset[YAXIS]) * cosRoll - ((float)measuredMagZ * magScale[ZAXIS] + magOffset[ZAXIS]) * sinRoll;
     compass = -degrees(atan2(-magY, magX));
+    //Serial.println(compass);
     
     // Check if gyroZero adjusted, if it is, reset gyroHeading to compass value
     if (gyroZero != gyro.getZero(YAW)) {
@@ -164,3 +165,58 @@ public:
     else absoluteHeading = heading;
   }
 };
+
+// ***********************************************************************
+// ************************* CHR6DM Subclass *****************************
+// ***********************************************************************
+#if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
+class Compass_CHR6DM : public Compass {
+
+private:
+public:
+  Compass_CHR6DM() : Compass(){
+
+  }
+
+  // ***********************************************************
+  // Define all the virtual functions declared in the main class
+  // ***********************************************************
+  void initialize(void) {
+  }
+
+  void measure(void) {
+    heading = chr6dm.data.yaw; //this hardly needs any filtering :)
+
+    // Change from +/-180 to 0-360
+    if (heading < 0) absoluteHeading = 360 + heading;
+    else absoluteHeading = heading;
+  }
+};
+#endif
+
+
+class Compass_CHR6DM_Fake : public Compass {
+
+private:
+public:
+  Compass_CHR6DM_Fake() : Compass(){
+
+  }
+
+  // ***********************************************************
+  // Define all the virtual functions declared in the main class
+  // ***********************************************************
+  void initialize(void) {
+  }
+
+  void measure(void) {
+    heading = 0;
+
+    // Change from +/-180 to 0-360
+    if (heading < 0) absoluteHeading = 360 + heading;
+    else absoluteHeading = heading;
+  }
+};
+
+
+

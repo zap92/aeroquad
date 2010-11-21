@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - October 2010
+  AeroQuad v2.1 - November 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -175,6 +175,10 @@ void readSerialCommand() {
       break;
     case 'c': // calibrate accels
       accel.calibrate();
+       #if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
+      flightAngle.calibrate();
+      accel.setOneG(accel.getFlightData(ZAXIS));
+       #endif
       break;
     case 'd': // send aref
       aref = readFloatSerial();
@@ -198,11 +202,9 @@ void sendSerialTelemetry() {
   update = 0;
   switch (queryType) {
   case '=': // Reserved debug command to view any variable from Serial Monitor
-    Serial.print(holdAltitude);
+    Serial.print(gyro.getHeading());
     comma();
-    //Serial.print(altitude.getData());
-    comma();
-    Serial.print(throttleAdjust);
+    Serial.print(compass.getData());
     Serial.println();
     //queryType = 'X';
     break;
@@ -362,7 +364,7 @@ void sendSerialTelemetry() {
     Serial.print(flightAngle.getData(ROLL));
     comma();
     Serial.print(flightAngle.getData(PITCH));
-    #ifdef HeadingMagHold
+    #if defined(HeadingMagHold) || defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
       comma();
       Serial.print(compass.getAbsoluteHeading());
     #else
@@ -414,7 +416,7 @@ void sendSerialTelemetry() {
       Serial.print(2000);
     if (flightMode == ACRO)
       Serial.print(1000);
-    #ifdef HeadingMagHold
+    #if defined(HeadingMagHold) || defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
       comma();
       Serial.print(compass.getAbsoluteHeading());
     #else
@@ -507,6 +509,10 @@ void sendSerialTelemetry() {
       Serial.print('7');
     #elif defined(MultipilotI2C)
       Serial.print('8');
+    #elif defined(AeroQuadMega_CHR6DM)
+          Serial.print('5');
+    #elif defined(APM_OP_CHR6DM)
+          Serial.print('6');
     #endif
     comma();
     // Determine which motor flight configuration for Configurator GUI
@@ -579,3 +585,5 @@ void printInt(int data) {
   Serial.print(msb, BYTE);
   Serial.print(lsb, BYTE);
 }
+
+
