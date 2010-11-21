@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - October 2010
+  AeroQuad v2.1 - November 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -38,14 +38,23 @@
 //#define ArduCopter          // ArduPilot Mega (APM) with APM Sensor Board
 //#define Multipilot          // Multipilot board with Lys344 and ADXL 610 Gyro (needs debug)
 //#define MultipilotI2C       // Active Multipilot I2C and Mixertable (needs debug)
+//#define AeroQuadMega_CHR6DM // Clean Arduino Mega with CHR6DM as IMU/heading ref.
+//#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
+
+/***************************************************************************
+************************ Define Telemetry Rate *****************************
+****************************************************************************/
+
+#define TELEMETRYLOOPTIME 50000 //Ã‚Âµs, 50ms, 20Hz for faster computers/cables (smoother Configurator values)
+//#define TELEMETRYLOOPTIME 100000 //Ã‚Âµs, 100ms, 10Hz for slower computers/cables (more rough Configurator values)
 
 /****************************************************************************
  *********************** Define Flight Configuration ************************
  ****************************************************************************/
 // Use only one of the following definitions
 
-#define plusConfig
-//#define XConfig
+//#define plusConfig
+#define XConfig
 //#define HEXACOAXIAL
 //#define HEXARADIAL
 
@@ -63,13 +72,11 @@
 //#define Camera
 
 // Optional Sensors
-// Uncomment the following lines to enable additional hardware installed onto your AeroQuad Shield
-#define HeadingMagHold // Enables HMC5843 Magnetometer
-// Please note that the Altitude Hold function is still experimental, use at your own risk!
-// This is not a fully completed function yet
-// Uncomment the line below to enable relative altitude telemtry to the Configurator
-// To enable the Altitude Hold function, move the AUX1 switch to the middle or high position (>1700us)
-#define AltitudeHold // Enables BMP083 Barometer
+#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
+#define AltitudeHold // Enables BMP085 Barometer, availabe on all Mega based boards
+//#define BatteryMonitor //define your personal specs in BatteryReadArmLed.h! Full documentation with schematic there
+
+//#define AutoDescent // Requires BatteryMonitor to be enabled, then descend in 2 fixed PWM rates, if AltitudeHold enabled, then descend in 2 fixed m/s rates
 
 /****************************************************************************
  ********************* End of User Definition Section ***********************
@@ -157,6 +164,28 @@
   FlightAngle_DCM flightAngle;
 #endif
 
+#ifdef AeroQuadMega_CHR6DM
+  Accel_CHR6DM accel;
+  Gyro_CHR6DM gyro;
+  Receiver_AeroQuadMega receiver;
+  Motors_PWM motors;
+  #include "FlightAngle.h"
+  FlightAngle_CHR6DM flightAngle;
+  #include "Compass.h"
+  Compass_CHR6DM compass;
+#endif
+
+#ifdef APM_OP_CHR6DM
+  Accel_CHR6DM accel;
+  Gyro_CHR6DM gyro;
+  Receiver_ArduCopter receiver;
+  Motors_ArduCopter motors;
+  #include "FlightAngle.h"
+  FlightAngle_CHR6DM flightAngle;
+  #include "Compass.h"
+  Compass_CHR6DM compass;
+#endif
+
 #ifdef Multipilot
   Accel_AeroQuad_v1 accel;
   Gyro_AeroQuad_v1 gyro;
@@ -189,6 +218,9 @@
   #include "Altitude.h"
   Altitude_AeroQuad_v2 altitude;  //BMP085
 #endif
+#ifdef BatteryMonitor
+  #include "BatteryReadArmLed.h"
+#endif
 
 // Include this last as it contains objects from above declarations
 #include "DataStorage.h"
@@ -212,6 +244,10 @@
 // ************************************************************
 void setup() {
   Serial.begin(BAUD);
+  #if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
+  Serial1.begin(BAUD);
+  PORTD = B00000100;
+  #endif
   pinMode(LEDPIN, OUTPUT);
   digitalWrite(LEDPIN, LOW);
   
@@ -221,8 +257,20 @@ void setup() {
     pinMode(LED3PIN, OUTPUT);
     digitalWrite(LED3PIN, LOW);
   #endif
+  #if defined(APM_OP_CHR6DM) || defined(ArduCopter) 
+    pinMode(LED_Red, OUTPUT);
+    pinMode(LED_Yellow, OUTPUT);
+    pinMode(LED_Green, OUTPUT);
+  #endif
+  #ifdef BatteryMonitor
+    pinMode(FL_LED ,OUTPUT);
+    pinMode(FR_LED ,OUTPUT);
+    pinMode(RR_LED ,OUTPUT);
+    pinMode(RL_LED ,OUTPUT);
+    analogReference(EXTERNAL); //use Oilpan 3V3 AREF or if wanted, define DEFAULT here to use VCC as reference and define that voltage in BatteryReadArmLed.h
+  #endif
   
-  #if defined(AeroQuad_v18) || defined(AeroQuadMega_v2) || defined(AeroQuad_Wii) || defined(AeroQuadMega_Wii)
+  #if defined(AeroQuad_v18) || defined(AeroQuadMega_v2) || defined(AeroQuad_Wii) || defined(AeroQuadMega_Wii) || defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
     Wire.begin();
   #endif
   #if defined(AeroQuad_v18) || defined(AeroQuadMega_v2)
@@ -246,7 +294,10 @@ void setup() {
   // insert it into the gyro class because it executes first
   gyro.initialize(); // defined in Gyro.h
   accel.initialize(); // defined in Accel.h
-  
+  //accel.setOneG(accel.getFlightData(ZAXIS));
+  #if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
+  flightAngle.calibrate(); //defined in FlightAngle.pde
+  #endif
   // Calibrate sensors
   gyro.autoZero(); // defined in Gyro.h
   zeroIntegralError();
@@ -281,9 +332,18 @@ void setup() {
   #endif
   #ifdef AeroQuadMega_Wii
     accel.invert(ROLL);
+    accel.invert(PITCH);
+    accel.invert(ZAXIS);
     gyro.invert(PITCH);
-    gyro.invert(YAW);
   #endif
+
+  #if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM) 
+      //accel.invert(ROLL);
+      //accel.invert(PITCH);
+      //accel.invert(ZAXIS);
+      gyro.invert(PITCH);
+  #endif
+
   #ifdef Multipilot
     accel.invert(PITCH);
     gyro.invert(ROLL);
@@ -293,7 +353,7 @@ void setup() {
   flightAngle.initialize(); // defined in FlightAngle.h
 
   // Optional Sensors
-  #ifdef HeadingMagHold
+  #if defined(HeadingMagHold) || defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
     compass.initialize();
     setHeading = compass.getHeading();
   #endif
@@ -307,7 +367,7 @@ void setup() {
     pitchCamera.attach(PITCHCAMERAPIN);
   #endif
   
-  previousTime = millis();
+  previousTime = micros(); //was millis();
   digitalWrite(LEDPIN, HIGH);
   safetyCheck = 0;
 }
@@ -317,9 +377,9 @@ void setup() {
 // ************************************************************
 void loop () {
   // Measure loop rate
-  currentTime = millis();
+  currentTime = micros(); //was millis(); , remember to scale all times from now on
   deltaTime = currentTime - previousTime;
-  G_Dt = deltaTime / 1000.0;
+  G_Dt = deltaTime / 1000000.0;
   previousTime = currentTime;
   #ifdef DEBUG
     if (testSignal == LOW) testSignal = HIGH;
@@ -327,37 +387,39 @@ void loop () {
     digitalWrite(LEDPIN, testSignal);
   #endif
   
-  // Reads external pilot commands and performs functions based on stick configuration
-  if ((currentTime > (receiverTime + RECEIVERLOOPTIME)) && (receiverLoop == ON)) {// 10Hz
+   // Reads external pilot commands and performs functions based on stick configuration
+  if ((receiverLoop == ON) && (currentTime > receiverTime)) {// 50Hz
     readPilotCommands(); // defined in FlightCommand.pde
-    receiverTime = currentTime;
+    receiverTime = currentTime + RECEIVERLOOPTIME;
   }
   
   // Measures sensor data and calculates attitude
-  if ((currentTime > (sensorTime + AILOOPTIME)) && (sensorLoop == ON)) { // 500Hz
+  if ((sensorLoop == ON) && (currentTime > sensorTime)) { // 500Hz
     readSensors(); // defined in Sensors.pde
-    sensorTime = currentTime;
+    sensorTime = currentTime + AILOOPTIME;
   } 
 
   // Combines external pilot commands and measured sensor data to generate motor commands
-  if ((currentTime > controlLoopTime + CONTROLLOOPTIME) && (controlLoop == ON)) { // 500Hz
+  if ((controlLoop == ON) && (currentTime > controlLoopTime)) { // 500Hz
     flightControl(); // defined in FlightControl.pde
-    controlLoopTime = currentTime;
+    controlLoopTime = currentTime + CONTROLLOOPTIME;
   } 
   
   // Listen for configuration commands and reports telemetry
-  if ((currentTime > telemetryTime + TELEMETRYLOOPTIME) && (telemetryLoop == ON)) { // 10Hz    
+  if ((telemetryLoop == ON) && (currentTime > telemetryTime)) { // 20Hz
     readSerialCommand(); // defined in SerialCom.pde
     sendSerialTelemetry(); // defined in SerialCom.pde
-    telemetryTime = currentTime;
+    telemetryTime = currentTime + TELEMETRYLOOPTIME;
   }
   
 #ifdef Camera // Experimental, not fully implemented yet
   // Command camera stabilization servos (requires #include <servo.h>)
-  if ((currentTime > (cameraTime + CAMERALOOPTIME)) && (cameraLoop == ON)) { // 50Hz
+  if ((cameraLoop == ON) && (currentTime > cameraTime)) { // 50Hz
     rollCamera.write((mCamera * flightAngle.get(ROLL)) + bCamera);
     pitchCamera.write((mCamera * flightAngle.get(PITCH)) + bCamera);
-    cameraTime = currentTime;
+    cameraTime = currentTime + CAMERALOOPTIME;
   }
 #endif
 }
+
+
