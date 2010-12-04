@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - November 2010
+  AeroQuad v2.1 Beta - December 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -100,7 +100,7 @@ float windupGuard; // Read in from EEPROM
 // Smoothing filter parameters
 #define GYRO 0
 #define ACCEL 1
-#define FINDZERO 50
+#define FINDZERO 10 //50
 float smoothHeading;
 
 // Sensor pin assignments
@@ -366,5 +366,17 @@ float findMode(float *data, int arraySize); // defined in Sensors.pde
 #else
 int findMode(int *data, int arraySize); // defined in Sensors.pde
 #endif
+
+// FUNCTION: return the number of bytes currently free in RAM      
+extern int  __bss_end; // used by freemem 
+extern int  *__brkval; // used by freemem
+int freemem(){
+    int free_memory;
+    if((int)__brkval == 0)
+        free_memory = ((int)&free_memory) - ((int)&__bss_end);
+    else
+        free_memory = ((int)&free_memory) - ((int)__brkval);
+    return free_memory;
+}
 
 
