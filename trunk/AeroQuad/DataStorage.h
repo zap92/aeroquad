@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - November 2010
+  AeroQuad v2.1 Beta - December 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -68,11 +68,11 @@ void initializeEEPROM(void) {
   PID[YAW].P = 3.0;
   PID[YAW].I = 0.05;
   PID[YAW].D = 0.0;
-  PID[LEVELROLL].P = 1.0;
-  PID[LEVELROLL].I = 0.5;
+  PID[LEVELROLL].P = 7.0;
+  PID[LEVELROLL].I = 1.0;
   PID[LEVELROLL].D = 0.0;
-  PID[LEVELPITCH].P = 1.0;
-  PID[LEVELPITCH].I = 0.5;
+  PID[LEVELPITCH].P = 7.0;
+  PID[LEVELPITCH].I = 1.0;
   PID[LEVELPITCH].D = 0.0;
   PID[HEADING].P = 3.0;
   PID[HEADING].I = 0.1;
@@ -127,41 +127,25 @@ void initializeEEPROM(void) {
 
 void readEEPROM(void) {
   readPID(ROLL, ROLL_PID_GAIN_ADR);
-  PID[ROLL].lastPosition = 0;
-  PID[ROLL].integratedError = 0;
   readPID(PITCH, PITCH_PID_GAIN_ADR);
-  PID[PITCH].lastPosition = 0;
-  PID[PITCH].integratedError = 0;
   readPID(YAW, YAW_PID_GAIN_ADR);
-  PID[YAW].lastPosition = 0;
-  PID[YAW].integratedError = 0;
-  
   readPID(LEVELROLL, LEVELROLL_PID_GAIN_ADR);
-  PID[LEVELROLL].lastPosition = 0;
-  PID[LEVELROLL].integratedError = 0;  
   readPID(LEVELPITCH, LEVELPITCH_PID_GAIN_ADR);
-  PID[LEVELPITCH].lastPosition = 0;
-  PID[LEVELPITCH].integratedError = 0;
-  
   readPID(HEADING, HEADING_PID_GAIN_ADR);
-  PID[HEADING].lastPosition = 0;
-  PID[HEADING].integratedError = 0;
-  
   readPID(LEVELGYROROLL, LEVEL_GYRO_ROLL_PID_GAIN_ADR);
-  PID[LEVELGYROROLL].lastPosition = 0;
-  PID[LEVELGYROROLL].integratedError = 0;
-  
   readPID(LEVELGYROPITCH, LEVEL_GYRO_PITCH_PID_GAIN_ADR);
   PID[LEVELGYROPITCH].lastPosition = 0;
   PID[LEVELGYROPITCH].integratedError = 0;
   
   #ifdef AltitudeHold
+    //readPID(ALTITUDE, ALTITUDE_PGAIN_ADR);
     PID[ALTITUDE].P = readFloat(ALTITUDE_PGAIN_ADR);
     PID[ALTITUDE].I = readFloat(ALTITUDE_IGAIN_ADR);
     PID[ALTITUDE].D = readFloat(ALTITUDE_DGAIN_ADR);
     PID[ALTITUDE].windupGuard = readFloat(ALTITUDE_WINDUP_ADR);
     PID[ALTITUDE].lastPosition = 0;
     PID[ALTITUDE].integratedError = 0;
+    //readPID(ZDAMPENING, ZDAMP_PGAIN_ADR);
     PID[ZDAMPENING].P = readFloat(ZDAMP_PGAIN_ADR);
     PID[ZDAMPENING].I = readFloat(ZDAMP_IGAIN_ADR);
     PID[ZDAMPENING].D = readFloat(ZDAMP_DGAIN_ADR);

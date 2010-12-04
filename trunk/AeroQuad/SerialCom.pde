@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - November 2010
+  AeroQuad v2.1 Beta - December 2010
   www.AeroQuad.com
   Copyright (c) 2010 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -108,7 +108,9 @@ void readSerialCommand() {
       gyro.setSmoothFactor(readFloatSerial());
       accel.setSmoothFactor(readFloatSerial());
       timeConstant = readFloatSerial();
-      //flightMode = readFloatSerial();
+      #if defined(AeroQuad_v1) || defined(AeroQuad_v18)
+        flightAngle.initialize();
+      #endif
       break;
     case 'M': // Receive transmitter smoothing values
       receiver.setXmitFactor(readFloatSerial());
@@ -142,6 +144,12 @@ void readSerialCommand() {
       gyro.calibrate();
       accel.calibrate();
       zeroIntegralError();
+      #ifdef HeadingMagHold
+        compass.initialize();
+      #endif
+      #ifdef AltitudeHold
+        altitude.initialize();
+      #endif
       break;
     case '1': // Calibrate ESCS's by setting Throttle high on all channels
       armed = 0;
@@ -206,7 +214,8 @@ void sendSerialTelemetry() {
     //comma();
     //Serial.print(compass.getData());
     //Serial.println();
-    //queryType = 'X';
+    //Serial.println(freemem());
+    queryType = 'X';
     break;
   case 'B': // Send roll and pitch gyro PID values
     Serial.print(PID[ROLL].P);
@@ -559,9 +568,10 @@ void sendSerialTelemetry() {
 
 // Used to read floating point values from the serial port
 float readFloatSerial() {
+  #define SERIALFLOATSIZE 10
   byte index = 0;
   byte timeout = 0;
-  char data[128] = "";
+  char data[SERIALFLOATSIZE] = "0";
 
   do {
     if (Serial.available() == 0) {
@@ -573,7 +583,7 @@ float readFloatSerial() {
       timeout = 0;
       index++;
     }
-  }  while ((data[constrain(index-1, 0, 128)] != ';') && (timeout < 5) && (index < 128));
+  }  while ((data[constrain(index-1, 0, SERIALFLOATSIZE)] != ';') && (timeout < 5) && (index < SERIALFLOATSIZE));
   return atof(data);
 }
 
