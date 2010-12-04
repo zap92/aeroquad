@@ -191,8 +191,8 @@ Copyright 2010 AeroQuad</Property>
 				<Property Name="Destination[2].destName" Type="Str">DLL Directory</Property>
 				<Property Name="Destination[2].path" Type="Path">../Executable</Property>
 				<Property Name="DestinationCount" Type="Int">3</Property>
-				<Property Name="Exe_iconItemID" Type="Ref">/My Computer/Icon/Config-Tools.ico</Property>
-				<Property Name="Source[0].itemID" Type="Str">{1975AD4A-DA11-4FC4-8AC3-4624197E6E57}</Property>
+				<Property Name="Exe_iconItemID" Type="Ref">/My Computer/Icon/transparent icon.ico</Property>
+				<Property Name="Source[0].itemID" Type="Str">{AE3B1FEE-C0D9-4713-958B-2F2FB7F4E866}</Property>
 				<Property Name="Source[0].type" Type="Str">Container</Property>
 				<Property Name="Source[1].itemID" Type="Ref">/My Computer/AeroQuadConfigurator.ini</Property>
 				<Property Name="Source[1].sourceInclusion" Type="Str">Include</Property>
@@ -260,7 +260,7 @@ Copyright 2010 AeroQuad</Property>
 				<Property Name="OSCheck" Type="Int">0</Property>
 				<Property Name="OSCheck_Vista" Type="Bool">false</Property>
 				<Property Name="ProductName" Type="Str">AeroQuad Configurator</Property>
-				<Property Name="ProductVersion" Type="Str">2.6.2</Property>
+				<Property Name="ProductVersion" Type="Str">2.6.5</Property>
 				<Property Name="ReadmeFile" Type="Ref"></Property>
 				<Property Name="ShortcutInfo.Count" Type="Int">1</Property>
 				<Property Name="ShortcutInfo[0].DirTag" Type="Str">{B9E310F1-839C-48B7-8CAE-33000780C26E}</Property>
@@ -1947,7 +1947,7 @@ Copyright 2010 AeroQuad</Property>
 				<Property Name="OSCheck" Type="Int">0</Property>
 				<Property Name="OSCheck_Vista" Type="Bool">false</Property>
 				<Property Name="ProductName" Type="Str">AeroQuad Configurator</Property>
-				<Property Name="ProductVersion" Type="Str">2.6.2</Property>
+				<Property Name="ProductVersion" Type="Str">2.6.7</Property>
 				<Property Name="ReadmeFile" Type="Ref"></Property>
 				<Property Name="ShortcutInfo.Count" Type="Int">1</Property>
 				<Property Name="ShortcutInfo[0].DirTag" Type="Str">{B9E310F1-839C-48B7-8CAE-33000780C26E}</Property>
