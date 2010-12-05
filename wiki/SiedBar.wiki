@@ -1,2 +1,0 @@
- * [AeroQuadFAQ AeroQuad FAQ]
-  * [HowToFAQ How to add a Frequently Asked Question]
