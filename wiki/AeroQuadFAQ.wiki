@@ -2,7 +2,7 @@
 
 Please check through this list of common questions to help you build and fly your !AeroQuad.  In the event you don't see your question here, post your question at the !AeroQuad forums at http://AeroQuad.com.  If you know have an answer to a common question you think other users may have, please contribute and post it here!
 
-<wiki:toc max_depth="1" /> <br>
+<wiki:toc max_depth="3" /> <br>
 
 ----
 == Whats the best way to figure out the wire colors on the wii+ and nunchuck boards? ==
