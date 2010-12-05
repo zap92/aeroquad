@@ -11,16 +11,21 @@ BEFORE you cut off the Nintendo plugs. trace the wires from the connector to the
 It is a great idea to do this, but not required.  You can get an automotive switch which is rated for a high amount of DC current.
 
 ----
-= EPP or APC props? and why? ==
-EPP are cheeper but might break more(need pro here) and APC are stiffer and last longer
+= EPP or APC props? and why? =
+Personal choice. EPP props are definitely not as good a quality, but they are much cheaper, so if you are doing acro, and hitting the deck a lot, you may opt for the EPP. If you are flying a camera around, and are looking for better balance, better performance overall, go for the APC props. If you live somewhere with "real" winters, and fly in the cold, they are all going to "become" brittle and break if they strike anything, so go for the less expensive.
 
 ----
 = What exactly do i need to do to the AQ code before I upload it to my CPU? =
 Please answer this!
 
 ----
-= Nylon or aluminum bolts to hold it together? =
-Nylon make your quad "crashable" nylon bolts break when stressed so that your parts dont. repairs can be made on the field. use aluminum ones where you must have strength
+= Nylon, aluminum, or steel bolts to hold it together? =
+There are pros and cons to all of them.
+ * Nylon (plastic) somewhat fragile, they WILL break in a crash, this can be good or bad. If you have a light crash, now you have to get your box of nylon hardware, and put replace what snapped, so it could be time consuming if you are doing acrobatic (learning) stuff, BUT, there is less of a chance of breaking something more valuable like a boom, motor, or chassis piece.
+ * Aluminum hardware is usually the most expensive (if you are getting good grade alu. hardware), it is very light, a big plus, and of course stronger than plastic. The big disadvantage as I see it, is that it tends to bend as oppose to break, this can cause issues trying to remove the bent hardware, specially if you have long bolts holding a sandwich of parts together.
+ * Steel hardware is pretty inexpensive, but it is the heaviest, but also the strongest. The big pro is that it will probably rarely bend or break, which leads us to the big con, it will rarely bend or break, which means something else will, like the motor booms, or chassis plates. Steel is pretty inexpensive, even the higher grades (10.9 or 12.9)
+
+The best solution that I have found is to pick and choose the hardware that meets YOUR needs at specific location on the quad you are building, plastic to hold arms in place if you are learning acro, aluminum to hold the computer / computer mounts in place, steel to hold the inner most boom mounts etc.
 
 ----
 = What re recommended arm lengths for a beginner and for an experienced flyer? =
@@ -29,10 +34,6 @@ Nylon make your quad "crashable" nylon bolts break when stressed so that your pa
 ----
 = Arduino mounting and shock absorbing. =
 yes use some sort of shock mount like multiple layers of double sided tape for the gyro and acc sensors. the Aurdiono does not need shock mounting
-
-----
-= Do I need to remove power before I plug in the USB? will it blow up my cpu if i dont? =
-Please answer this!
 
 ----
 = is the Nunchuk optional? if so why and what will I loose/gain? =
@@ -55,19 +56,11 @@ BEFORE you cut off the Nintendo plugs, trace the wires from the connector to the
 Do not have a power switch if you're unsure, just use a regular RC battery plug (such as DEAN)
 
 ----
-= Nylon or aluminum bolts to hold it together? =
-Steel if you're unsure, optimize later
-
-----
 = Arm length, preferred? =
 40-60cm (at longest dimension) to start out with. Other variations work.
 
 ----
 = How do I protect the sensors against vibration? =
-Please answer this!
-
-----
-= Do I need to remove power before I plug in the USB? will it blow up my cpu if i dont? =
 Please answer this!
 
 ----
@@ -113,19 +106,6 @@ There are a ton of suitable materials that will work for this application, I wil
 ----
 = Do you need a power switch between the battery and the other components? =
 No, whether you are just plugging in the battery, or flipping a switch, power is power, if your system is assembled incorrectly, or you are running the wrong (to big) a battery, you will cook something. Just be sure that all your electronics are rated to handle the battery you are utilizing.
-
-----
-= EPP or APC props? and why? =
-Personal choice. EPP props are definitely not as good a quality, but they are much cheaper, so if you are doing acro, and hitting the deck a lot, you may opt for the EPP. If you are flying a camera around, and are looking for better balance, better performance overall, go for the APC props. If you live somewhere with "real" winters, and fly in the cold, they are all going to "become" brittle and break if they strike anything, so go for the less expensive.
-
-----
-= Nylon, aluminum, or steel bolts to hold it together? =
-There are pros and cons to all of them.
- * Nylon (plastic) somewhat fragile, they WILL break in a crash, this can be good or bad. If you have a light crash, now you have to get your box of nylon hardware, and put replace what snapped, so it could be time consuming if you are doing acrobatic (learning) stuff, BUT, there is less of a chance of breaking something more valuable like a boom, motor, or chassis piece.
- * Aluminum hardware is usually the most expensive (if you are getting good grade alu. hardware), it is very light, a big plus, and of course stronger than plastic. The big disadvantage as I see it, is that it tends to bend as oppose to break, this can cause issues trying to remove the bent hardware, specially if you have long bolts holding a sandwich of parts together.
- * Steel hardware is pretty inexpensive, but it is the heaviest, but also the strongest. The big pro is that it will probably rarely bend or break, which leads us to the big con, it will rarely bend or break, which means something else will, like the motor booms, or chassis plates. Steel is pretty inexpensive, even the higher grades (10.9 or 12.9)
-
-The best solution that I have found is to pick and choose the hardware that meets YOUR needs at specific location on the quad you are building, plastic to hold arms in place if you are learning acro, aluminum to hold the computer / computer mounts in place, steel to hold the inner most boom mounts etc.
 
 ----
 = Arm length. how long for a n00b to how short for a pro? =
