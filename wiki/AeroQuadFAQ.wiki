@@ -5,113 +5,114 @@ Please check through this list of common questions to help you build and fly you
 <wiki:toc max_depth="1" /> <br>
 
 ----
-= Whats the best way to figure out the wire colors on the wii+ and nunchuck boards? =
+== Whats the best way to figure out the wire colors on the wii+ and nunchuck boards? ==
 BEFORE you cut off the Nintendo plugs. trace the wires from the connector to the boards with a continuity tester to determine which colors are your GND/SDA/SCL/VCC wires
 
-= materials that work to hold that arms together? (aluminium not plexiglass)=
+== materials that work to hold that arms together? (aluminium not plexiglass)==
 Plexiglass Cracks under stress. Use Lexan or Aluminium or CF.
 
-Q. do you need a power switch between the battery and the other components?
+== do you need a power switch between the battery and the other components? ==
 A. -
 
-Q. EPP or APC props? and why?
+== EPP or APC props? and why? ==
 A. EPP are cheeper but might break more(need pro here) and APC are stiffer and last longer
 
-Q. two pusher two puller or all pusher with a 7 degree rotation on two?
+== two pusher two puller or all pusher with a 7 degree rotation on two? ==
 A. -
 
-Q. what exactly do i need to do to the AQ code before I upload it to my CPU?
+== what exactly do i need to do to the AQ code before I upload it to my CPU? ==
 A. -
 
-Q. nylon or aluminum bolts to hold it together?
+== nylon or aluminum bolts to hold it together? ==
 A. Nylon make your quad "crashable" nylon bolts break when stressed so that your parts dont. repairs can be made on the field. use aluminum ones where you must have strength
 
-Q. arm length. how long for a n00b to how short for a pro?
+== arm length. how long for a n00b to how short for a pro? ==
 A. 50-60mm motor to motor for a stable Quad. pro go as small as you want. this will make a harder to fly but more agile Quad
 
-Q. arduino mounting and shock absorbing.
+== arduino mounting and shock absorbing. ==
 A. yes use some sort of shock mount like multiple layers of double sided tape for the gyro and acc sensors. the Aurdiono does not need shock mounting
 
-Q. do I need to remove power before I plug in the USB? will it blow up my cpu if i dont?
+== do I need to remove power before I plug in the USB? will it blow up my cpu if i dont? ==
 A. -
 
-Q. is the Nunchuk optional? if so why and what will I loose/gain?
+== is the Nunchuk optional? if so why and what will I loose/gain? ==
 A. -
 
-Q. how often do I need to "Lube" the motors?
+== how often do I need to "Lube" the motors? ==
 A. -
 
-Q. is location of the wii+ or nunchuck important?
+== is location of the wii+ or nunchuck important? ==
 A. the Nunchuck need to be at the center of the quad. as close to the center of all AXIS as possiable.
 
-Q. What is the best way to figure out the wire colors on the wii+ and nunchuck boards?
+== What is the best way to figure out the wire colors on the wii+ and nunchuck boards? ==
 A. BEFORE you cut off the Nintendo plugs, trace the wires from the connector to the boards with a continuity tester to determine which colors are your GND/SDA/SCL/VCC wires
 
-Q. Materials that work to hold that arms together? (aluminium not plexiglass)
+== Materials that work to hold that arms together? (aluminium not plexiglass) ==
 A. -
 
-Q. Do you need a power switch between the battery and the other components?
+== Do you need a power switch between the battery and the other components? ==
 A. Do not have a power switch if you're unsure, just use a regular RC battery plug (such as DEAN)
 
-Q. EPP or APC props? and why?
+== EPP or APC props? and why? ==
 A. -
 
-Q. two pusher two puller or all pusher with a 7 degree rotation on two?
+== two pusher two puller or all pusher with a 7 degree rotation on two? ==
 A. -
 
-Q. what exactly do i need to do to the AQ code before I upload it to my CPU?
+== what exactly do i need to do to the AQ code before I upload it to my CPU? ==
 A. -
 
-Q. Nylon or aluminum bolts to hold it together?
+== Nylon or aluminum bolts to hold it together? ==
 A. Steel if you're unsure, optimize later
 
-Q. Arm length, preferred?
+== Arm length, preferred? ==
 A. 40-60cm (at longest dimension) to start out with. Other variations work.
 
-Q. How do I protect the sensors against vibration?
+== How do I protect the sensors against vibration? ==
 A. -
 
-Q. Do I need to remove power before I plug in the USB? will it blow up my cpu if i dont?
+== Do I need to remove power before I plug in the USB? will it blow up my cpu if i dont? ==
 A. -
 
-Q. Is the accelerometer optional? if so why and what will I loose/gain?
+== Is the accelerometer optional? if so why and what will I loose/gain? ==
 A. It is optional, self leveling will be impossible without it
 
-Q. How often do I need to lubricate the motors?
+== How often do I need to lubricate the motors? ==
 A. -
 
-Q. is location of the wii+ or nunchuck important?
+== is location of the wii+ or nunchuck important? ==
 A. the Nunchuck need to be at the center of the quad. as close to the center of all AXIS as possiable.
 
-Q. Where do I find the layout for the shields? 
+== Where do I find the layout for the shields?  ==
 A. http://code.google.com/p/aeroquad/so...ntation/Shield <- gotta go there to copy for next post
 
-Q. Where can I learn to fly?
+== Where can I learn to fly? ==
 A. http://www.rchelicopterfun.com/how-t...licopters.html
 
-Q. Where can I find the official tutorial?
+== Where can I find the official tutorial?
 A. http://code.google.com/p/aeroquad/do...9.pdf&can=2&q=
 
-Q. How can I confirm everything is working before flight, and how to confirm PID tuning? What is PID tuning?
+== How can I confirm everything is working before flight, and how to confirm PID tuning? What is PID tuning? ==
 A. http://aeroquad.com/showthread.php?1...tutorial-on-AQ also http://aeroquad.com/content.php?125 and http://aeroquad.com/content.php?118
-Q. Materials that work to hold that arms together? (aluminium not plexiglass)
 
-A. There are a ton of suitable materials that will work for this application, I will list a few-
+== Materials that work to hold that arms together? (aluminium not plexiglass) ==
+
+== There are a ton of suitable materials that will work for this application, I will list a few-
 -Aluminum , easy to find, relatively inexpensive, not to hard to work with.
 -G10 fiberglass, easy to find, cheap, sort of a pain to work with, dealing with fiberglass dust, need the right protective gear (dust mask goggles, etc)
 -Plexiglass (acrylic) , easy to find, relatively inexpensive, can be easy to work with (tends to crack when drilling, somewhat brittle)
 -Polycarbonite (lexan) , a little harder to find in thicker sheets, more expensive than plex, much stronger in regards to our use than plex, easy to work with and shape (RC car bodies are made from lexan)
 -Carbon fiber, a little more difficult to find at a decent price, definitely the best strength to weight ratio, VERY expensive, difficult to work with. IMO the ultimate material for a quad, but again, expensive and difficult to work with.
 
-Q. Do you need a power switch between the battery and the other components?
+== Do you need a power switch between the battery and the other components? ==
 
 A. No, whether you are just plugging in the battery, or flipping a switch, power is power, if your system is assembled incorrectly, or you are running the wrong (to big) a battery, you will cook something. Just be sure that all your electronics are rated to handle the battery you are utilizing.
 
-Q. EPP or APC props? and why?
+== EPP or APC props? and why? ==
 
 A. Personal choice. EPP props are definitely not as good a quality, but they are much cheaper, so if you are doing acro, and hitting the deck a lot, you may opt for the EPP. If you are flying a camera around, and are looking for better balance, better performance overall, go for the APC props. If you live somewhere with "real" winters, and fly in the cold, they are all going to "become" brittle and break if they strike anything, so go for the less expensive.
 
-Q. Nylon, aluminum, or steel bolts to hold it together?
+== Nylon, aluminum, or steel bolts to hold it together? ==
 
 A. There are pros and cons to all of them.
 -Nylon (plastic) somewhat fragile, they WILL break in a crash, this can be good or bad. If you have a light crash, now you have to get your box of nylon hardware, and put replace what snapped, so it could be time consuming if you are doing acrobatic (learning) stuff, BUT, there is less of a chance of breaking something more valuable like a boom, motor, or chassis piece.
@@ -120,7 +121,6 @@ A. There are pros and cons to all of them.
 
 The best solution that I have found is to pick and choose the hardware that meets YOUR needs at specific location on the quad you are building, plastic to hold arms in place if you are learning acro, aluminum to hold the computer / computer mounts in place, steel to hold the inner most boom mounts etc.
 
-
-Q. Arm length. how long for a n00b to how short for a pro?
+== Arm length. how long for a n00b to how short for a pro? ==
 
 A. Preference. The longer the arms (to an extent) the more stable the quad will be, the shorter the are, the faster the quad will change direction/orientation. The chassis we make have either 10" or 12" arms dependent on what you are after.
