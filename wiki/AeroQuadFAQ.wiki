@@ -6,12 +6,15 @@ Please check through this list of common questions to help you build and fly you
 = Whats the best way to figure out the wire colors on the wii+ and nunchuck boards? ==
 BEFORE you cut off the Nintendo plugs. trace the wires from the connector to the boards with a continuity tester to determine which colors are your GND/SDA/SCL/VCC wires
 
+----
 = materials that work to hold that arms together? (aluminium not plexiglass)==
 Plexiglass Cracks under stress. Use Lexan or Aluminium or CF.
 
+----
 = do you need a power switch between the battery and the other components? ==
 Please answer this!
 
+----
 = EPP or APC props? and why? ==
 EPP are cheeper but might break more(need pro here) and APC are stiffer and last longer
 
