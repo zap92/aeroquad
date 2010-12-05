@@ -4,4 +4,4 @@ Please check through this list of common questions to help you build and fly you
 
 ----
 = How do I post a new FAQ and it's answer? =
-Just copy and paste this section of text.  Replace the text between the "=" signs with the question.  Replace all the text after the "=" sign with the answer.
+Log in with your Google account and click the "Edit This Page" link.  Next, copy and paste this section of text.  Replace the text between the "=" signs with the question.  Replace all the text after the "=" sign with the answer.  Be sure to include the "----" before the question to separate each section.  Please insert your question in alphabetical order.
