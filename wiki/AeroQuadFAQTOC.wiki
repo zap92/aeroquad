@@ -1,3 +1,1 @@
-[AeroQuadFAQ]
-----
-* [HowToFAQ How to add a Frequently Asked Question]
+* [Articles HowToFAQ How to add a Frequently Asked Question]
