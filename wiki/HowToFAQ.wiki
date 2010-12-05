@@ -1,0 +1,6 @@
+*How do I post a new FAQ and it's answer?*
+Copy the text below.  You will replace the text with the question and answer you would like to contribute.  Log in with your Google account and click the "Edit This Page" link on the FAQ wiki page.  Next, paste the text into the FAQ.  Please insert it in alphabetical order to help make it easy for others to find your submission.  THANKS!
+
+----
+= Place you frequenctly asked question here? =
+Replace this text with the answer to the FAQ.
