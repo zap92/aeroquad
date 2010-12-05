@@ -1,2 +1,2 @@
-== !AeroQuad FAQ ==
- * [HowToFAQ How to add a Frequently Asked Question]
+ * [AeroQuadFAQ AeroQuad FAQ]
+  * [HowToFAQ How to add a Frequently Asked Question]
