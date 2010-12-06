@@ -1,2 +1,0 @@
-  * [http://aeroquad.googlecode.com/files/AeroQuad%20Manual%20v10.pdf Build Tutorial]
-  * [AeroQuadFAQ]
