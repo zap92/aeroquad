@@ -100,7 +100,11 @@ float windupGuard; // Read in from EEPROM
 // Smoothing filter parameters
 #define GYRO 0
 #define ACCEL 1
-#define FINDZERO 10 //50
+#if defined(__AVR_ATmega328__) || defined(__AVR_ATmega328P__)
+  #define FINDZERO 10
+#else
+  #define FINDZERO 50
+#endif
 float smoothHeading;
 
 // Sensor pin assignments
