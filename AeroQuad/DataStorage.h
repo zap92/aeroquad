@@ -18,6 +18,9 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+// Special thanks for 1k space optimization update from Ala42
+// http://aeroquad.com/showthread.php?1369-The-big-enhancement-addition-to-2.0-code&p=13359&viewfull=1#post13359
+
 // Utilities for writing and reading from the EEPROM
 float readFloat(int address) {
   union floatStore {

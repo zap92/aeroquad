@@ -106,8 +106,8 @@
   Receiver_AeroQuad receiver;
   Motors_PWM motors;
   #include "FlightAngle.h"
-  FlightAngle_CompFilter flightAngle;
-  //FlightAngle_DCM flightAngle;
+  //FlightAngle_CompFilter flightAngle;
+  FlightAngle_DCM flightAngle;
 #endif
 
 #ifdef AeroQuadMega_v1
@@ -264,7 +264,7 @@ void setup() {
     analogReference(EXTERNAL); //use Oilpan 3V3 AREF or if wanted, define DEFAULT here to use VCC as reference and define that voltage in BatteryReadArmLed.h
   #endif
   
-  #if defined(AeroQuad_v18) || defined(AeroQuadMega_v2) || defined(AeroQuad_Wii) || defined(AeroQuadMega_Wii) || defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
+  #if defined(AeroQuad_v18) || defined(AeroQuadMega_v2) || defined(AeroQuad_Wii) || defined(AeroQuadMega_Wii) || defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM) || defined(ArduCopter)
     Wire.begin();
   #endif
   #if defined(AeroQuad_v18) || defined(AeroQuadMega_v2)
