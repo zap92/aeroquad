@@ -1,7 +1,7 @@
 /*
-  AeroQuad v2.1.2 Beta - December 2010
+  AeroQuad v2.1 - January 2011
   www.AeroQuad.com
-  Copyright (c) 2010 Ted Carancho.  All rights reserved.
+  Copyright (c) 2011 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
  
   This program is free software: you can redistribute it and/or modify 
@@ -42,9 +42,9 @@ void readSensors(void) {
       altitudeTime = currentTime + ALTITUDELOOPTIME;
     }
   #endif
-  #if defined(BatteryMonitor)
+  #if defined(BattMonitor)
     if (currentTime > batteryTime) {
-      readBattery();
+      if (armed == ON) batteryMonitor.measure();
       batteryTime = currentTime + BATTERYLOOPTIME;
     }
   #endif
