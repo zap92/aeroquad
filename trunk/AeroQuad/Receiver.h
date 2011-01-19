@@ -42,7 +42,7 @@ public:
     transmitterCommand[AUX] = 1000;
 
     for (byte channel = ROLL; channel < LASTCHANNEL; channel++)
-      transmitterCommandSmooth[channel] = 0;
+      transmitterCommandSmooth[channel] = 1.0;
     for (byte channel = ROLL; channel < THROTTLE; channel++)
       transmitterZero[channel] = 1500;
   }
@@ -140,7 +140,7 @@ public:
 /*************************************************/
 /*************** AeroQuad PCINT ******************/
 /*************************************************/
-#if defined(AeroQuad_v1) || defined(AeroQuad_v18) || defined(AeroQuad_Wii)
+#if defined(AeroQuad_v1) || defined(AeroQuad_v18) || defined(AeroQuad_Wii) || defined(AeroQuad_v1_IDG)
 volatile uint8_t *port_to_pcmask[] = {
   &PCMSK0,
   &PCMSK1,
@@ -160,7 +160,6 @@ volatile static tPinTimingData pinData[9];
 void attachPinChangeInterrupt(uint8_t pin) {
   uint8_t bit = digitalPinToBitMask(pin);
   uint8_t port = digitalPinToPort(pin);
-  //uint8_t slot;
   volatile uint8_t *pcmask;
 
   // map pin to PCIR register
@@ -232,15 +231,8 @@ SIGNAL(PCINT2_vect) {
 // defines arduino pins used for receiver in arduino pin numbering schema
 static byte receiverPin[6] = {2, 5, 6, 4, 7, 8}; // pins used for ROLL, PITCH, YAW, THROTTLE, MODE, AUX
 
-class Receiver_AeroQuad :
-public Receiver {
-private:
-
+class Receiver_AeroQuad : public Receiver {
 public:
-  Receiver_AeroQuad() :
-  Receiver(){
-  }
-
   // Configure each receiver pin for PCINT
   void initialize() {
     this->_initialize(); // load in calibration xmitFactor from EEPROM
@@ -346,48 +338,22 @@ SIGNAL(PCINT2_vect) {
   MegaPcIntISR();
 }
 
-// For some reason, these declarations don't work when made outside of class
-// When initialized here, all receiver channels read throttle output
-/*#ifdef AeroQuadMega_v1
- arduino pins 67, 65, 64, 66, 63, 62
-static byte receiverPin[6] = {5, 3, 2, 4, 1, 0}; // bit number of PORTK used for ROLL, PITCH, YAW, THROTTLE, MODE, AUX
+#ifdef AeroQuadMega_v1
+  // arduino pins 67, 65, 64, 66, 63, 62
+  static byte receiverPin[6] = {5, 3, 2, 4, 1, 0}; // bit number of PORTK used for ROLL, PITCH, YAW, THROTTLE, MODE, AUX
 #else
- arduino pins 63, 64, 65, 62, 66, 67
-static byte receiverPin[6] = {1, 2, 3, 0, 4, 5}; // bit number of PORTK used for ROLL, PITCH, YAW, THROTTLE, MODE, AUX
-#endif*/
+ //arduino pins 63, 64, 65, 62, 66, 67
+  static byte receiverPin[6] = {1, 2, 3, 0, 4, 5}; // bit number of PORTK used for ROLL, PITCH, YAW, THROTTLE, MODE, AUX
+#endif
 
-class Receiver_AeroQuadMega :
-public Receiver {
-private:
-  byte receiverPin[LASTCHANNEL];
-
+class Receiver_AeroQuadMega : public Receiver {
 public:
-  Receiver_AeroQuadMega() :
-  Receiver(){
-  }
-
   void initialize() {
     this->_initialize(); // load in calibration xmitFactor from EEPROM
     DDRK = 0;
     PORTK = 0;
     PCMSK2 |= 0x3F;
     PCICR |= 0x1 << 2;
-
-#ifdef AeroQuadMega_v1
-    receiverPin[ROLL] = 5;
-    receiverPin[PITCH] = 3;
-    receiverPin[YAW] = 2;
-    receiverPin[THROTTLE] = 4;
-    receiverPin[MODE] = 1;
-    receiverPin[AUX] = 0;
-#else
-    receiverPin[ROLL] = 1;
-    receiverPin[PITCH] = 2;
-    receiverPin[YAW] = 3;
-    receiverPin[THROTTLE] = 0;
-    receiverPin[MODE] = 4;
-    receiverPin[AUX] = 5;
-#endif
 
   for (byte channel = ROLL; channel < LASTCHANNEL; channel++)
       pinData[receiverPin[channel]].edge = FALLING_EDGE;
@@ -515,8 +481,7 @@ ISR(TIMER4_CAPT_vect)//interrupt.
   //Counter++;
 }
 //#endif
-class Receiver_ArduCopter :
-public Receiver {
+class Receiver_ArduCopter : public Receiver {
 private:
   int receiverPin[6];
 
