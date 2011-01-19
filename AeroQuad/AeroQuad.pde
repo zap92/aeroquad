@@ -187,6 +187,10 @@
   Motors_ArduCopter motors;
   #include "FlightAngle.h"
   FlightAngle_DCM flightAngle;
+  #ifdef AltitudeHold
+    #include "Altitude.h"
+    Altitude_AeroQuad_v2 altitude;
+  #endif
   #ifdef BattMonitor
     #include "BatteryMonitor.h"
     BatteryMonitor_APM batteryMonitor;
@@ -256,9 +260,9 @@
     #include "Altitude.h"
     Altitude_AeroQuad_v2 altitude;
   #endif
-  #ifdef BattteryMonitor
+  #ifdef BattMonitor
     #include "BatteryMonitor.h"
-    BatteryAlarm_APM batteryAlarm;
+    BatteryMonitor_APM batteryMonitor;
   #endif
   #ifdef CameraControl
     #include "Camera.h"
@@ -352,11 +356,12 @@ void setup() {
   levelAdjust[PITCH] = 0;
   
   // Setup correct sensor orientation
-  #ifdef AeroQuad_v1_IDG
+  #ifdef AeroQuad_v1
     gyro.invert(YAW);
   #endif
-  #ifdef AeroQuad_Wii
-    accel.invert(ROLL);
+  #if defined(AeroQuad_Wii) || defined(AeroQuadMega_Wii)
+    accel.invert(PITCH);
+    accel.invert(ZAXIS);
   #endif
   #ifdef Multipilot
     accel.invert(PITCH);

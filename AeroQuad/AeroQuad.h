@@ -46,8 +46,7 @@
 #ifdef AeroQuadMega_v2  
   #define LED2PIN 4
   #define LED3PIN 31
-#endif
-#ifdef AeroQuad_v18
+#else
   #define LED2PIN 12
   #define LED3PIN 12
 #endif
@@ -73,15 +72,6 @@
 #define LEVELGYROPITCH 7
 #define ALTITUDE 8
 #define ZDAMPENING 9
-
-#if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
-  float fakeGyroRoll;
-  float fakeGyroPitch;
-  float fakeGyroYaw;
-  float fakeAccelRoll;
-  float fakeAccelPitch;
-  float fakeAccelYaw;
-#endif
 
 // PID Variables
 struct PIDdata {
@@ -158,8 +148,8 @@ int levelAdjust[2] = {0,0};
 int levelLimit; // Read in from EEPROM
 int levelOff; // Read in from EEPROM
 // Scale to convert 1000-2000 PWM to +/- 45 degrees
-float mLevelTransmitter = 0.09;
-float bLevelTransmitter = -135;
+//float mLevelTransmitter = 0.09;
+//float bLevelTransmitter = -135;
 
 #if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
   float CHR_RollAngle;
@@ -365,11 +355,11 @@ void printInt(int data); // defined in SerialCom.pde
 float readFloatSerial(void); // defined in SerialCom.pde
 void comma(void); // defined in SerialCom.pde
 
-#if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
+//#if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
 float findMode(float *data, int arraySize); // defined in Sensors.pde
-#else
+//#else
 int findMode(int *data, int arraySize); // defined in Sensors.pde
-#endif
+//#endif
 
 // FUNCTION: return the number of bytes currently free in RAM      
 extern int  __bss_end; // used by freemem 

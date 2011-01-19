@@ -531,6 +531,9 @@ public:
 #ifdef CHR6DM_FAKE_ACCEL
 class Accel_CHR6DM_Fake : public Accel {
 public:
+  float fakeAccelRoll;
+  float fakeAccelPitch;
+  float fakeAccelYaw;
   Accel_CHR6DM_Fake() : Accel() {
     accelScaleFactor = 0;
   }
@@ -555,9 +558,9 @@ public:
       accelADC[YAXIS] = fakeAccelPitch - accelZero[YAXIS];
       accelADC[ZAXIS] = fakeAccelYaw - accelOneG;
 
-      accelData[XAXIS] = smooth(accelADC[XAXIS], accelData[XAXIS], smoothFactor, ((currentTime - previousTime) / 5000.0));
-      accelData[YAXIS] = smooth(accelADC[YAXIS], accelData[YAXIS], smoothFactor, ((currentTime - previousTime) / 5000.0));
-      accelData[ZAXIS] = smooth(accelADC[ZAXIS], accelData[ZAXIS], smoothFactor, ((currentTime - previousTime) / 5000.0));
+      accelData[XAXIS] = smoothWithTime(accelADC[XAXIS], accelData[XAXIS], smoothFactor, ((currentTime - previousTime) / 5000.0));
+      accelData[YAXIS] = smoothWithTime(accelADC[YAXIS], accelData[YAXIS], smoothFactor, ((currentTime - previousTime) / 5000.0));
+      accelData[ZAXIS] = smoothWithTime(accelADC[ZAXIS], accelData[ZAXIS], smoothFactor, ((currentTime - previousTime) / 5000.0));
     previousTime = currentTime;
   }
   
