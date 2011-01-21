@@ -221,21 +221,8 @@ Copyright 2010 AeroQuad</Property>
 				<Property Name="Destination[1].type" Type="Str">userFolder</Property>
 				<Property Name="DestinationCount" Type="Int">2</Property>
 				<Property Name="DistPart[0].flavorID" Type="Str">DefaultFull</Property>
-				<Property Name="DistPart[0].productID" Type="Str">{EF367060-8B96-4290-BB4D-13D435408C89}</Property>
+				<Property Name="DistPart[0].productID" Type="Str">{6E0A9556-A848-4738-B4DB-468DF8F5EF37}</Property>
 				<Property Name="DistPart[0].productName" Type="Str">NI LabVIEW Run-Time Engine 2010</Property>
-				<Property Name="DistPart[0].SoftDep[0].dependencyKey" Type="Str">AKBAAA.75DDBFCF_4DC8_4175_98FF_3D0A26A8E7A7</Property>
-				<Property Name="DistPart[0].SoftDep[0].productName" Type="Str">NI System Web Server 1.0</Property>
-				<Property Name="DistPart[0].SoftDep[1].dependencyKey" Type="Str">CKBAAA.75DDBFCF_4DC8_4175_98FF_3D0A26A8E7A7</Property>
-				<Property Name="DistPart[0].SoftDep[1].productName" Type="Str">NI_Logos_5.2.0</Property>
-				<Property Name="DistPart[0].SoftDep[2].dependencyKey" Type="Str">EKBAAA.75DDBFCF_4DC8_4175_98FF_3D0A26A8E7A7</Property>
-				<Property Name="DistPart[0].SoftDep[2].productName" Type="Str">NI LabVIEW 2010 Run-Time Engine Web Server</Property>
-				<Property Name="DistPart[0].SoftDep[3].dependencyKey" Type="Str">FKBAAA.75DDBFCF_4DC8_4175_98FF_3D0A26A8E7A7</Property>
-				<Property Name="DistPart[0].SoftDep[3].productName" Type="Str">NI LabVIEW 2010 Real-Time NBFifo</Property>
-				<Property Name="DistPart[0].SoftDep[4].dependencyKey" Type="Str">HKBAAA.75DDBFCF_4DC8_4175_98FF_3D0A26A8E7A7</Property>
-				<Property Name="DistPart[0].SoftDep[4].productName" Type="Str">NI SSL Support</Property>
-				<Property Name="DistPart[0].SoftDep[5].dependencyKey" Type="Str">IKBAAA.75DDBFCF_4DC8_4175_98FF_3D0A26A8E7A7</Property>
-				<Property Name="DistPart[0].SoftDep[5].productName" Type="Str">NI Web Application Server 1.0</Property>
-				<Property Name="DistPart[0].SoftDepCount" Type="Int">6</Property>
 				<Property Name="DistPart[0].upgradeCode" Type="Str">{9F6EADB1-707C-41AF-8F3D-FB856FA8BD1C}</Property>
 				<Property Name="DistPart[1].flavorID" Type="Str">_deployment_</Property>
 				<Property Name="DistPart[1].productID" Type="Str">{D6FC9FA9-3386-409A-8D62-EE026CA721D1}</Property>
@@ -249,7 +236,7 @@ Copyright 2010 AeroQuad</Property>
 				<Property Name="INST_buildSpecName" Type="Str">Installer</Property>
 				<Property Name="INST_defaultDir" Type="Str">{911FD540-AAC1-4ACE-952C-14E573DC1E9B}</Property>
 				<Property Name="INST_productName" Type="Str">AeroQuad Configurator</Property>
-				<Property Name="INST_productVersion" Type="Str">2.6.9</Property>
+				<Property Name="INST_productVersion" Type="Str">2.6.10</Property>
 				<Property Name="InstSpecBitness" Type="Str">32-bit</Property>
 				<Property Name="InstSpecVersion" Type="Str">9018011</Property>
 				<Property Name="MSI_arpCompany" Type="Str">Carancho Engineering LLC</Property>
