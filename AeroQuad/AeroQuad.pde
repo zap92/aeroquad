@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - January 2011
+  AeroQuad v2.2 - Feburary 2011
   www.AeroQuad.com
   Copyright (c) 2011 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -30,10 +30,10 @@
 
 //#define AeroQuad_v1         // Arduino 2009 with AeroQuad Shield v1.7 and below
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
-//#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
+#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
 //#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
-#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
+//#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
 //#define ArduCopter          // ArduPilot Mega (APM) with APM Sensor Board
 //#define Multipilot          // Multipilot board with Lys344 and ADXL 610 Gyro (needs debug)
@@ -54,10 +54,11 @@
 // Optional Sensors
 // Warning:  If you enable HeadingHold or AltitudeHold and do not have the correct sensors connected, the flight software may hang
 // *******************************************************************************************************************************
-#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
-#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
-#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
-//#define WirelessTelemetry  // Enables Wireless telemetry on Serial3  // jihlein: Wireless telemetry enable
+//#define UseArduPirateSuperStable // Enable the imported stable mode imported from ArduPirate (experimental, use at your own risk)
+//#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
+//#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
+//#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
+//#define WirelessTelemetry  // Enables Wireless telemetry on Serial3  // Wireless telemetry enable
 
 // *******************************************************************************************************************************
 // Camera Stabilization
@@ -65,7 +66,7 @@
 // If using v2.0 Shield place jumper between:
 // D12 to D33 for roll, connect servo to SERVO1
 // D11 to D34 for pitch, connect servo to SERVO2
-// D13 to D35 for yaw, connectr servo to SERVO3
+// D13 to D35 for yaw, connect servo to SERVO3
 // Please note that you will need to have battery connected to power on servos with v2.0 shield
 // *******************************************************************************************************************************
 //#define CameraControl
@@ -79,7 +80,7 @@
 #include "AeroQuad.h"
 #include "I2C.h"
 #include "PID.h"
-#include "Filter.h"
+#include "AQMath.h"
 #include "Receiver.h"
 #include "DataAcquisition.h"
 #include "Accel.h"
@@ -93,7 +94,8 @@
   Receiver_AeroQuad receiver;
   Motors_PWM motors;
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #ifdef CameraControl
     #include "Camera.h"
     Camera_AeroQuad camera;
@@ -106,7 +108,8 @@
   Receiver_AeroQuad receiver;
   Motors_PWM motors;
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #ifdef CameraControl
     #include "Camera.h"
     Camera_AeroQuad camera;
@@ -120,7 +123,8 @@
   Motors_PWMtimer motors;
   //Motors_AeroQuadI2C motors; // Use for I2C based ESC's
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #ifdef HeadingMagHold
     #include "Compass.h"
     Compass_AeroQuad_v2 compass;
@@ -147,7 +151,8 @@
   Gyro_AeroQuad_v1 gyro;
   Motors_PWM motors;
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #ifdef CameraControl
     #include "Camera.h"
     Camera_AeroQuad camera;
@@ -161,7 +166,8 @@
   Accel_AeroQuadMega_v2 accel;
   Gyro_AeroQuadMega_v2 gyro;
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #ifdef HeadingMagHold
     #include "Compass.h"
     Compass_AeroQuad_v2 compass;
@@ -186,7 +192,12 @@
   Receiver_ArduCopter receiver;
   Motors_ArduCopter motors;
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
+  #ifdef HeadingMagHold
+    #include "Compass.h"
+    Compass_AeroQuad_v2 compass;
+  #endif
   #ifdef AltitudeHold
     #include "Altitude.h"
     Altitude_AeroQuad_v2 altitude;
@@ -203,8 +214,9 @@
   Receiver_AeroQuad receiver;
   Motors_PWM motors;
   #include "FlightAngle.h"
-  FlightAngle_CompFilter flightAngle;
-  //FlightAngle_DCM flightAngle;
+//  FlightAngle_CompFilter tempFlightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #ifdef CameraControl
     #include "Camera.h"
     Camera_AeroQuad camera;
@@ -217,7 +229,8 @@
   Receiver_AeroQuadMega receiver;
   Motors_PWM motors;
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #ifdef CameraControl
     #include "Camera.h"
     Camera_AeroQuad camera;
@@ -230,7 +243,8 @@
   Receiver_AeroQuadMega receiver;
   Motors_PWM motors;
   #include "FlightAngle.h"
-  FlightAngle_CHR6DM flightAngle;
+  FlightAngle_CHR6DM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #include "Compass.h"
   Compass_CHR6DM compass;
   #ifdef AltitudeHold
@@ -253,7 +267,8 @@
   Receiver_ArduCopter receiver;
   Motors_ArduCopter motors;
   #include "FlightAngle.h"
-  FlightAngle_CHR6DM flightAngle;
+  FlightAngle_CHR6DM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
   #include "Compass.h"
   Compass_CHR6DM compass;
   #ifdef AltitudeHold
@@ -278,7 +293,8 @@
   //#define PRINT_MIXERTABLE
   //#define TELEMETRY_DEBUG
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
 #endif
 
 #ifdef MultipilotI2C  
@@ -289,7 +305,22 @@
   //#define PRINT_MIXERTABLE
   //#define TELEMETRY_DEBUG
   #include "FlightAngle.h"
-  FlightAngle_DCM flightAngle;
+  FlightAngle_DCM tempFlightAngle;
+  FlightAngle *_flightAngle = &tempFlightAngle;
+#endif
+
+
+
+#ifdef XConfig
+  void (*processFlightControl)() = &processFlightControlXMode;
+#else
+  void (*processFlightControl)() = &processFlightControlPlusMode;
+#endif
+
+#ifdef UseArduPirateSuperStable
+  void (*processStableMode)() = &processArdupirateSuperStableMode;
+#else
+  void (*processStableMode)() = &processAeroQuadStableMode;
 #endif
 
 // Include this last as it contains objects from above declarations
@@ -369,7 +400,7 @@ void setup() {
   #endif
   
   // Flight angle estimiation
-  flightAngle.initialize(); // defined in FlightAngle.h
+  _flightAngle->initialize(); // defined in FlightAngle.h
 
   // Optional Sensors
   #ifdef HeadingMagHold
@@ -421,7 +452,7 @@ void loop () {
 
   // Combines external pilot commands and measured sensor data to generate motor commands
   if (controlLoop == ON) {
-    flightControl(); // defined in FlightControl.pde
+    processFlightControl();
   } 
   
   // Reads external pilot commands and performs functions based on stick configuration
@@ -439,9 +470,9 @@ void loop () {
 
   #ifdef CameraControl // Experimental, not fully implemented yet
     if ((cameraLoop == ON) && (currentTime > cameraTime)) { // 50Hz
-      camera.setPitch(flightAngle.getData(PITCH));
-      camera.setRoll(flightAngle.getData(ROLL));
-      camera.setYaw(flightAngle.getData(YAW));
+      camera.setPitch(_flightAngle->getData(PITCH));
+      camera.setRoll(_flightAngle->getData(ROLL));
+      camera.setYaw(_flightAngle->getData(YAW));
       camera.move();
       cameraTime = currentTime + CAMERALOOPTIME;
     }
