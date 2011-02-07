@@ -1,5 +1,5 @@
 /*
-  AeroQuad v2.1 - January 2011
+  AeroQuad v2.2 - Feburary 2011
   www.AeroQuad.com
   Copyright (c) 2011 Ted Carancho.  All rights reserved.
   An Open Source Arduino based multicopter.
@@ -39,7 +39,8 @@ public:
   // The following function calls must be defined inside any new subclasses
   // **********************************************************************
   virtual void initialize(void); 
-  virtual void measure(void); 
+  virtual void measure(void);
+  virtual const int getRawData(byte);
   
   // *********************************************************
   // The following functions are common between all subclasses
@@ -136,10 +137,10 @@ public:
     Wire.endTransmission();
     // Heading calculation based on code written by FabQuad
     // http://aeroquad.com/showthread.php?691-Hold-your-heading-with-HMC5843-Magnetometer
-    cosRoll = cos(radians(flightAngle.getData(ROLL)));
-    sinRoll = sin(radians(flightAngle.getData(ROLL)));
-    cosPitch = cos(radians(flightAngle.getData(PITCH)));
-    sinPitch = sin(radians(flightAngle.getData(PITCH)));
+    cosRoll = cos(radians(_flightAngle->getData(ROLL)));
+    sinRoll = sin(radians(_flightAngle->getData(ROLL)));
+    cosPitch = cos(radians(_flightAngle->getData(PITCH)));
+    sinPitch = sin(radians(_flightAngle->getData(PITCH)));
     magX = ((float)measuredMagX * magScale[XAXIS] + magOffset[XAXIS]) * cosPitch + ((float)measuredMagY * magScale[YAXIS] + magOffset[YAXIS]) * sinRoll * sinPitch + ((float)measuredMagZ * magScale[ZAXIS] + magOffset[ZAXIS]) * cosRoll * sinPitch;
     magY = ((float)measuredMagY * magScale[YAXIS] + magOffset[YAXIS]) * cosRoll - ((float)measuredMagZ * magScale[ZAXIS] + magOffset[ZAXIS]) * sinRoll;
     //magX = measuredMagX * cosPitch + measuredMagY * sinRoll * sinPitch + measuredMagZ * cosRoll * sinPitch;
@@ -175,6 +176,7 @@ class Compass_CHR6DM : public Compass {
 public:
   Compass_CHR6DM() : Compass() {}
   void initialize(void) {}
+  const int getRawData(byte) {}
   void measure(void) {
     heading = chr6dm.data.yaw; //this hardly needs any filtering :)
     // Change from +/-180 to 0-360
@@ -187,6 +189,7 @@ class Compass_CHR6DM_Fake : public Compass {
 public:
   Compass_CHR6DM_Fake() : Compass() {}
   void initialize(void) {}
+  const int getRawData(byte) {}
   void measure(void) {
     heading = 0;
     // Change from +/-180 to 0-360
