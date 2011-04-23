@@ -18,164 +18,8 @@
 //  along with this program. If not, see <http://www.gnu.org/licenses/>. 
 //*/
 //
-//class Accel {
-//public:
-//  float accelScaleFactor;
-//  float smoothFactor;
-//  float rawAltitude;
-//  int accelChannel[3];
-//  #if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
-//    float accelZero[3];
-//  #else
-//    int accelZero[3];
-//  #endif
-//  float accelData[3];
-//  int accelADC[3];
-//  int sign[3];
-//  float accelOneG, zAxis;
-//  byte rollChannel, pitchChannel, zAxisChannel;
-//  
-//  Accel(void) {
-//    sign[ROLL] = 1;
-//    sign[PITCH] = 1;
-//    sign[YAW] = 1;
-//    zAxis = 0;
-//  }
-//
-//  // ******************************************************************
-//  // The following function calls must be defined in any new subclasses
-//  // ******************************************************************
-//  virtual void initialize(void) {
-//    this->_initialize(rollChannel, pitchChannel, zAxisChannel);
-//  }
-//  virtual void measure(void);
-//  virtual void calibrate(void);
-//  virtual const int getFlightData(byte);
-//
-//  // **************************************************************
-//  // The following functions are common between all Gyro subclasses
-//  // **************************************************************
-//  void _initialize(byte rollChannel, byte pitchChannel, byte zAxisChannel) {
-//    accelChannel[ROLL] = rollChannel;
-//    accelChannel[PITCH] = pitchChannel;
-//    accelChannel[ZAXIS] = zAxisChannel;
-//    accelOneG        = readFloat(ACCEL1G_ADR);
-//    accelZero[XAXIS] = readFloat(LEVELPITCHCAL_ADR);
-//    accelZero[YAXIS] = readFloat(LEVELROLLCAL_ADR);
-//    accelZero[ZAXIS] = readFloat(LEVELZCAL_ADR);
-//  }
-//  
-//  // return the raw ADC value from the accel, with sign change if need, not smoothed or scaled to SI units
-//  const int getRaw(byte axis) {
-//    return accelADC[axis] * sign[axis];
-//  }
-//  
-//  // return the smoothed and scaled to SI units value of the accel with sign change if needed
-//  const float getData(byte axis) {
-//    return accelData[axis] * sign[axis];
-//  }
-//  
-//  // invert the sign for a specifica accel axis
-//  const int invert(byte axis) {
-//    sign[axis] = -sign[axis];
-//    return sign[axis];
-//  }
-//  
-//  const int getZero(byte axis) {
-//    return accelZero[axis];
-//  }
-//  
-//  void setZero(byte axis, int value) {
-//    accelZero[axis] = value;
-//  }
-//  
-//  // returns the SI scale factor
-//  const float getScaleFactor(void) {
-//    return accelScaleFactor;
-//  }
-//  
-//  // returns the smoothfactor
-//  const float getSmoothFactor() {
-//    return smoothFactor;
-//  }
-//  
-//  void setSmoothFactor(float value) {
-//    smoothFactor = value;
-//  }
-//  
-//  void setOneG(float value) {
-//    accelOneG = value;
-//  }
-//  
-//  const float getOneG(void) {
-//    return accelOneG;
-//  }
-//  
-//  const float getZaxis() {
-//    return accelOneG - getData(ZAXIS);
-//  }
-//};
-//
-///******************************************************/
-///************ AeroQuad v1 Accelerometer ***************/
-///******************************************************/
-//#if defined(AeroQuad_v1) || defined(AeroQuad_v1_IDG) || defined(AeroQuadMega_v1)
-//class Accel_AeroQuad_v1 : public Accel {
-//private:
-//  
-//public:
-//  Accel_AeroQuad_v1() : Accel(){
-//  }
-//  
-//  void initialize(void) {
-//    // rollChannel = 1
-//    // pitchChannel = 0
-//    // zAxisChannel = 2
-//    this->_initialize(1, 0, 2);
-//    smoothFactor     = readFloat(ACCSMOOTH_ADR);
-//    accelScaleFactor = G_2_MPS2((aref/1024.0) / 0.300);
-//    //accelScaleFactor = G_2_MPS2(((aref*1000)/1024)/(aref*100));
-//  }
-//  
-//  void measure(void) {
-//    accelADC[XAXIS] = analogRead(accelChannel[PITCH]) - accelZero[PITCH];
-//    accelADC[YAXIS] = analogRead(accelChannel[ROLL]) - accelZero[ROLL];
-//    accelADC[ZAXIS] = accelZero[ZAXIS] - analogRead(accelChannel[ZAXIS]);
-//    for (byte axis = XAXIS; axis < LASTAXIS; axis++) {
-//      //accelData[axis] = computeFirstOrder(accelADC[axis] * accelScaleFactor, &firstOrder[axis]);
-//      accelData[axis] = filterSmooth(accelADC[axis] * accelScaleFactor, accelData[axis], smoothFactor);
-//    }
-//  }
-//
-//  const int getFlightData(byte axis) {
-//    return getRaw(axis);
-//  }
-//  
-//  // Allows user to zero accelerometers on command
-//  void calibrate(void) {
-//    int findZero[FINDZERO];
-//
-//    for (byte calAxis = XAXIS; calAxis < LASTAXIS; calAxis++) {
-//      for (int i=0; i<FINDZERO; i++) {
-//        findZero[i] = analogRead(accelChannel[calAxis]);
-//      }
-//      accelZero[calAxis] = findMedianInt(findZero, FINDZERO);
-//    }
-//    
-//    // store accel value that represents 1g
-//    measure();
-//    accelOneG = -accelData[ZAXIS];
-//    // replace with estimated Z axis 0g value
-//    accelZero[ZAXIS] = (accelZero[XAXIS] + accelZero[YAXIS]) / 2;
-//    
-//    writeFloat(accelOneG, ACCEL1G_ADR);
-//    writeFloat(accelZero[YAXIS], LEVELROLLCAL_ADR);
-//    writeFloat(accelZero[XAXIS], LEVELPITCHCAL_ADR);
-//    writeFloat(accelZero[ZAXIS], LEVELZCAL_ADR);
-//  }
-//};
-//#endif
-//
+
+
 ///******************************************************/
 ///********* AeroQuad Mega v2 Accelerometer *************/
 ///******************************************************/
@@ -284,7 +128,8 @@
 //  }
 //};
 //#endif
-//
+
+
 ///******************************************************/
 ///********* AeroQuad Mini v1 Accelerometer *************/
 ///******************************************************/
@@ -369,79 +214,9 @@
 //  }
 //};
 //#endif
-//
-///******************************************************/
-///*********** ArduCopter ADC Accelerometer *************/
-///******************************************************/
-//#ifdef ArduCopter
-//class Accel_ArduCopter : public Accel {
-//private:
-//  int rawADC;
-//
-//public:
-//  Accel_ArduCopter() : Accel(){
-//    accelScaleFactor = G_2_MPS2((3.3/4096) / 0.330);    
-//  }
-//  
-//  void initialize(void) {
-//    // old AQ way
-//    // rollChannel = 5
-//    // pitchChannel = 4
-//    // zAxisChannel = 6
-//    // new way in 2.3
-//    // rollChannel = 3
-//    // pitchChannel = 4
-//    // zAxisChannel = 5
-//    this->_initialize(3, 4, 5);
-//    smoothFactor     = readFloat(ACCSMOOTH_ADR);
-//  }
-//  
-//  void measure(void) {
-//    for (byte axis = ROLL; axis < LASTAXIS; axis++) {
-//      rawADC = readADC(accelChannel[axis]);
-//      if (rawADC > 500) { // Check if measurement good
-//        if (axis == ROLL)
-//          accelADC[axis] = rawADC - accelZero[axis];
-//        else
-//          accelADC[axis] = accelZero[axis] - rawADC;
-//        //accelData[axis] = computeFirstOrder(accelADC[axis] * accelScaleFactor, &firstOrder[axis]);
-//        accelData[axis] = filterSmooth(accelADC[axis] * accelScaleFactor, accelData[axis], smoothFactor);
-//      }
-//    }
-//  }
-//
-//  const int getFlightData(byte axis) {
-//      return getRaw(axis);
-//  }
-//  
-//  // Allows user to zero accelerometers on command
-//  void calibrate(void) {
-//    int findZero[FINDZERO];
-//    
-//    for(byte calAxis = XAXIS; calAxis < LASTAXIS; calAxis++) {
-//      for (int i=0; i<FINDZERO; i++) {
-//        findZero[i] = readADC(accelChannel[calAxis]);
-//        delay(2);
-//      }
-//      accelZero[calAxis] = findMedianInt(findZero, FINDZERO);
-//    }
-//
-//    //accelOneG = 486;    // tested value with the configurator at flat level
-//    // replace with estimated Z axis 0g value
-//    accelZero[ZAXIS] = (accelZero[ROLL] + accelZero[PITCH]) / 2;
-//   
-//    // store accel value that represents 1g
-//    measure();
-//    accelOneG = -accelData[ZAXIS];
-//
-//    writeFloat(accelOneG,        ACCEL1G_ADR);
-//    writeFloat(accelZero[XAXIS], LEVELPITCHCAL_ADR);
-//    writeFloat(accelZero[YAXIS], LEVELROLLCAL_ADR);
-//    writeFloat(accelZero[ZAXIS], LEVELZCAL_ADR);
-//  }
-//};
-//#endif
-//
+
+
+
 ///******************************************************/
 ///****************** Wii Accelerometer *****************/
 ///******************************************************/
@@ -508,7 +283,8 @@
 //  }
 //};
 //#endif
-//
+
+
 ///******************************************************/
 ///****************** CHR6DM Accelerometer **************/
 ///******************************************************/
