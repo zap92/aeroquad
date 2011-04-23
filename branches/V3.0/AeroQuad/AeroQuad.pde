@@ -58,7 +58,7 @@
 // You must define one of the next 3 attitude stabilization modes or the software will not build
 // *******************************************************************************************************************************
 //#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
-//#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
+#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
 //#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -94,6 +94,13 @@
 #if defined(HeadingMagHold) && defined(FlightAngleMARG) && defined(FlightAngleARG)
 #undef FlightAngleARG
 #endif
+
+
+/**
+ * Kenny todo.
+ * @todo : extract accelerometer and others!
+ * @todo : adapt Alan led class or use it, standardize led processing. Fix dave bug for WII
+ */
 
 #include <EEPROM.h>
 #include <Wire.h>
@@ -394,7 +401,11 @@
   Gyroscope *gyro = &gyroSpecific;
   
   // Accelerometer Declaration
-  Accel_ArduCopter accel;
+  #include <Accelerometer.h>
+  #include <Accelerometer_APM.h>
+  Accelerometer_APM accelSpecific;
+  Accelerometer *accel = &accelSpecific;
+
   // Receiver Declaration
   Receiver_ArduCopter receiver;
   // Motor Declaration
@@ -478,7 +489,7 @@
      Wire.begin();
      
      gyroSpecific.setPlatformWii(&platformWii);
-     accel.setPlatformWii(&platformWii);
+     accel->setPlatformWii(&platformWii);
   }
 #endif
 
@@ -523,7 +534,7 @@
     Wire.begin();
     
     gyroSpecific.setPlatformWii(&platformWii);
-    accel.setPlatformWii(&platformWii);    
+    accel->setPlatformWii(&platformWii);    
   }
 #endif
 
@@ -722,7 +733,7 @@ void setup() {
   // insert it into the gyro class because it executes first
   initSensorsZeroFromEEPROM();
   gyro->initialize(); // defined in Gyro.h
-  accel.initialize(); // defined in Accel.h
+  accel->initialize(); // defined in Accel.h
   
   // Calibrate sensors
   gyro->calibrate(); // defined in Gyro.h
@@ -830,18 +841,18 @@ void loop () {
       if (sensorLoop == ON) {
         // measure critical sensors
         gyro->measure();
-        accel.measure();
+        accel->measure();
         
         // ****************** Calculate Absolute Angle *****************
         #if defined HeadingMagHold && defined FlightAngleMARG
           flightAngle->calculate(gyro->getRadPerSec(ROLL),                       \
                                  gyro->getRadPerSec(PITCH),                      \
                                  gyro->getRadPerSec(YAW),                        \
-                                 accel.getData(XAXIS),                     \
-                                 accel.getData(YAXIS),                     \
-                                 accel.getData(ZAXIS),                     \
-                                 compass.getRawData(XAXIS),                \
-                                 compass.getRawData(YAXIS),                \
+                                 accel->getMeterPerSec(XAXIS),                    \
+                                 accel->getMeterPerSec(YAXIS),                    \
+                                 accel->getMeterPerSec(ZAXIS),                    \
+                                 compass.getRawData(XAXIS),                      \
+                                 compass.getRawData(YAXIS),                      \
                                  compass.getRawData(ZAXIS));
         #endif
       
@@ -849,11 +860,11 @@ void loop () {
           flightAngle->calculate(gyro->getRadPerSec(ROLL),                       \
                                  gyro->getRadPerSec(PITCH),                      \
                                  gyro->getRadPerSec(YAW),                        \
-                                 accel.getData(XAXIS),                     \
-                                 accel.getData(YAXIS),                     \
-                                 accel.getData(ZAXIS),                     \
-                                 0.0,                                      \
-                                 0.0,                                      \
+                                 accel->getMeterPerSec(XAXIS),                    \
+                                 accel->getMeterPerSec(YAXIS),                    \
+                                 accel->getMeterPerSec(ZAXIS),                    \
+                                 0.0,                                            \
+                                 0.0,                                            \
                                  0.0);
         #endif
 
@@ -861,11 +872,11 @@ void loop () {
           flightAngle->calculate(gyro->getRadPerSec(ROLL),                       \
                                  gyro->getRadPerSec(PITCH),                      \
                                  gyro->getRadPerSec(YAW),                        \
-                                 accel.getData(XAXIS),                     \
-                                 accel.getData(YAXIS),                     \
-                                 accel.getData(ZAXIS),                     \
-                                 0.0,                                      \
-                                 0.0,                                      \
+                                 accel->getMeterPerSec(XAXIS),                    \
+                                 accel->getMeterPerSec(YAXIS),                    \
+                                 accel->getMeterPerSec(ZAXIS),                    \
+                                 0.0,                                            \
+                                 0.0,                                            \
                                  0.0);
         #endif
       
@@ -873,10 +884,10 @@ void loop () {
           flightAngle->calculate(gyro->getRadPerSec(ROLL),                       \
                                  gyro->getRadPerSec(PITCH),                      \
                                  gyro->getRadPerSec(YAW),                        \
-                                 accel.getData(XAXIS),                     \
-                                 accel.getData(YAXIS),                     \
-                                 accel.getData(ZAXIS),                     \
-                                 accel.getOneG(),                          \
+                                 accel->getMeterPerSec(XAXIS),                     \
+                                 accel->getMeterPerSec(YAXIS),                     \
+                                 accel->getMeterPerSec(ZAXIS),                     \
+                                 accel->getOneG(),                          \
                                  compass.getHdgXY(XAXIS),                  \
                                  compass.getHdgXY(YAXIS));
         #endif
@@ -885,10 +896,10 @@ void loop () {
           flightAngle->calculate(gyro->getRadPerSec(ROLL),  \
                                  gyro->getRadPerSec(PITCH),                      \
                                  gyro->getRadPerSec(YAW),                        \
-                                 accel.getData(XAXIS),                     \
-                                 accel.getData(YAXIS),                     \
-                                 accel.getData(ZAXIS),                     \
-                                 accel.getOneG(),                          \
+                                 accel->getMeterPerSec(XAXIS),                     \
+                                 accel->getMeterPerSec(YAXIS),                     \
+                                 accel->getMeterPerSec(ZAXIS),                     \
+                                 accel->getOneG(),                          \
                                  0.0,                                      \
                                  0.0);
         #endif
