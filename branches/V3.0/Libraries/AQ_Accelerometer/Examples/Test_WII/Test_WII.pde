@@ -18,25 +18,30 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include <Wire.h>             // Arduino IDE bug, needed because that the ITG3200 use Wire!
-#include <Device_I2C.h>       // Arduino IDE bug, needed because that the ITG3200 use Wire!
 #include <Platform_CHR6DM.h>  // Arduino IDE bug, needed because that the CHR6DM use Wire!
+#include <APM_ADC.h>          // Arduino IDE bug, needed because that the CHR6DM use Wire!
 
+#include <Wire.h>             
+#include <Device_I2C.h>       
 #include <Axis.h>
-#include <APM_ADC.h>
 #include <AQMath.h>
-#include <Accelerometer_APM.h>
+#include <Platform_Wii.h>
+#include <Accelerometer_WII.h>
 
 unsigned long timer;
-Accelerometer_APM accel;
+Platform_Wii platformWii;
+Accelerometer_WII accel;
 
 void setup() {
   
   Serial.begin(115200);
-  Serial.println("Accelerometer library test (APM)");
+  Serial.println("Accelerometer library test (WII)");
   
-  initializeADC();
+  Wire.begin();
+  platformWii.initialize();
+  accel.setPlatformWii(&platformWii);
   accel.calibrate();
+  timer = millis();
 }
 
 void loop() {
