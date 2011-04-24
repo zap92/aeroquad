@@ -25,10 +25,10 @@
 #include <Axis.h>
 #include <APM_ADC.h>
 #include <AQMath.h>
-#include <Accelerometer_IDG500.h>
+#include <Accelerometer_ADXL500.h>
 
 unsigned long timer;
-Accelerometer_IDG500 accel;
+Accelerometer_ADXL500 accel;
 
 void setup() {
   
