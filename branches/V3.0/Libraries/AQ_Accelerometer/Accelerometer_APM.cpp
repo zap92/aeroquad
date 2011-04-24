@@ -30,7 +30,7 @@ Accelerometer_APM::Accelerometer_APM() {
 }
   
 void Accelerometer_APM::measure(void) {
-  float accelADC;
+  int accelADC;
   for (byte axis = ROLL; axis < LASTAXIS; axis++) {
     const float rawADC = readADC(axis+3);
     if (rawADC > 500) { // Check if measurement good

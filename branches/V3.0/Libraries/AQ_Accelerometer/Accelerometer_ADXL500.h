@@ -18,14 +18,19 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _AEROQUAD_ACCELEROMETER_APM_H_
-#define _AEROQUAD_ACCELEROMETER_APM_H_
+#ifndef _AEROQUAD_ACCELEROMETER_IDG500_H_
+#define _AEROQUAD_ACCELEROMETER_IDG500_H_
 
 #include <Accelerometer.h>
 
-class Accelerometer_APM : public Accelerometer {
+class Accelerometer_ADXL500 : public Accelerometer {
+private:
+  float aref;
+  
 public:
-  Accelerometer_APM();
+  Accelerometer_ADXL500();
+  
+  void setAref(float aref);
   
   void measure(void);
   void calibrate(void);

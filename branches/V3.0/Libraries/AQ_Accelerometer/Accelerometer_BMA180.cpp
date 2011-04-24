@@ -68,13 +68,13 @@ void Accelerometer_BMA180::measure(void) {
   Wire.endTransmission();
   Wire.requestFrom(ACCEL_ADDRESS, 6);
   
-  int accelADC[3];
+  int accelADC;
   for (byte axis = XAXIS; axis < LASTAXIS; axis++) {
     if (axis == XAXIS)
-      accelADC[axis] = ((Wire.receive()|(Wire.receive() << 8)) >> 2) - zero[axis];
+      accelADC = ((Wire.receive()|(Wire.receive() << 8)) >> 2) - zero[axis];
     else
-      accelADC[axis] = zero[axis] - ((Wire.receive()|(Wire.receive() << 8)) >> 2);
-    meterPerSec[axis] = filterSmooth(accelADC[axis] * accelScaleFactor, meterPerSec[axis], smoothFactor);
+      accelADC = zero[axis] - ((Wire.receive()|(Wire.receive() << 8)) >> 2);
+    meterPerSec[axis] = filterSmooth(accelADC * accelScaleFactor, meterPerSec[axis], smoothFactor);
   }  
 }
 
