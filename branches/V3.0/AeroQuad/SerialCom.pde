@@ -154,10 +154,6 @@ void readSerialCommand() {
       break;
     case 'c': // calibrate accels
       accel->calibrate();
-#if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
-      flightAngle->calibrate();
-      accel->setOneG(accel->getFlightData(ZAXIS));
-#endif
       break;
     case 'd': // send aref
       aref = readFloatSerial();

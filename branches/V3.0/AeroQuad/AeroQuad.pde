@@ -34,13 +34,13 @@
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
 //#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
 //#define AeroQuad_Mini       // Arduino Pro Mini with AeroQuad Mini Shield V1.0
-#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
+//#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
 //#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
 //#define ArduCopter          // ArduPilot Mega (APM) with APM Sensor Board
 //#define AeroQuadMega_CHR6DM // Clean Arduino Mega with CHR6DM as IMU/heading ref.
-//#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
+#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
 
 /****************************************************************************
  *********************** Define Flight Configuration ************************
@@ -111,7 +111,6 @@
 #include <AQMath.h>
 #include <APM_ADC.h>
 #include "Receiver.h"
-#include "Accel.h"
 #include "Motors.h"
 
 // Create objects defined from Configuration Section above
@@ -127,6 +126,7 @@
   #include <Accelerometer_ADXL500.h>
   Accelerometer_ADXL500 accelSpecific;
   Accelerometer *accel = &accelSpecific;
+  
   // Receiver declaration
   Receiver_AeroQuad receiver;
   // Motor declaration
@@ -170,6 +170,7 @@
   #include <Accelerometer_ADXL500.h>
   Accelerometer_ADXL500 accelSpecific;
   Accelerometer *accel = &accelSpecific;
+  
   // Receiver declaration
   Receiver_AeroQuad receiver;
   // Motor declaration
@@ -213,6 +214,7 @@
   #include <Accelerometer_BMA180.h>
   Accelerometer_BMA180 accelSpecific;
   Accelerometer *accel = &accelSpecific;
+  
   // Receiver declaration
   Receiver_AeroQuad receiver;
   // Motors declaration
@@ -321,7 +323,11 @@
   Gyroscope *gyro = &gyroSpecific;
 
   // Accelerometer declaration
-  Accel_AeroQuad_v1 accel;
+  #include <Accelerometer.h>
+  #include <Accelerometer_ADXL500.h>
+  Accelerometer_ADXL500 accelSpecific;
+  Accelerometer *accel = &accelSpecific;
+
   // Reveiver declaration
   Receiver_AeroQuadMega receiver;
   // Motor declaration
@@ -360,7 +366,11 @@
   Gyroscope *gyro = &gyroSpecific;
   
   // Accelerometer declaration
-  Accel_AeroQuadMega_v2 accel;
+  #include <Accelerometer.h>
+  #include <Accelerometer_BMA180.h>
+  Accelerometer_BMA180 accelSpecific;
+  Accelerometer *accel = &accelSpecific;
+
   // Receiver Declaration
   Receiver_AeroQuadMega receiver;
   // Motors declaration
@@ -506,6 +516,8 @@
   void initPlatformSpecific() {
      Wire.begin();
      
+     platformWii.initialize();
+     
      gyroSpecific.setPlatformWii(&platformWii);
      accelSpecific.setPlatformWii(&platformWii);
   }
@@ -522,7 +534,11 @@
   Gyroscope *gyro = &gyroSpecific;
 
   // Accelerometer declaration
-  Accel_Wii accel;
+  #include <Accelerometer.h>
+  #include <Accelerometer_WII.h>
+  Accelerometer_WII accelSpecific;
+  Accelerometer *accel = &accelSpecific;
+
   // Receiver declaration
   Receiver_AeroQuadMega receiver;
   // Motors declaration
@@ -552,7 +568,7 @@
     Wire.begin();
     
     gyroSpecific.setPlatformWii(&platformWii);
-    accel->setPlatformWii(&platformWii);    
+    accelSpecific.setPlatformWii(&platformWii);    
   }
 #endif
 
@@ -566,7 +582,10 @@
   Gyroscope *gyro = &gyroSpecific;
 
   // Accelerometer declaration
-  Accel_CHR6DM accel;
+  #include <Accelerometer.h>
+  Accelerometer accelSpecific;
+  Accelerometer *accel = &accelSpecific;
+
   // Receiver declaration
   Receiver_AeroQuadMega receiver;
   // Motors declaration
@@ -623,7 +642,10 @@
   Gyroscope *gyro = &gyroSpecific;
   
   // Accelerometer declaration
-  Accel_CHR6DM accel;
+  #include <Accelerometer.h>
+  Accelerometer accelSpecific;
+  Accelerometer *accel = &accelSpecific;
+
   // Receiver declaration
   Receiver_ArduCopter receiver;
   // Motors declaration
