@@ -58,7 +58,7 @@
 // You must define one of the next 3 attitude stabilization modes or the software will not build
 // *******************************************************************************************************************************
 //#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
-#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
+//#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
 //#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -110,7 +110,6 @@
 #include "PID.h"
 #include <AQMath.h>
 #include <APM_ADC.h>
-#include "Receiver.h"
 #include "Motors.h"
 
 // Create objects defined from Configuration Section above
@@ -431,7 +430,12 @@
   Accelerometer *accel = &accelSpecific;
 
   // Receiver Declaration
-  Receiver_ArduCopter receiver;
+  #include <Receiver.h>
+  #include <Receiver_APM.h>
+  Receiver_APM receiverSpecific;
+  Receiver *receiver = &receiverSpecific;
+
+  
   // Motor Declaration
   Motors_ArduCopter motors;
   
@@ -766,7 +770,10 @@ void setup() {
   motors.initialize(); // defined in Motors.h
 
   // Setup receiver pins for pin change interrupts
-  if (receiverLoop == ON) receiver.initialize(); // defined in Received.h
+  if (receiverLoop == ON) {
+    receiver->initialize(); // defined in Received.h
+    initReceiverFromEEPROM();
+  }
        
   // Initialize sensors
   // If sensors have a common initialization routine
