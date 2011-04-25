@@ -34,6 +34,12 @@ Receiver::Receiver() {
     transmitterCommandSmooth[channel] = 1.0;
   for (byte channel = ROLL; channel < THROTTLE; channel++)
     transmitterZero[channel] = 1500;
+  for (byte channel = ROLL; channel < THROTTLE; channel++)
+    mTransmitter[channel] = 1;
+  for (byte channel = ROLL; channel < THROTTLE; channel++)
+    bTransmitter[channel] = 1;
+  for (byte channel = ROLL; channel < THROTTLE; channel++)
+    transmitterSmooth[channel] = 1;
 }
 
 const float Receiver::getXmitFactor(void) {
