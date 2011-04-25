@@ -188,12 +188,12 @@ byte altitudeHold = OFF;
 //#define LASTCHANNEL 6
 int delta;
 
-#define RISING_EDGE 1
-#define FALLING_EDGE 0
-#define MINONWIDTH 950
-#define MAXONWIDTH 2075
-#define MINOFFWIDTH 12000
-#define MAXOFFWIDTH 24000
+//#define RISING_EDGE 1
+//#define FALLING_EDGE 0
+//#define MINONWIDTH 950
+//#define MAXONWIDTH 2075
+//#define MINOFFWIDTH 12000
+//#define MAXOFFWIDTH 24000
 
 // Flight angle variables
 float timeConstant;

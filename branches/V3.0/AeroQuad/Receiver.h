@@ -245,7 +245,7 @@
 //
 //// defines arduino pins used for receiver in arduino pin numbering schema
 //static byte receiverPin[6] = {2, 5, 6, 4, 7, 8}; // pins used for ROLL, PITCH, YAW, THROTTLE, MODE, AUX
-//
+
 //class Receiver_AeroQuad : public Receiver {
 //public:
 //  // Configure each receiver pin for PCINT

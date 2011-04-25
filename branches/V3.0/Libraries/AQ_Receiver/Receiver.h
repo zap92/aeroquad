@@ -54,7 +54,7 @@ protected:
 public:  
   Receiver();
 
-  virtual void initialize() {}
+  virtual void initialize(void) {}
   virtual void read(void) {}
   
   const float getXmitFactor(void);
