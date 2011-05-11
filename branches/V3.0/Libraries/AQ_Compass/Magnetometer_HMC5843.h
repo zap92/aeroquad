@@ -19,39 +19,22 @@
 */
 
 
-#ifndef _AEROQUAD_COMPASS_H_
-#define _AEROQUAD_COMPASS_H_
+#ifndef _AEROQUAD_MAGNETOMETER_HMC5843_H_
+#define _AEROQUAD_MAGNETOMETER_HMC5843_H_
 
-#include <WProgram.h>
+#include "Compass.h"
 
-class Compass {
+class Magnetometer_HMC5843 : public Compass{
 private:
-  float magMax[3];
-  float magMin[3];
+  int compassAddress;
+  float magCalibration[3];
   
-protected:  
-  float hdgX;
-  float hdgY;
-
-  float measuredMagX;
-  float measuredMagY;
-  float measuredMagZ;
-  float magScale[3];
-  float magOffset[3];
-
 public:
-
-  Compass();
+  Magnetometer_HMC5843();	
   
-  virtual void initialize() {}
-  virtual void measure(float roll, float pitch) {}
+  void initialize();
+  void measure(float roll, float pitch);
   
-  void setMagCal(byte axis, float maxValue, float minValue);
-  const float getMagMax(byte axis);
-  const float getMagMin(byte axis);
-  const float getHdgXY(byte axis);
-  const int getRawData(byte axis);
-	
 };
 
 
