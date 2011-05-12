@@ -28,9 +28,9 @@
 #define MAXCOMMAND 2000
 
 enum NB_Motors{
-  FOUR_Motors,
-  SIX_Motors,
-  HEIGHT_Motors
+  FOUR_Motors = 4,
+  SIX_Motors = 6,
+  HEIGHT_Motors = 8
 };
 
 

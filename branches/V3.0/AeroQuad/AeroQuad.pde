@@ -98,6 +98,7 @@
 
 /**
  * Kenny todo.
+ * @todo : double check motors integration from John import
  * @todo : add example test for mag, put also the address as define!
  * @todo : extract barometers, kinematics, camera, 
  * @todo : adapt Alan led class or use it, standardize led processing. Fix dave bug for WII
@@ -790,44 +791,13 @@
 void (*initPlatform)() = &initPlatformSpecific;
 
 #if defined quadXConfig
-
-  #define FRONT_LEFT  0
-  #define REAR_RIGHT  1
-  #define FRONT_RIGHT 2
-  #define REAR_LEFT   3
-  #define LASTMOTOR 4
   #include "FlightControlQuadXMode.h"
-  
 #elif defined quadPlusConfig
-
-  #define FRONT 0
-  #define REAR  1
-  #define RIGHT 2
-  #define LEFT  3
-  #define LASTMOTOR 4
   #include "FlightControlQuadPlusMode.h"
-  
 #elif defined hexPlusConfig  
-  #define FRONT_LEFT  0
-  #define REAR_RIGHT  1
-  #define FRONT_RIGHT 2
-  #define REAR_LEFT   3
-  #define FRONT       4
-  #define REAR        5
-  #define LASTMOTOR   6
   #include "FlightControlHexPlusMode.h"
-  
 #elif defined hexXConfig
-
-  #define FRONT_LEFT  0
-  #define REAR_RIGHT  1
-  #define FRONT_RIGHT 2
-  #define REAR_LEFT   3
-  #define RIGHT       4
-  #define LEFT        5
-  #define LASTMOTOR   6
   #include "FlightControlHexXMode.h"
-  
 #else
   // provoque a compilation error here, no motor config defined
 #endif
@@ -839,7 +809,7 @@ void (*initPlatform)() = &initPlatformSpecific;
 // ********************** Setup AeroQuad **********************
 // ************************************************************
 void setup() {
-  Serial.begin(BAUD);
+  SERIAL_BEGIN(BAUD);
   pinMode(LEDPIN, OUTPUT);
   digitalWrite(LEDPIN, LOW);
 
@@ -892,7 +862,11 @@ void setup() {
   initPlatform();
   
   // Configure motors
-  motors->initialize(); // defined in Motors.h
+  #if defined(quadXConfig) || defined(quadPlusConfig)
+     motors->initialize(); 
+  #elif defined(hexPlusConfig) || defined(hexXConfig)
+     motors->initialize(SIX_Motors); 
+  #endif
 
   // Setup receiver pins for pin change interrupts
   if (receiverLoop == ON) {
