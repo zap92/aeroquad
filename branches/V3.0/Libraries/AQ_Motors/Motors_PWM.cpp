@@ -30,10 +30,10 @@ void Motors_PWM::initialize(NB_Motors numbers) {
 }
 
 void Motors_PWM::write() {
-  analogWrite(FRONTMOTORPIN, motorCommand[FRONT] / 8);
-  analogWrite(REARMOTORPIN,  motorCommand[REAR]  / 8);
-  analogWrite(RIGHTMOTORPIN, motorCommand[RIGHT] / 8);
-  analogWrite(LEFTMOTORPIN,  motorCommand[LEFT]  / 8);
+  analogWrite(FRONTMOTORPIN, motorCommand[0] / 8);
+  analogWrite(REARMOTORPIN,  motorCommand[1]  / 8);
+  analogWrite(RIGHTMOTORPIN, motorCommand[2] / 8);
+  analogWrite(LEFTMOTORPIN,  motorCommand[3]  / 8);
 }
 
 void Motors_PWM::commandAllMotors(int command) {

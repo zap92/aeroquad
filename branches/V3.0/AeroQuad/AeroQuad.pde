@@ -46,10 +46,10 @@
  *********************** Define Flight Configuration ************************
  ****************************************************************************/
 // Use only one of the following definitions
-#define XConfig
-//#define plusConfig
-//#define HEXACOAXIAL  // Not used yet
-//#define HEXARADIAL   // Not used yet
+#define quadXConfig
+//#define quadPlusConfig
+//#define hexPlusConfig
+//#define hexXConfig
 
 // *******************************************************************************************************************************
 // Optional Sensors
@@ -67,7 +67,7 @@
 // flightAngle recommendations: use FlightAngleARG if you do not have a magnetometer, use DCM if you have a magnetometer installed
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //#define FlightAngleMARG // Experimental!  Fly at your own risk! Use this if you have a magnetometer installed and enabled HeadingMagHold above
-#define FlightAngleARG // Use this if you do not have a magnetometer installed
+//#define FlightAngleARG // Use this if you do not have a magnetometer installed
 //#define WirelessTelemetry  // Enables Wireless telemetry on Serial3  // Wireless telemetry enable
 //#define BinaryWrite // Enables fast binary transfer of flight data to Configurator
 //#define BinaryWritePID // Enables fast binary transfer of attitude PID data
@@ -98,11 +98,11 @@
 
 /**
  * Kenny todo.
- * @todo : flight test mag and add example test!
+ * @todo : add example test for mag, put also the address as define!
  * @todo : extract barometers, kinematics, camera, 
  * @todo : adapt Alan led class or use it, standardize led processing. Fix dave bug for WII
  * @todo : import alamo work for OSD here http://aeroquad.com/showthread.php?2942-OSD-implementation-using-MAX7456
- * @todo : do alan request on the #define for eeprom address
+ * @todo : do alan request on the #define for eeprom address, @see ala42 way - >http://aeroquad.com/showthread.php?2995-EEPROM-defines
  * @todo : fix wireless telemetry
  * 28142 -> 27778
  *
@@ -789,12 +789,47 @@
 // Generalization of the specific init platform
 void (*initPlatform)() = &initPlatformSpecific;
 
-#if defined XConfig
-  #include "FlightControlXMode.h"
-  void (*processFlightControl)() = &processFlightControlXMode;
-#elif defined plusConfig
-  #include "FlightControlPlusMode.h"
-  void (*processFlightControl)() = &processFlightControlPlusMode;
+#if defined quadXConfig
+
+  #define FRONT_LEFT  0
+  #define REAR_RIGHT  1
+  #define FRONT_RIGHT 2
+  #define REAR_LEFT   3
+  #define LASTMOTOR 4
+  #include "FlightControlQuadXMode.h"
+  
+#elif defined quadPlusConfig
+
+  #define FRONT 0
+  #define REAR  1
+  #define RIGHT 2
+  #define LEFT  3
+  #define LASTMOTOR 4
+  #include "FlightControlQuadPlusMode.h"
+  
+#elif defined hexPlusConfig  
+  #define FRONT_LEFT  0
+  #define REAR_RIGHT  1
+  #define FRONT_RIGHT 2
+  #define REAR_LEFT   3
+  #define FRONT       4
+  #define REAR        5
+  #define LASTMOTOR   6
+  #include "FlightControlHexPlusMode.h"
+  
+#elif defined hexXConfig
+
+  #define FRONT_LEFT  0
+  #define REAR_RIGHT  1
+  #define FRONT_RIGHT 2
+  #define REAR_LEFT   3
+  #define RIGHT       4
+  #define LEFT        5
+  #define LASTMOTOR   6
+  #include "FlightControlHexXMode.h"
+  
+#else
+  // provoque a compilation error here, no motor config defined
 #endif
 
 // Include this last as it contains objects from above declarations
@@ -880,7 +915,7 @@ void setup() {
   
   // Flight angle estimation
   #ifdef HeadingMagHold
-    compass->initialize();
+    compass->initialize(flightAngle->getDCMmatrixPtr());
     //setHeading = compass->getHeading();
     flightAngle->initialize(compass->getHdgXY(XAXIS), compass->getHdgXY(YAXIS));
   #else
@@ -1103,7 +1138,7 @@ void loop () {
 
       if (sensorLoop == ON) {
         #if defined(HeadingMagHold)
-          compass->measure(flightAngle->getData(ROLL), flightAngle->getData(PITCH)); // defined in compass.h
+          compass->measure(flightAngle->getData(ROLL), flightAngle->getData(PITCH), flightAngle->getDCMmatrixPtr(), 1); // defined in compass.h
         #endif
         #if defined(BattMonitor)
           batteryMonitor.measure(armed);

@@ -39,10 +39,10 @@ void Motors_I2C::initialize(NB_Motors numbers) {
 }
 
 void Motors_I2C::write() {
-  sendByteI2C(FRONTMOTORID, constrain((motorCommand[FRONT] * mMotorCommand) + bMotorCommand, 0, 255));
-  sendByteI2C(REARMOTORID,  constrain((motorCommand[REAR]  * mMotorCommand) + bMotorCommand, 0, 255));
-  sendByteI2C(RIGHTMOTORID, constrain((motorCommand[RIGHT] * mMotorCommand) + bMotorCommand, 0, 255));
-  sendByteI2C(LEFTMOTORID,  constrain((motorCommand[LEFT]  * mMotorCommand) + bMotorCommand, 0, 255));
+  sendByteI2C(FRONTMOTORID, constrain((motorCommand[0] * mMotorCommand) + bMotorCommand, 0, 255));
+  sendByteI2C(REARMOTORID,  constrain((motorCommand[1]  * mMotorCommand) + bMotorCommand, 0, 255));
+  sendByteI2C(RIGHTMOTORID, constrain((motorCommand[2] * mMotorCommand) + bMotorCommand, 0, 255));
+  sendByteI2C(LEFTMOTORID,  constrain((motorCommand[3]  * mMotorCommand) + bMotorCommand, 0, 255));
 }
 
 void Motors_I2C::commandAllMotors(int command) {
