@@ -32,26 +32,26 @@
 
 
 Motors_I2C::Motors_I2C() {
-  motorAddress[0] = MOTOR_ADDR_0;
-  motorAddress[1] = MOTOR_ADDR_1;
-  motorAddress[2] = MOTOR_ADDR_2;
-  motorAddress[3] = MOTOR_ADDR_3;
-  motorAddress[4] = MOTOR_ADDR_4;
-  motorAddress[5] = MOTOR_ADDR_5;
+  motorAddress[MOTOR1] = MOTOR_ADDR_0;
+  motorAddress[MOTOR2] = MOTOR_ADDR_1;
+  motorAddress[MOTOR3] = MOTOR_ADDR_2;
+  motorAddress[MOTOR4] = MOTOR_ADDR_3;
+  motorAddress[MOTOR5] = MOTOR_ADDR_4;
+  motorAddress[MOTOR6] = MOTOR_ADDR_5;
 }
 
 void Motors_I2C::initialize(NB_Motors numbers) {
   lastMotor = numbers;
-  for (byte motor = 0; motor < lastMotor; motor++)
+  for (byte motor = MOTOR1; motor < lastMotor; motor++)
     sendByteI2C(motorAddress[motor], 0);
 }
 
 void Motors_I2C::write() {
-  for (byte motor = 0; motor < lastMotor; motor++)
+  for (byte motor = MOTOR1; motor < lastMotor; motor++)
     sendByteI2C(motorAddress[motor], constrain((motorCommand[motor] - 1000) / 4, 0, 255));
 }
 
 void Motors_I2C::commandAllMotors(int command) {
-  for (byte motor = 0; motor < lastMotor; motor++)
+  for (byte motor = MOTOR1; motor < lastMotor; motor++)
     sendByteI2C(motorAddress[motor], constrain((motorCommand[motor] - 1000) / 4, 0, 255));
 }

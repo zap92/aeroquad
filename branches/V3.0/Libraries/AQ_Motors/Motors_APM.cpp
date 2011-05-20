@@ -84,10 +84,10 @@ void Motors_APM::initialize(NB_Motors numbers) {
 }
 
 void Motors_APM::write() {
-  OCR1B = motorCommand[0] * 2;
-  OCR1C = motorCommand[1] * 2;
-  OCR5B = motorCommand[2] * 2;
-  OCR5C = motorCommand[3] * 2;
+  OCR1B = motorCommand[MOTOR1] * 2;
+  OCR1C = motorCommand[MOTOR2] * 2;
+  OCR5B = motorCommand[MOTOR3] * 2;
+  OCR5C = motorCommand[MOTOR4] * 2;
 }
 
 void Motors_APM::commandAllMotors(int command) {

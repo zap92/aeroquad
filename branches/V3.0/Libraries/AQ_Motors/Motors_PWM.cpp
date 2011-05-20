@@ -44,10 +44,10 @@ void Motors_PWM::initialize(NB_Motors numbers) {
 }
 
 void Motors_PWM::write() {
-  analogWrite(MOTORPIN0, motorCommand[0] / 8);
-  analogWrite(MOTORPIN1, motorCommand[1]  / 8);
-  analogWrite(MOTORPIN2, motorCommand[2] / 8);
-  analogWrite(MOTORPIN3, motorCommand[3]  / 8);
+  analogWrite(MOTORPIN0, motorCommand[MOTOR1] / 8);
+  analogWrite(MOTORPIN1, motorCommand[MOTOR2]  / 8);
+  analogWrite(MOTORPIN2, motorCommand[MOTOR3] / 8);
+  analogWrite(MOTORPIN3, motorCommand[MOTOR4]  / 8);
 }
 
 void Motors_PWM::commandAllMotors(int command) {
