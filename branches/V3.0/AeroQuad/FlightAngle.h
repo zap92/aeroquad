@@ -272,8 +272,8 @@ public:
     dcmMatrix[7] =  0;
     dcmMatrix[8] =  1;
 
-    kpRollPitch = 2.0;
-    kiRollPitch = 0.005;
+    kpRollPitch = 0.1;        // alternate 0.05;
+    kiRollPitch = 0.0002;     // alternate 0.0001;
     
     kpYaw = -2.0;
     kiYaw = -0.005;
@@ -675,8 +675,8 @@ public:
     eyInt = 0.0;
     ezInt = 0.0;
 
-    Kp = 2.0;
-    Ki = 0.005;
+    Kp = 0.2; // 2.0;
+    Ki = 0.0005; //0.005;
  }
   
 ////////////////////////////////////////////////////////////////////////////////
