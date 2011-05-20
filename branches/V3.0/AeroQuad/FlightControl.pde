@@ -61,9 +61,8 @@ void processCalibrateESC(void)
       motors->setMotorCommand(motor, constrain(testCommand, 1000, 1200));
     break;
   case 5:
-//    for (byte motor = 0; motor < LASTMOTOR; motor++)
-//      motors->setMotorCommand(motor, constrain(motors->getMotorCommand(motor), 1000, 1200));
-      // @todo : Ted, check this about remote command with the configurator
+    for (byte motor = 0; motor < LASTMOTOR; motor++)
+      motors->setMotorCommand(motor, constrain(motorConfiguratorCommand[motor], 1000, 1200));
     safetyCheck = ON;
     break;
   default:

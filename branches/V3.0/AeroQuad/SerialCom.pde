@@ -138,7 +138,7 @@ void readSerialCommand() {
       armed = 0;
       calibrateESC = 5;
       for (byte motor = 0; motor < LASTMOTOR; motor++)
-        motors->setMotorCommand(motor, readFloatSerial());
+        motorConfiguratorCommand[motor] = (int)readFloatSerial();
       break;
     case 'a': // fast telemetry transfer
       if (readFloatSerial() == 1.0)

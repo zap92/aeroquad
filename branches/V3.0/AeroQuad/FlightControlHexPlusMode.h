@@ -21,13 +21,13 @@
 #ifndef _AQ_PROCESS_FLIGHT_CONTROL_HEX_PLUS_MODE_H_
 #define _AQ_PROCESS_FLIGHT_CONTROL_HEX_PLUS_MODE_H_
 
-#define FRONT_LEFT  0
-#define REAR_RIGHT  1
-#define FRONT_RIGHT 2
-#define REAR_LEFT   3
-#define FRONT       4
-#define REAR        5
-#define LASTMOTOR   6
+#define FRONT_LEFT  MOTOR1
+#define REAR_RIGHT  MOTOR2
+#define FRONT_RIGHT MOTOR3
+#define REAR_LEFT   MOTOR4
+#define FRONT       MOTOR5
+#define REAR        MOTOR6
+#define LASTMOTOR   MOTOR6+1
 
 
 void processFlightControl(void) {
