@@ -29,20 +29,12 @@
 class Magnetometer_HMC5843 : public Compass{
 private:
   float magCalibration[3];
-  byte  firstPassMagBias;
-  float dcmMatrixPrevious[9];
-  float magFieldBodyPrevious[3];
-  float magFieldEarthPrevious[3];
-  float magBias[3];
-  float magFieldEarth[3];
   
 public:
   Magnetometer_HMC5843();	
   
-  void initialize(float dcm[]);
-  void measure(float roll, float pitch, float dcm[], byte useMagBias);
-  void magBiasCalculation(float dcmMatrix[], float magFieldBody[]);
-  void setPastValues(float dcmMatrix[], float magFieldBody[]);
+  void initialize();
+  void measure(float roll, float pitch);
 };
 
 

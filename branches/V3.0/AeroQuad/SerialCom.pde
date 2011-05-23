@@ -110,7 +110,7 @@ void readSerialCommand() {
       accel->calibrate();
       zeroIntegralError();
 #ifdef HeadingMagHold
-      compass->initialize(flightAngle->getDCMmatrixPtr());
+      compass->initialize();
 #endif
 #ifdef AltitudeHold
       altitude.initialize();

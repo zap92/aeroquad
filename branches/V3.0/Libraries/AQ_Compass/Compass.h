@@ -38,14 +38,13 @@ protected:
   float measuredMagZ;
   float magScale[3];
   float magOffset[3];
-  float magFieldBodyRaw[3];
 
 public:
 
   Compass();
   
-  virtual void initialize(float dcm[]) {}
-  virtual void measure(float roll, float pitch, float dcm[], byte useMagBias) {}
+  virtual void initialize() {}
+  virtual void measure(float roll, float pitch) {}
   
   const float getHdgXY(byte axis);
   const int getRawData(byte axis);

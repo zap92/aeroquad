@@ -32,12 +32,14 @@ const float Compass::getHdgXY(byte axis) {
 }
 
 const int Compass::getRawData(byte axis) {
-  return magFieldBodyRaw[axis];
+  if (axis == XAXIS) return measuredMagX;
+  if (axis == YAXIS) return measuredMagY;
+  if (axis == ZAXIS) return measuredMagZ;
 }
 
 
 void Compass::setMagCal(byte axis, float maxValue, float minValue) {
-      magMax[axis] = maxValue;
+    magMax[axis] = maxValue;
     magMin[axis] = minValue;
     // Assume max/min is scaled to +1 and -1
     // y2 = 1, x2 = max; y1 = -1, x1 = min
