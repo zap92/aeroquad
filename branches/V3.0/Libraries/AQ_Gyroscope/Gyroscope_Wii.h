@@ -29,10 +29,45 @@ private:
   Platform_Wii *platformWii;
 
 public:
-  Gyroscope_Wii();
+  Gyroscope_Wii() {
+    // 0.5mV/º/s, 0.2mV/ADC step => 0.2/3.33 = around 0.069565217391304
+    // ttp://invensense.com/mems/gyro/documents/PS-IDG-0650B-00-05.pdf and
+    // http://invensense.com/mems/gyro/documents/ps-isz-0650b-00-05.pdf
+    scaleFactor = radians(0.06201166); // Define the scale factor that converts to radians/second
+    smoothFactor = 1.0;
+  }
+
+  void setPlatformWii(Platform_Wii *platformWii) {
+    this->platformWii = platformWii;
+  }
+
+  void measure() {
+    // Replace code below with sensor measurement methodology
+    platformWii->measure();
+    for (byte axis = ROLL; axis <= YAW; axis++) {
+      int gyroADC = platformWii->getGyroADC(axis) - zero[axis];
+      rate[axis] = filterSmooth(gyroADC * scaleFactor, rate[axis], smoothFactor);
+    }
   
-  void setPlatformWii(Platform_Wii *platformWii);
-  void measure(void);
-  void calibrate(void);
+    // Measure gyro heading
+    long int currentTime = micros();
+    if (rate[YAW] > radians(1.0) || rate[YAW] < radians(-1.0)) {
+      heading += rate[YAW] * ((currentTime - lastMesuredTime) / 1000000.0);
+    }
+    lastMesuredTime = currentTime;
+}
+
+  void calibrate() {
+    int findZero[FINDZERO];
+    
+    for (byte axis = ROLL; axis <= YAW; axis++) {
+      for (int i=0; i<FINDZERO; i++) {
+	    platformWii->measure();
+        findZero[i] = platformWii->getGyroADC(axis);
+        delay(5);
+      }
+      zero[axis] = findMedianInt(findZero, FINDZERO);
+    }
+  }
 };
 #endif

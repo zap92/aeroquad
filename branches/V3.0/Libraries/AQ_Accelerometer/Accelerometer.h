@@ -33,18 +33,38 @@ protected:
   float zero[3];
   
 public:  
-  Accelerometer();
+  Accelerometer() {};
 
   virtual void initialize() {}
   virtual void calibrate() {}
   virtual void measure() {}
   
-  const float getSmoothFactor();
-  void setSmoothFactor(float value);
-  void setOneG(float oneG);
-  float getOneG();
-  float getMeterPerSec(byte axis);
-  float getZero(byte axis);
-  void setZero(byte axis, float zero);
+  const float getSmoothFactor() {
+    return smoothFactor;
+  }
+
+  void setSmoothFactor(float value) {
+    smoothFactor = value;
+  }
+
+  void setOneG(float oneG) {
+    this->oneG = oneG;
+  }
+
+  float getOneG() {
+    return oneG;
+  }
+
+  float getMeterPerSec(byte axis) {
+    return meterPerSec[axis];
+  }
+
+  float getZero(byte axis) {
+    return zero[axis];
+  }
+
+  void setZero(byte axis, float zero) {
+    this->zero[axis] = zero;
+  }
 };
 #endif

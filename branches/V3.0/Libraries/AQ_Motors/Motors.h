@@ -48,15 +48,29 @@ protected:
   
 public:
 
-  Motors();
+  Motors() {
+  }
 	
   virtual void initialize(NB_Motors numbers = FOUR_Motors) {}
   virtual void write() {}
   virtual void commandAllMotors(int command) {}
-  
-  void pulseMotors(byte nbPulse);
-  void setMotorCommand(byte motor, int command);
-  int getMotorCommand(byte motor);
+
+  void pulseMotors(byte nbPulse) {
+    for (byte i = 0; i < nbPulse; i++) {
+      commandAllMotors(MINCOMMAND + 100);
+      delay(250);
+      commandAllMotors(MINCOMMAND);
+      delay(250);
+    }
+  }
+
+  void setMotorCommand(byte motor, int command) {
+    motorCommand[motor] = command;
+  }
+
+  int getMotorCommand(byte motor) {
+    return motorCommand[motor];
+  }
 };
 
 
