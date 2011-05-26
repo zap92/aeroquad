@@ -32,7 +32,7 @@ public:
     accelScaleFactor = G_2_MPS2(4.0/1024.0);  		// +/- 2G at 10bits of ADC
   }
 
-  void Accelerometer_ADXL345::initialize(void) {
+  void initialize(void) {
     if (readWhoI2C(ACCEL_ADDRESS) !=  0xE5) 			// page 14 of datasheet
       Serial.println("Accelerometer not found!");
 
@@ -79,4 +79,4 @@ public:
     oneG = -meterPerSec[ZAXIS];
   }
 };
-#endif0
+#endif
