@@ -70,8 +70,8 @@ void readSerialCommand() {
       windupGuard = readFloatSerial(); // defaults found in setup() of AeroQuad.pde
       break;
     case 'G': // Receive auto level configuration
-      levelLimit = readFloatSerial();
-      levelOff = readFloatSerial();
+      readFloatSerial();
+      readFloatSerial();
       break;
     case 'I': // Receiver altitude hold PID
 #ifdef AltitudeHold
@@ -260,8 +260,8 @@ void sendSerialTelemetry() {
     queryType = 'X';
     break;
   case 'H': // Send auto level configuration values
-		PrintValueComma(levelLimit);
-    SERIAL_PRINTLN(levelOff);
+    PrintValueComma(0);
+    Serial.println(0);
     queryType = 'X';
     break;
   case 'J': // Altitude Hold
@@ -317,11 +317,11 @@ void sendSerialTelemetry() {
     for (byte axis = ROLL; axis < YAW; axis++) {
       PrintValueComma(levelAdjust[axis]);
     }
-    PrintValueComma(degrees(flightAngle->getData(ROLL)));
-    PrintValueComma(degrees(flightAngle->getData(PITCH)));
+    PrintValueComma(degrees(kinematics->getData(ROLL)));
+    PrintValueComma(degrees(kinematics->getData(PITCH)));
     #if defined(HeadingMagHold) || defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
       //PrintValueComma(compass->getAbsoluteHeading());
-      PrintValueComma(flightAngle->getDegreesHeading(YAW));
+      PrintValueComma(kinematics->getDegreesHeading(YAW));
     #else
       PrintValueComma(0);
     #endif
@@ -383,7 +383,7 @@ void sendSerialTelemetry() {
       PrintValueComma(1000);
     #ifdef HeadingMagHold
       //PrintValueComma(compass->getAbsoluteHeading());
-      PrintValueComma(flightAngle->getDegreesHeading(YAW));
+      PrintValueComma(kinematics->getDegreesHeading(YAW));
     #else
       PrintValueComma(0);
     #endif

@@ -26,12 +26,14 @@
 
 #include <WProgram.h>
 
+#define COMPASS_ADDRESS 0x1E
+
 class Magnetometer_HMC5843 : public Compass{
 private:
   float magCalibration[3];
   
 public:
-  Magnetometer_HMC5843() {
+  Magnetometer_HMC5843() : Compass() {
   }
 
   void initialize() {
@@ -80,7 +82,7 @@ public:
     measure(0.0, 0.0);  // Assume 1st measurement at 0 degrees roll and 0 degrees pitch
   }
 
- void measure(float roll, float pitch) {
+  void measure(float roll, float pitch) {
     float magX;
     float magY;
     float tmp;
@@ -111,7 +113,6 @@ public:
     hdgX = magX / tmp;
     hdgY = -magY / tmp;
   }
-
 };
 
 

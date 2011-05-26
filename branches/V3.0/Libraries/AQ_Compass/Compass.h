@@ -41,23 +41,23 @@ protected:
 
 public:
 
-  Compass();
+  Compass() {}
   
-  virtual void initialize() {}
-  virtual void measure(float roll, float pitch) {}
+  virtual void initialize();
+  virtual void measure(float roll, float pitch);
   
-  const float Compass::getHdgXY(byte axis) {
+  const float getHdgXY(byte axis) {
     if (axis == XAXIS) return hdgX;
     if (axis == YAXIS) return hdgY;
   }
 
-  const int Compass::getRawData(byte axis) {
+  const int getRawData(byte axis) {
     if (axis == XAXIS) return measuredMagX;
     if (axis == YAXIS) return measuredMagY;
     if (axis == ZAXIS) return measuredMagZ;
   }
 
-  void Compass::setMagCal(byte axis, float maxValue, float minValue) {
+  void setMagCal(byte axis, float maxValue, float minValue) {
     magMax[axis] = maxValue;
     magMin[axis] = minValue;
     // Assume max/min is scaled to +1 and -1
@@ -69,11 +69,11 @@ public:
     magOffset[axis] = -(magScale[axis] * magMin[axis]) - 1;
   }
 
-  const float Compass::getMagMax(byte axis) {
+  const float getMagMax(byte axis) {
     return magMax[axis];
   }
 
-  const float Compass::getMagMin(byte axis) {
+  const float getMagMin(byte axis) {
     return magMin[axis];
   }
 };
