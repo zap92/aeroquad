@@ -32,9 +32,9 @@
 
 //#define AeroQuad_v1         // Arduino 2009 with AeroQuad Shield v1.7 and below
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
-//#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
+#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
 //#define AeroQuad_Mini       // Arduino Pro Mini with Ae  roQuad Mini Shield V1.0
-#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
+//#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
 //#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
 //#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
@@ -99,6 +99,7 @@
 
 /**
  * Kenny todo.
+ * @todo : CHECK BACK GYRO AND ACCEL FROM 2.4.1
  * @todo : double check motors integration from John import, and also he's accel calibration 
  * @todo : add example test for mag, put also the address as define!
  * @todo : extract barometers, kinematics, camera, 
@@ -169,6 +170,14 @@
     gyroSpecific.setAref(aref);
     accelSpecific.setAref(aref);
   }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
+  }
 #endif
 
 #ifdef AeroQuad_v1_IDG
@@ -222,6 +231,14 @@
   void initPlatform() {
     gyroSpecific.setAref(aref);
     accelSpecific.setAref(aref);
+  }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
   }
 #endif
 
@@ -297,6 +314,14 @@
     Wire.begin();
     TWBR = 12;
   }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
+  }
 #endif
 
 #ifdef AeroQuad_Mini
@@ -357,6 +382,14 @@
     Wire.begin();
     TWBR = 12;
   }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
+  }
 #endif
 
 #ifdef AeroQuadMega_v1
@@ -411,6 +444,14 @@
    */
   void initPlatform() {
     gyroSpecific.setAref(aref);
+  }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
   }
 #endif
 
@@ -483,6 +524,14 @@
     Wire.begin();
     TWBR = 12;
   }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
+  }
 #endif
 
 #ifdef ArduCopter
@@ -550,6 +599,14 @@
     
     Wire.begin();
   }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
+  }
 #endif
 
 #ifdef AeroQuad_Wii
@@ -615,6 +672,15 @@
      gyroSpecific.setPlatformWii(&platformWii);
      accelSpecific.setPlatformWii(&platformWii);
   }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    platformWii.measure();
+    gyro->measure();
+    accel->measure();
+  }
 #endif
 
 #ifdef AeroQuadMega_Wii
@@ -673,6 +739,15 @@
     
     gyroSpecific.setPlatformWii(&platformWii);
     accelSpecific.setPlatformWii(&platformWii);    
+  }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    platformWii.measure();
+    gyro->measure();
+    accel->measure();
   }
 #endif
 
@@ -741,6 +816,14 @@
     
     gyroSpecific.setChr6dm(&chr6dm);
   }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
+  }
 #endif
 
 #ifdef APM_OP_CHR6DM
@@ -807,6 +890,14 @@
     chr6dm.requestPacket();
     
     gyroSpecific.setChr6dm(&chr6dm);
+  }
+  
+  /**
+   * Measure critical sensors
+   */
+  void measureCriticalSensors() {
+    gyro->measure();
+    accel->measure();
   }
 #endif
 
@@ -1006,9 +1097,7 @@ void loop () {
       hundredHZpreviousTime = currentTime;
       
       if (sensorLoop == ON) {
-        // measure critical sensors
-        gyro->measure();
-        accel->measure();
+        measureCriticalSensors();
         
         // ****************** Calculate Absolute Angle *****************
         #if defined HeadingMagHold && defined FlightAngleMARG
