@@ -59,8 +59,8 @@
 // You must define one of the next 3 attitude stabilization modes or the software will not build
 // *******************************************************************************************************************************
 //#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
-//#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
-#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
+#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
+//#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // You must define *only* one of the following 2 flightAngle calculations
@@ -291,8 +291,10 @@
   
   // Altitude declaration
   #ifdef AltitudeHold
-    #include "Altitude.h"
-    Altitude_AeroQuad_v2 altitude;
+    #include <BarometricSensor.h>
+    #include <BarometricSensor_BMP085.h>
+    BarometricSensor_BMP085 barometricSensorSpecific;
+    BarometricSensor *barometricSensor = &barometricSensorSpecific;
   #endif
   
   // Battery Monitor declaration
@@ -516,10 +518,13 @@
     Magnetometer_HMC5843 compassSpecific;
     Compass *compass = &compassSpecific;
   #endif
-  // Altitude hold declaration
+
+  // Altitude declaration
   #ifdef AltitudeHold
-    #include "Altitude.h"
-    Altitude_AeroQuad_v2 altitude;
+    #include <BarometricSensor.h>
+    #include <BarometricSensor_BMP085.h>
+    BarometricSensor_BMP085 barometricSensorSpecific;
+    BarometricSensor *barometricSensor = &barometricSensorSpecific;
   #endif
 
   // Battery Monitor declaration
@@ -604,10 +609,13 @@
     Magnetometer_HMC5843 compassSpecific;
     Compass *compass = &compassSpecific;
   #endif
-  // Altitude Hold declaration
+
+  // Altitude declaration
   #ifdef AltitudeHold
-    #include "Altitude.h"
-    Altitude_AeroQuad_v2 altitude;
+    #include <BarometricSensor.h>
+    #include <BarometricSensor_BMP085.h>
+    BarometricSensor_BMP085 barometricSensorSpecific;
+    BarometricSensor *barometricSensor = &barometricSensorSpecific;
   #endif
   
   // Battery monitor declaration
@@ -819,10 +827,12 @@
 //  #include "Compass.h"
 //  Compass_CHR6DM compass;
 
-  // Altitude hold declaration
+  // Altitude declaration
   #ifdef AltitudeHold
-    #include "Altitude.h"
-    Altitude_AeroQuad_v2 altitude;
+    #include <BarometricSensor.h>
+    #include <BarometricSensor_BMP085.h>
+    BarometricSensor_BMP085 barometricSensorSpecific;
+    BarometricSensor *barometricSensor = &barometricSensorSpecific;
   #endif
   
   // Battery monitor declaration
@@ -907,8 +917,10 @@
 
   // Altitude declaration
   #ifdef AltitudeHold
-    #include "Altitude.h"
-    Altitude_AeroQuad_v2 altitude;
+    #include <BarometricSensor.h>
+    #include <BarometricSensor_BMP085.h>
+    BarometricSensor_BMP085 barometricSensorSpecific;
+    BarometricSensor *barometricSensor = &barometricSensorSpecific;
   #endif
   
   // Battery monitor declaration
@@ -1071,7 +1083,7 @@ void setup() {
 
   // Optional Sensors
   #ifdef AltitudeHold
-    altitude.initialize();
+    barometricSensor->initialize();
   #endif
   
   
@@ -1255,7 +1267,7 @@ void loop () {
       
       if (sensorLoop == ON) {
         #if defined(AltitudeHold)
-          altitude.measure(); // defined in altitude.h
+          barometricSensor->measure(); // defined in altitude.h
         #endif
       }
       
