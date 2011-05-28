@@ -331,7 +331,7 @@ void sendSerialTelemetry() {
       PrintValueComma(0);
     #endif
     #ifdef BattMonitor
-      SERIAL_PRINT(batteryMonitor.getData());
+      SERIAL_PRINT(batteryMonitor->getBatteryVoltage());
     #else
       SERIAL_PRINT(0);
     #endif
@@ -357,7 +357,7 @@ void sendSerialTelemetry() {
         PrintValueComma(gyro->getRadPerSec(axis));
     }
     #ifdef BattMonitor
-      PrintValueComma(batteryMonitor.getData());
+      PrintValueComma(batteryMonitor->getBatteryVoltage());
     #else
       PrintValueComma(0);
     #endif
