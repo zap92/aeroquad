@@ -92,6 +92,11 @@ public:
   {
     return gyro[axis];
   }
+  
+  byte getWmpSlow(byte axis)
+  {
+    return wmpSlow[axis];
+  }
 
 };
 

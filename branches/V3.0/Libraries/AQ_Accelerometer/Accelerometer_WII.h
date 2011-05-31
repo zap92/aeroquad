@@ -38,7 +38,6 @@ public:
   }
   
   void measure(void) {
-    platformWii->measure();
     int accelADC[3];
     accelADC[XAXIS] =  platformWii->getAccelADC(PITCH) - zero[PITCH];
     accelADC[YAXIS] = platformWii->getAccelADC(ROLL) - zero[ROLL];

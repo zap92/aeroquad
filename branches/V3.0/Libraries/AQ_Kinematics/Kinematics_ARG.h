@@ -49,6 +49,8 @@
 
 #include "Kinematics.h"
 
+#include <AQMath.h>
+
 class Kinematics_ARG : public Kinematics {
 private:
   float Kp;                   // proportional gain governs rate of convergence to accelerometer/magnetometer
@@ -56,7 +58,11 @@ private:
   float halfT;                // half the sample period
   float q0, q1, q2, q3;       // quaternion elements representing the estimated orientation
   float exInt, eyInt, ezInt;  // scaled integral error
-
+  
+  float previousEx;
+  float previousEy;
+  float previousEz;
+  
   ////////////////////////////////////////////////////////////////////////////////
   // argUpdate
   ////////////////////////////////////////////////////////////////////////////////
@@ -90,9 +96,25 @@ private:
   //  ez = (ax*vy - ay*vx);
     	
     // integral error scaled integral gain
+	
     exInt = exInt + ex*Ki;
-    eyInt = eyInt + ey*Ki;
-    ezInt = ezInt + ez*Ki;
+	if (isSwitched(previousEx,ex)) {
+	  exInt = 0;
+	}
+	previousEx = ex;
+	
+	eyInt = eyInt + ey*Ki;
+	if (isSwitched(previousEy,ey)) {
+	  eyInt = 0;
+	}
+	previousEy = ey;
+	
+	ezInt = ezInt + ez*Ki;
+	if (isSwitched(previousEz,ez)) {
+	  ezInt = 0;
+	}
+	previousEz = ez;
+	
     	
     // adjusted gyroscope measurements
     gx = gx + Kp*ex + exInt;
@@ -153,6 +175,10 @@ public:
     exInt = 0.0;
     eyInt = 0.0;
     ezInt = 0.0;
+	
+    previousEx = 0;
+    previousEy = 0;
+    previousEz = 0;
 
     Kp = 0.2; // 2.0;
     Ki = 0.0005; //0.005;

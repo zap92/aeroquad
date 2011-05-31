@@ -26,15 +26,32 @@
 
 class Gyroscope_Wii : public Gyroscope {
 private:
+  float wmpLowRangeToRadPerSec;
+  float wmpHighRangeToRadPerSec;
+  
   Platform_Wii *platformWii;
+  
 
 public:
   Gyroscope_Wii() {
-    // 0.5mV/º/s, 0.2mV/ADC step => 0.2/3.33 = around 0.069565217391304
-    // ttp://invensense.com/mems/gyro/documents/PS-IDG-0650B-00-05.pdf and
-    // http://invensense.com/mems/gyro/documents/ps-isz-0650b-00-05.pdf
-    scaleFactor = radians(0.06201166); // Define the scale factor that converts to radians/second
-    smoothFactor = 1.0;
+    // Wii Motion+ has a low range and high range. Scaling is thought to be as follows:
+    //
+    // Vref = 1.35 volts
+    // At 0 rate, reading is approximately 8063 bits
+    // Scaling is then 1.35/8063, or 0.00016743 volts/bit
+    //
+    // Low Range
+    //    440 degrees per second at 2.7 millivolts/degree (from datasheet)
+    //    degrees per bit = 0.00016743 / 2.7 mVolts = 0.06201166 degrees per second per bit
+    //                                              = 0.00108231 radians per second per bit
+    // High Range
+    //   2000 degrees per second at 0.5 millivolts/degree (from datasheet)
+    //    degrees per bit = 0.00016743 / 0.5 mVolts = 0.33486295 degrees per second per bit
+    //                                              = 0.00584446 radians per second per bit
+    wmpLowRangeToRadPerSec  = 0.001082308;
+    wmpHighRangeToRadPerSec = 0.005844461;
+
+    lastMesuredTime = micros();
   }
 
   void setPlatformWii(Platform_Wii *platformWii) {
@@ -44,9 +61,15 @@ public:
   void measure() {
     // Replace code below with sensor measurement methodology
     platformWii->measure();
-    for (byte axis = ROLL; axis <= YAW; axis++) {
-      int gyroADC = platformWii->getGyroADC(axis) - zero[axis];
-      rate[axis] = filterSmooth(gyroADC * scaleFactor, rate[axis], smoothFactor);
+    
+	int gyroADC[3];
+    gyroADC[ROLL] = zero[ROLL] - platformWii->getGyroADC(ROLL);
+	gyroADC[PITCH] = platformWii->getGyroADC(PITCH) - zero[PITCH];
+	gyroADC[YAW] = zero[YAW] - platformWii->getGyroADC(YAW);
+	
+	for (byte axis = ROLL; axis < LASTAXIS; axis++) { 
+      float gyroScaleFactor = platformWii->getWmpSlow(axis) ? wmpLowRangeToRadPerSec : wmpHighRangeToRadPerSec ;  // if wmpSlow == 1, use low range conversion,
+      rate[axis] = filterSmooth(gyroADC[axis] * gyroScaleFactor, rate[axis], smoothFactor); 
     }
   
     // Measure gyro heading

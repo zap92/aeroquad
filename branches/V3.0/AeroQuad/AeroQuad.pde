@@ -59,7 +59,7 @@
 // You must define one of the next 3 attitude stabilization modes or the software will not build
 // *******************************************************************************************************************************
 //#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
-#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
+//#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
 //#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -99,13 +99,11 @@
 
 /**
  * Kenny todo.
- * @todo : CHECK BACK GYRO AND ACCEL FROM 2.4.1
- * @todo : double check motors integration from John import, and also he's accel calibration 
- * @todo : add example test for mag, put also the address as define!
- * @todo : extract barometers, kinematics, camera, 
+ * @todo : add example test for mag, put also the address as define! UNIT TEST
+ * @todo : camera, 
  * @todo : adapt Alan led class or use it, standardize led processing. Fix dave bug for WII
- * @todo : import alamo work for OSD here http://aeroquad.com/showthread.php?2942-OSD-implementation-using-MAX7456
- * @todo : fix wireless telemetry
+ *
+ * @TODO : KENNY : REMOVE DRIFT CORRECTION TEST FROM AGR WHEN ALAN AND JOHN HAVE FIX IT!
  */
  
 #include <EEPROM.h>
