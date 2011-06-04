@@ -96,22 +96,21 @@ private:
   //  ez = (ax*vy - ay*vx);
     	
     // integral error scaled integral gain
-	
     exInt = exInt + ex*Ki;
 	if (isSwitched(previousEx,ex)) {
-	  exInt = 0;
+	  exInt = 0.0;
 	}
 	previousEx = ex;
 	
 	eyInt = eyInt + ey*Ki;
 	if (isSwitched(previousEy,ey)) {
-	  eyInt = 0;
+	  eyInt = 0.0;
 	}
 	previousEy = ey;
 	
 	ezInt = ezInt + ez*Ki;
 	if (isSwitched(previousEz,ez)) {
-	  ezInt = 0;
+	  ezInt = 0.0;
 	}
 	previousEz = ez;
 	
