@@ -936,8 +936,8 @@
 
 #if defined triConfig
   #include <Motors.h>
-  #include <Motors_Tri_PWM.h>
-  Motors_Tri_PWM motorsSpecific;
+  #include <Motors_PWM.h>
+  Motors_PWM motorsSpecific;
   Motors *motors = &motorsSpecific;
 #elif defined MOTOR_PWM
   #include <Motors.h>
