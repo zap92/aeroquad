@@ -137,10 +137,7 @@
   Receiver *receiver = &receiverSpecific;
 
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_PWM.h>
-  Motors_PWM motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM
   
   // Kinematics declaration
   #include "Kinematics.h"
@@ -199,10 +196,7 @@
   Receiver *receiver = &receiverSpecific;
 
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_PWM.h>
-  Motors_PWM motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM  
   
   // Kinematics declaration
   #include "Kinematics.h"
@@ -261,10 +255,7 @@
   Receiver *receiver = &receiverSpecific;
   
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_PWM_Timer.h>
-  Motors_PWM_Timer motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM_Timer
   
   // Kinematics declaration
   #include "Kinematics.h"
@@ -352,10 +343,7 @@
   Receiver *receiver = &receiverSpecific;
 
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_PWM_Timer.h>
-  Motors_PWM_Timer motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM_Timer
   
   // Kinematics declaration
   #include "Kinematics.h"
@@ -430,10 +418,7 @@
   Receiver *receiver = &receiverSpecific;
   
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_PWM.h>
-  Motors_PWM motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM  
   
   // Kinematics declaration
   #include "Kinematics.h"
@@ -491,10 +476,7 @@
   Receiver *receiver = &receiverSpecific;
 
   // Motor declaration
-  #include "Motors.h"
-  #include <Motors_PWM_Timer.h>
-  Motors_PWM_Timer motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM_Timer
 
   // Kinematics declaration
   #include "Kinematics.h"
@@ -582,10 +564,7 @@
   Receiver *receiver = &receiverSpecific;
   
   // Motor Declaration
-  #include <Motors.h>
-  #include <Motors_APM.h>
-  Motors_APM motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_APM
   
   // Kinematics declaration
   #include "Kinematics.h"
@@ -671,10 +650,7 @@
   Receiver *receiver = &receiverSpecific;
 
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_PWM.h>
-  Motors_PWM motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM  
   
   // Kinematics declaration
   #include "Kinematics.h"
@@ -745,10 +721,7 @@
   Receiver *receiver = &receiverSpecific;
 
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_PWM.h>
-  Motors_PWM motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM
   
   // Kinematics declaration
   #include "Kinematics.h"
@@ -812,10 +785,7 @@
   Receiver *receiver = &receiverSpecific;
 
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_PWM.h>
-  Motors_PWM motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_PWM
   
   // Kinematics declaration
   #include "FlightAngle.h"
@@ -900,10 +870,7 @@
   Receiver *receiver = &receiverSpecific;
 
   // Motor declaration
-  #include <Motors.h>
-  #include <Motors_APM.h>
-  Motors_APM motorsSpecific;
-  Motors *motors = &motorsSpecific;
+  #define MOTOR_APM
   
   // Kinematics declaration
   #include "FlightAngle.h"
@@ -967,6 +934,32 @@
   }
 #endif
 
+#if defined triConfig
+  #include <Motors.h>
+  #include <Motors_Tri_PWM.h>
+  Motors_Tri_PWM motorsSpecific;
+  Motors *motors = &motorsSpecific;
+#elif defined MOTOR_PWM
+  #include <Motors.h>
+  #include <Motors_PWM.h>
+  Motors_PWM motorsSpecific;
+  Motors *motors = &motorsSpecific;
+#elif defined MOTOR_PWM_Timer
+  #include <Motors.h>
+  #include <Motors_PWM_Timer.h>
+  Motors_PWM_Timer motorsSpecific;
+  Motors *motors = &motorsSpecific;
+#elif defined MOTOR_APM
+  #include <Motors.h>
+  #include <Motors_APM.h>
+  Motors_APM motorsSpecific;
+  Motors *motors = &motorsSpecific;
+#elif defined MOTOR_I2C
+  #include <Motors.h>
+  #include <Motors_I2C.h>
+  Motors_I2C motorsSpecific;
+  Motors *motors = &motorsSpecific;
+#endif
 
 #if defined quadXConfig
   #include "FlightControlQuadXMode.h"
@@ -978,8 +971,6 @@
   #include "FlightControlHexXMode.h"
 #elif defined triConfig
   #include "FlightControlTriMode.h"
-#else
-  // provoque a compilation error here, no motor config defined
 #endif
 
 // Include this last as it contains objects from above declarations
@@ -1086,7 +1077,6 @@ void setup() {
   #ifdef AltitudeHold
     barometricSensor->initialize();
   #endif
-  
   
   // Camera stabilization setup
   #ifdef CameraControl
