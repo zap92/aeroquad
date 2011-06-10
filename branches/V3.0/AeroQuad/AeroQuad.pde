@@ -34,12 +34,12 @@
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
 //#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
 //#define AeroQuad_Mini       // Arduino Pro Mini with Ae  roQuad Mini Shield V1.0
-//#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
-//#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
+#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
+#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
 //#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
-#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
+//#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
 //#define AeroQuadMega_CHR6DM // Clean Arduino Mega with CHR6DM as IMU/heading ref.
 //#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
 
@@ -47,11 +47,11 @@
  *********************** Define Flight Configuration ************************
  ****************************************************************************/
 // Use only one of the following definitions
-#define quadXConfig
+//#define quadXConfig
 //#define quadPlusConfig
 //#define hexPlusConfig
 //#define hexXConfig
-//#define triConfig
+#define triConfig
 
 // *******************************************************************************************************************************
 // Optional Sensors
@@ -108,11 +108,12 @@
 
 /**
  * Kenny todo.
+ * @todo : FINISH the CHR6DM import from 2.4.1
  * @todo : add example test for mag, put also the address as define! UNIT TEST
- * @todo : camera, 
+ * @todo : camera ->> split
  * @todo : adapt Alan led class or use it, standardize led processing. Fix dave bug for WII
  *
- * @TODO : KENNY : REMOVE DRIFT CORRECTION TEST FROM AGR WHEN ALAN AND JOHN HAVE FIX IT!
+ * @TODO : REMOVE DRIFT CORRECTION TEST FROM AGR WHEN ALAN AND JOHN HAVE FIX IT!
  */
  
 #include <EEPROM.h>
@@ -139,27 +140,10 @@
   Accelerometer *accel = &accelSpecific;
   
   // Receiver declaration
-  #include <Receiver.h>
-  #include <Receiver_328p.h>
-  Receiver_328p receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_328P
 
   // Motor declaration
   #define MOTOR_PWM
-  
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
   
   // Camera control declaration
   #ifdef CameraControl
@@ -198,27 +182,10 @@
   Accelerometer *accel = &accelSpecific;
   
   // Receiver declaration
-  #include <Receiver.h>
-  #include <Receiver_328p.h>
-  Receiver_328p receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_328P
 
   // Motor declaration
   #define MOTOR_PWM  
-  
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
   
   // Camera control declaration
   #ifdef CameraControl
@@ -257,27 +224,10 @@
   Accelerometer *accel = &accelSpecific;
   
   // Receiver declaration
-  #include <Receiver.h>
-  #include <Receiver_328p.h>
-  Receiver_328p receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_328P
   
   // Motor declaration
   #define MOTOR_PWM_Timer
-  
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
   
   // Heading hold declaration
   #ifdef HeadingMagHold
@@ -345,27 +295,10 @@
   Accelerometer *accel = &accelSpecific;
   
   // Receiver declaration
-  #include <Receiver.h>
-  #include <Receiver_328p.h>
-  Receiver_328p receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_328P
 
   // Motor declaration
   #define MOTOR_PWM_Timer
-  
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
   
   // Battery Monitor declaration
   #ifdef BattMonitor
@@ -420,27 +353,10 @@
   Accelerometer *accel = &accelSpecific;
 
   // Reveiver declaration
-  #include <Receiver.h>
-  #include <Receiver_MEGA.h>
-  Receiver_MEGA receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_MEGA
   
   // Motor declaration
   #define MOTOR_PWM  
-  
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
   
   // Camera Control
   #ifdef CameraControl
@@ -478,28 +394,11 @@
   Accelerometer *accel = &accelSpecific;
 
   // Receiver Declaration
-  #include <Receiver.h>
-  #include <Receiver_MEGA.h>
-  Receiver_MEGA receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_MEGA
 
   // Motor declaration
   #define MOTOR_PWM_Timer
 
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
-  
   // Heading Hold declaration
   #ifdef HeadingMagHold
     #include <Compass.h>
@@ -572,27 +471,10 @@
   Accelerometer *accel = &accelSpecific;
 
   // Receiver Declaration
-  #include <Receiver.h>
-  #include <Receiver_APM.h>
-  Receiver_APM receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_APM
   
   // Motor Declaration
   #define MOTOR_APM
-  
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
   
   // Heading hold declaration
   #ifdef HeadingMagHold
@@ -664,27 +546,10 @@
   Accelerometer *accel = &accelSpecific;
   
   // Receiver declaration
-  #include <Receiver.h>
-  #include <Receiver_328p.h>
-  Receiver_328p receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_328P
 
   // Motor declaration
   #define MOTOR_PWM  
-  
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
   
   // Camera control declaration
   #ifdef CameraControl
@@ -741,27 +606,10 @@
   Accelerometer *accel = &accelSpecific;
 
   // Receiver declaration
-  #include <Receiver.h>
-  #include <Receiver_MEGA.h>
-  Receiver_MEGA receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_MEGA
 
   // Motor declaration
   #define MOTOR_PWM
-  
-  // Kinematics declaration
-  #include "Kinematics.h"
-  #ifdef FlightAngleARG
-    #include "Kinematics_ARG.h"
-    Kinematics_ARG tempKinematics;
-  #elif defined FlightAngleMARG
-    #include "Kinematics_MARG.h"
-    Kinematics_MARG tempKinematics;
-  #else
-    #include "Kinematics_DCM.h"
-    Kinematics_DCM tempKinematics;
-  #endif
-  Kinematics *kinematics = &tempKinematics;
   
   // Camera control declaration
   #ifdef CameraControl
@@ -805,10 +653,7 @@
   Accelerometer *accel = &accelSpecific;
 
   // Receiver declaration
-  #include <Receiver.h>
-  #include <Receiver_MEGA.h>
-  Receiver_MEGA receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_MEGA
 
   // Motor declaration
   #define MOTOR_PWM
@@ -890,10 +735,7 @@
   Accelerometer *accel = &accelSpecific;
 
   // Receiver declaration
-  #include <Receiver.h>
-  #include <Receiver_APM.h>
-  Receiver_APM receiverSpecific;
-  Receiver *receiver = &receiverSpecific;
+  #define RECEIVER_APM
 
   // Motor declaration
   #define MOTOR_APM
@@ -960,6 +802,46 @@
   }
 #endif
 
+//********************************************************
+//****************** KINEMATICS DECLARATION **************
+//********************************************************
+#include "Kinematics.h"
+#ifdef FlightAngleARG
+  #include "Kinematics_ARG.h"
+  Kinematics_ARG tempKinematics;
+#elif defined FlightAngleMARG
+  #include "Kinematics_MARG.h"
+  Kinematics_MARG tempKinematics;
+#else
+  #include "Kinematics_DCM.h"
+  Kinematics_DCM tempKinematics;
+#endif
+Kinematics *kinematics = &tempKinematics;
+
+//********************************************************
+//******************** RECEIVER DECLARATION **************
+//********************************************************
+#if defined RECEIVER_328P
+  #include <Receiver.h>
+  #include <Receiver_328p.h>
+  Receiver_328p receiverSpecific;
+  Receiver *receiver = &receiverSpecific;
+#elif defined RECEIVER_MEGA
+  #include <Receiver.h>
+  #include <Receiver_MEGA.h>
+  Receiver_MEGA receiverSpecific;
+  Receiver *receiver = &receiverSpecific;
+#elif defined RECEIVER_APM
+  #include <Receiver.h>
+  #include <Receiver_APM.h>
+  Receiver_APM receiverSpecific;
+  Receiver *receiver = &receiverSpecific;
+#endif
+
+
+//********************************************************
+//********************** MOTORS DECLARATION **************
+//********************************************************
 #if defined triConfig
   #include <Motors.h>
   #include <Motors_PWM.h>
@@ -987,6 +869,9 @@
   Motors *motors = &motorsSpecific;
 #endif
 
+//********************************************************
+//******** FLIGHT CONFIGURATION DECLARATION **************
+//********************************************************
 #if defined quadXConfig
   #include "FlightControlQuadXMode.h"
 #elif defined quadPlusConfig
