@@ -35,6 +35,10 @@
     - this would result in an extra ~0.7W being dissipated across the Arduino onboard regulator (for a 3S battery). That's a lot of power for a little regulator with minimal heatsinking!
 */
 
+#ifndef _AEROQUAD_OSD_MAX7456_H_
+#define _AEROQUAD_OSD_MAX7456_H_
+
+
 /*********************** User configuration section ***************************************/
 #define ShowReticle            //Displays a reticle in the centre of the screen. 
 #define ShowFlightTimer        //Displays how long the motors have been armed for since the Arduino was last reset
@@ -129,7 +133,7 @@
 #define AI_TOP_PIXEL ((RETICLE_ROW - AI_DISPLAY_RECT_HEIGHT/2)*18)
 #define AI_BOTTOM_PIXEL ((RETICLE_ROW + AI_DISPLAY_RECT_HEIGHT/2)*18)
 
-#ifdef MAX7456_OSD
+
 
 byte clear;
 
@@ -503,5 +507,5 @@ public:
 
 };
 
-#endif
+#endif  //#define _AEROQUAD_OSD_MAX7456_H_
 

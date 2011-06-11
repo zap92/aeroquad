@@ -152,6 +152,7 @@ void readSerialCommand() {
       break;
     case 'c': // calibrate accels
       accel->calibrate();
+      kinematics->calibrate();
       storeSensorsZeroToEEPROM();
       break;
     case 'd': // send aref

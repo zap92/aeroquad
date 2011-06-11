@@ -39,9 +39,9 @@
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
 //#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
-//#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
+#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
 //#define AeroQuadMega_CHR6DM // Clean Arduino Mega with CHR6DM as IMU/heading ref.
-#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
+//#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
 
 /****************************************************************************
  *********************** Define Flight Configuration ************************
@@ -59,9 +59,9 @@
 // *******************************************************************************************************************************
 // You must define one of the next 3 attitude stabilization modes or the software will not build
 // *******************************************************************************************************************************
-#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
-#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
-#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
+//#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
+//#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
+//#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
 //#define RateModeOnly // Use this if you only have a gyro sensor, this will disable any attitude modes.
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -101,14 +101,10 @@
 #if defined(HeadingMagHold) && defined(FlightAngleMARG) && defined(FlightAngleARG)
   #undef FlightAngleARG
 #endif
-#if defined(MAX7456_OSD) && !defined(AeroQuadMega_v2) && !defined(AeroQuadMega_Wii)
-  #undef MAX7456_OSD
-#endif
 
 
 /**
  * Kenny todo.
- * @todo : FINISH the CHR6DM import from 2.4.1
  * @todo : add example test for mag, put also the address as define! UNIT TEST
  * @todo : camera ->> split
  * @todo : adapt Alan led class or use it, standardize led processing. Fix dave bug for WII
@@ -263,13 +259,14 @@
    * Put AeroQuad_v18 specific intialization need here
    */
   void initPlatform() {
+
+    pinMode(LED2PIN, OUTPUT);
+    digitalWrite(LED2PIN, LOW);
+    pinMode(LED3PIN, OUTPUT);
+    digitalWrite(LED3PIN, LOW);
+    
     Wire.begin();
     TWBR = 12;
-    
-    // Battery Monitor
-    #ifdef BattMonitor
-      batteryMonitor->initialize();
-    #endif
   }
   
   /**
@@ -318,6 +315,12 @@
    * Put AeroQuad_Mini specific intialization need here
    */
   void initPlatform() {
+    
+    pinMode(LED2PIN, OUTPUT);
+    digitalWrite(LED2PIN, LOW);
+    pinMode(LED3PIN, OUTPUT);
+    digitalWrite(LED3PIN, LOW);
+
     Wire.begin();
     TWBR = 12;
   }
@@ -328,12 +331,6 @@
   void measureCriticalSensors() {
     gyro->measure();
     accel->measure();
-    
-    // Battery Monitor
-    #ifdef BattMonitor
-      batteryMonitor->initialize(0.9);
-    #endif
-
   }
 #endif
 
@@ -434,18 +431,31 @@
     OSD osd;
   #endif
 
-
   /**
    * Put AeroQuadMega_v2 specific intialization need here
    */
   void initPlatform() {
+    
+    pinMode(LED2PIN, OUTPUT);
+    digitalWrite(LED2PIN, LOW);
+    pinMode(LED3PIN, OUTPUT);
+    digitalWrite(LED3PIN, LOW);
+
+    // pins set to INPUT for camera stabilization so won't interfere with new camera class
+    pinMode(33, INPUT); // disable SERVO 1, jumper D12 for roll
+    pinMode(34, INPUT); // disable SERVO 2, jumper D11 for pitch
+    pinMode(35, INPUT); // disable SERVO 3, jumper D13 for yaw
+    pinMode(43, OUTPUT); // LED 1
+    pinMode(44, OUTPUT); // LED 2
+    pinMode(45, OUTPUT); // LED 3
+    pinMode(46, OUTPUT); // LED 4
+    digitalWrite(43, HIGH); // LED 1 on
+    digitalWrite(44, HIGH); // LED 2 on
+    digitalWrite(45, HIGH); // LED 3 on
+    digitalWrite(46, HIGH); // LED 4 on  
+
     Wire.begin();
     TWBR = 12;
-    
-    // Battery Monitor
-    #ifdef BattMonitor
-      batteryMonitor->initialize();
-    #endif
   }
   
   /**
@@ -505,19 +515,17 @@
     OSD osd;
   #endif
 
-  
   /**
    * Put ArduCopter specific intialization need here
    */
   void initPlatform() {
+    pinMode(LED_Red, OUTPUT);
+    pinMode(LED_Yellow, OUTPUT);
+    pinMode(LED_Green, OUTPUT);
+
     initializeADC();
     
     Wire.begin();
-    
-    // Battery Monitor
-    #ifdef BattMonitor
-      batteryMonitor->initialize();
-    #endif
   }
   
   /**
@@ -562,7 +570,6 @@
     #include "OSD.h"
     OSD osd;
   #endif
-
   
   /**
    * Put AeroQuad_Wii specific intialization need here
@@ -642,6 +649,7 @@
 #ifdef AeroQuadMega_CHR6DM
   #include <Platform_CHR6DM.h>
   CHR6DM chr6dm;
+  
   // Gyroscope declaration
   #include <Gyroscope.h>
   #include <Gyroscope_CHR6DM.h>
@@ -696,7 +704,11 @@
    * Put AeroQuadMega_CHR6DM specific intialization need here
    */
   void initPlatform() {
-    Serial1.begin(115200); //is this needed here? it's already done in Setup, APM TX1 is closest to board edge, RX1 is one step in (green TX wire from CHR goes into APM RX1)
+    Serial1.begin(BAUD);
+    PORTD = B00000100;
+
+    Wire.begin();
+    
     chr6dm.resetToFactory();
     chr6dm.setListenMode();
     chr6dm.setActiveChannels(CHANNEL_ALL_MASK);
@@ -707,11 +719,6 @@
     tempKinematics.setChr6dm(&chr6dm);
     tempKinematics.setGyroscope(&gyroSpecific);
     compassSpecific.setChr6dm(&chr6dm);
-    
-    // Battery Monitor
-    #ifdef BattMonitor
-      batteryMonitor->initialize();
-    #endif
   }
   
   /**
@@ -728,6 +735,7 @@
 #ifdef APM_OP_CHR6DM
   #include <Platform_CHR6DM.h>
   CHR6DM chr6dm;
+  
   // Gyroscope declaration
   #include <Gyroscope.h>
   #include <Gyroscope_CHR6DM.h>
@@ -782,7 +790,15 @@
    * Put APM_OP_CHR6DM specific intialization need here
    */
   void initPlatform() {
-    Serial1.begin(115200); //is this needed here? it's already done in Setup, APM TX1 is closest to board edge, RX1 is one step in (green TX wire from CHR goes into APM RX1)
+    pinMode(LED_Red, OUTPUT);
+    pinMode(LED_Yellow, OUTPUT);
+    pinMode(LED_Green, OUTPUT);
+
+    Serial1.begin(BAUD);
+    PORTD = B00000100;
+    
+    Wire.begin();
+
     chr6dm.resetToFactory();
     chr6dm.setListenMode();
     chr6dm.setActiveChannels(CHANNEL_ALL_MASK);
@@ -793,12 +809,6 @@
     tempKinematics.setChr6dm(&chr6dm);
     tempKinematics.setGyroscope(&gyroSpecific);
     compassSpecific.setChr6dm(&chr6dm);
-
-    
-    // Battery Monitor
-    #ifdef BattMonitor
-      batteryMonitor->initialize();
-    #endif
   }
   
   /**
@@ -816,9 +826,9 @@
 //****************** KINEMATICS DECLARATION **************
 //********************************************************
 #include "Kinematics.h"
-#if defined AeroQuadMega_CHR6DM || defined APM_OP_CHR6DM
-  // CHR6DM kinematics need some special initialization, then, declared in CHR6DM declaration scope
-#elif FlightAngleARG
+#if defined (AeroQuadMega_CHR6DM) || defined (APM_OP_CHR6DM)
+  // CHR6DM have it's own kinematics, so, initialize in it's scope
+#elif defined FlightAngleARG
   #include "Kinematics_ARG.h"
   Kinematics_ARG tempKinematics;
 #elif defined FlightAngleMARG
@@ -920,36 +930,6 @@ void setup() {
   digitalWrite(8, LOW);
 #endif    
 
-  #if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
-    Serial1.begin(BAUD);
-    PORTD = B00000100;
-  #endif
-  #if defined(AeroQuad_v18) || defined(AeroQuadMega_v2) || defined(AeroQuad_Mini)
-    pinMode(LED2PIN, OUTPUT);
-    digitalWrite(LED2PIN, LOW);
-    pinMode(LED3PIN, OUTPUT);
-    digitalWrite(LED3PIN, LOW);
-  #endif
-  #ifdef AeroQuadMega_v2
-    // pins set to INPUT for camera stabilization so won't interfere with new camera class
-    pinMode(33, INPUT); // disable SERVO 1, jumper D12 for roll
-    pinMode(34, INPUT); // disable SERVO 2, jumper D11 for pitch
-    pinMode(35, INPUT); // disable SERVO 3, jumper D13 for yaw
-    pinMode(43, OUTPUT); // LED 1
-    pinMode(44, OUTPUT); // LED 2
-    pinMode(45, OUTPUT); // LED 3
-    pinMode(46, OUTPUT); // LED 4
-    digitalWrite(43, HIGH); // LED 1 on
-    digitalWrite(44, HIGH); // LED 2 on
-    digitalWrite(45, HIGH); // LED 3 on
-    digitalWrite(46, HIGH); // LED 4 on  
-  #endif
-  #if defined(APM_OP_CHR6DM) || defined(ArduCopter) 
-    pinMode(LED_Red, OUTPUT);
-    pinMode(LED_Yellow, OUTPUT);
-    pinMode(LED_Green, OUTPUT);
-  #endif
-  
   // Read user values from EEPROM
   readEEPROM(); // defined in DataStorage.h
   
@@ -999,6 +979,11 @@ void setup() {
   // Optional Sensors
   #ifdef AltitudeHold
     barometricSensor->initialize();
+  #endif
+  
+  // Battery Monitor
+  #ifdef BattMonitor
+    batteryMonitor->initialize();
   #endif
   
   // Camera stabilization setup
