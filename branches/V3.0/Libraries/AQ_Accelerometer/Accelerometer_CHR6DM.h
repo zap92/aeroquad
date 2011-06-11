@@ -18,20 +18,20 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _AEROQUAD_GYROSCOPE_CHR6DM_H_
-#define _AEROQUAD_GYROSCOPE_CHR6DM_H_
+#ifndef _AEROQUAD_ACCELEROMETER_CHR6DM_H_
+#define _AEROQUAD_ACCELEROMETER_CHR6DM_H_
 
-#include <Gyroscope.h>
+#include <Accelerometer.h>
 #include <Platform_CHR6DM.h>
-#include <AQMath.h>
 
-class Gyroscope_CHR6DM : public Gyroscope {
+class Accelerometer_CHR6DM : public Accelerometer {
 private:
-  int gyroADC[3];
   CHR6DM *chr6dm;
   
 public:
-  Gyroscope_CHR6DM() {
+  Accelerometer_CHR6DM() {
+    accelScaleFactor = 0;
+    smoothFactor = 1.0;
   }
 
   void setChr6dm(CHR6DM *chr6dm) {
@@ -39,21 +39,14 @@ public:
   }
   
   void measure(void) {
-  
-    gyroADC[ROLL] = chr6dm->data.rollRate - zero[ROLL]; //gx yawRate
-    gyroADC[PITCH] = zero[PITCH] - chr6dm->data.pitchRate; //gy pitchRate
-    gyroADC[YAW] = chr6dm->data.yawRate - zero[ZAXIS]; //gz rollRate
+    float accelADC[3];
+    accelADC[XAXIS] = chr6dm->data.ax - zero[XAXIS];
+    accelADC[YAXIS] = chr6dm->data.ay - zero[YAXIS];
+    accelADC[ZAXIS] = chr6dm->data.az - oneG;
 
-    rate[ROLL] = filterSmooth(gyroADC[ROLL], rate[ROLL], smoothFactor); //expect 5ms = 5000Âµs = (current-previous) / 5000.0 to get around 1
-    rate[PITCH] = filterSmooth(gyroADC[PITCH], rate[PITCH], smoothFactor); //expect 5ms = 5000Âµs = (current-previous) / 5000.0 to get around 1
-    rate[YAW] = filterSmooth(gyroADC[YAW], rate[YAW], smoothFactor); //expect 5ms = 5000Âµs = (current-previous) / 5000.0 to get around 1
-
-    // Measure gyro heading
-    long int currentTime = micros();
-    if (rate[YAW] > radians(1.0) || rate[YAW] < radians(-1.0)) {
-      heading += rate[YAW] * ((currentTime - lastMesuredTime) / 1000000.0);
-    }
-    lastMesuredTime = currentTime;
+    meterPerSec[XAXIS] = filterSmooth(accelADC[XAXIS], meterPerSec[XAXIS], smoothFactor); //to get around 1
+    meterPerSec[YAXIS] = filterSmooth(accelADC[YAXIS], meterPerSec[YAXIS], smoothFactor);
+    meterPerSec[ZAXIS] = filterSmooth(accelADC[ZAXIS], meterPerSec[ZAXIS], smoothFactor);
   }
 
   void calibrate() {
@@ -62,17 +55,19 @@ public:
     float zeroZreads[FINDZERO];
 
     for (int i=0; i<FINDZERO; i++) {
-        chr6dm->read();
-        zeroXreads[i] = chr6dm->data.rollRate;
-        zeroYreads[i] = chr6dm->data.pitchRate;
-        zeroZreads[i] = chr6dm->data.yawRate;
+        chr6dm->requestAndReadPacket();
+        zeroXreads[i] = chr6dm->data.ax;
+        zeroYreads[i] = chr6dm->data.ay;
+        zeroZreads[i] = chr6dm->data.az;
     }
+
 
     zero[XAXIS] = findMedianFloat(zeroXreads, FINDZERO);
     zero[YAXIS] = findMedianFloat(zeroYreads, FINDZERO);
     zero[ZAXIS] = findMedianFloat(zeroZreads, FINDZERO);
+   
+    // store accel value that represents 1g
+    oneG = zero[ZAXIS];
   }
 };
-
-#endif  // #ifndef _AEROQUAD_GYROSCOPE_CHR6DM_H_
-
+#endif

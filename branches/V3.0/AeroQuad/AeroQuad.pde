@@ -34,24 +34,24 @@
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
 //#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
 //#define AeroQuad_Mini       // Arduino Pro Mini with Ae  roQuad Mini Shield V1.0
-#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
-#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
+//#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
+//#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
 //#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
 //#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
 //#define AeroQuadMega_CHR6DM // Clean Arduino Mega with CHR6DM as IMU/heading ref.
-//#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
+#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
 
 /****************************************************************************
  *********************** Define Flight Configuration ************************
  ****************************************************************************/
 // Use only one of the following definitions
-//#define quadXConfig
+#define quadXConfig
 //#define quadPlusConfig
 //#define hexPlusConfig
 //#define hexXConfig
-#define triConfig
+//#define triConfig
 
 // *******************************************************************************************************************************
 // Optional Sensors
@@ -59,9 +59,9 @@
 // *******************************************************************************************************************************
 // You must define one of the next 3 attitude stabilization modes or the software will not build
 // *******************************************************************************************************************************
-//#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
-//#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
-//#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
+#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
+#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
+#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
 //#define RateModeOnly // Use this if you only have a gyro sensor, this will disable any attitude modes.
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -533,6 +533,7 @@
   // Platform Wii declaration
   #include <Platform_Wii.h>
   Platform_Wii platformWii;
+  
   // Gyroscope declaration
   #include <Gyroscope.h>
   #include <Gyroscope_Wii.h>
@@ -649,7 +650,8 @@
 
   // Accelerometer declaration
   #include <Accelerometer.h>
-  Accelerometer accelSpecific;
+  #include <Accelerometer_CHR6DM.h>
+  Accelerometer_CHR6DM accelSpecific;
   Accelerometer *accel = &accelSpecific;
 
   // Receiver declaration
@@ -659,13 +661,14 @@
   #define MOTOR_PWM
   
   // Kinematics declaration
-  #include "FlightAngle.h"
-  FlightAngle_CHR6DM tempFlightAngle;
-  FlightAngle *flightAngle = &tempFlightAngle;
+  #include "Kinematics_CHR6DM.h"
+  Kinematics_CHR6DM tempKinematics;
   
   // Compas declaration
-//  #include "Compass.h"
-//  Compass_CHR6DM compass;
+  #include <Compass.h>
+  #include <Magnetometer_CHR6DM.h>
+  Magnetometer_CHR6DM compassSpecific;
+  Compass *compass = &compassSpecific;
 
   // Altitude declaration
   #ifdef AltitudeHold
@@ -700,6 +703,10 @@
     chr6dm.requestPacket();
     
     gyroSpecific.setChr6dm(&chr6dm);
+    accelSpecific.setChr6dm(&chr6dm);
+    tempKinematics.setChr6dm(&chr6dm);
+    tempKinematics.setGyroscope(&gyroSpecific);
+    compassSpecific.setChr6dm(&chr6dm);
     
     // Battery Monitor
     #ifdef BattMonitor
@@ -711,12 +718,10 @@
    * Measure critical sensors
    */
   void measureCriticalSensors() {
+    
+    chr6dm.read();
     gyro->measure();
     accel->measure();
-    // Battery Monitor
-    #ifdef BattMonitor
-      batteryMonitor->initialize();
-    #endif
   }
 #endif
 
@@ -731,7 +736,8 @@
   
   // Accelerometer declaration
   #include <Accelerometer.h>
-  Accelerometer accelSpecific;
+  #include <Accelerometer_CHR6DM.h>
+  Accelerometer_CHR6DM accelSpecific;
   Accelerometer *accel = &accelSpecific;
 
   // Receiver declaration
@@ -741,13 +747,14 @@
   #define MOTOR_APM
   
   // Kinematics declaration
-  #include "FlightAngle.h"
-  FlightAngle_CHR6DM tempFlightAngle;
-  FlightAngle *flightAngle = &tempFlightAngle;
+  #include "Kinematics_CHR6DM.h"
+  Kinematics_CHR6DM tempKinematics;
   
-  // Compass declaration
-//  #include "Compass.h"
-//  Compass_CHR6DM compass;
+  // Compas declaration
+  #include <Compass.h>
+  #include <Magnetometer_CHR6DM.h>
+  Magnetometer_CHR6DM compassSpecific;
+  Compass *compass = &compassSpecific;
 
   // Altitude declaration
   #ifdef AltitudeHold
@@ -764,6 +771,7 @@
     BatteryMonitor_APM batteryMonitorSpecific;
     BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
   #endif  
+  
   // Camera control declaration
   #ifdef CameraControl
     #include "Camera.h"
@@ -781,6 +789,11 @@
     chr6dm.requestPacket();
     
     gyroSpecific.setChr6dm(&chr6dm);
+    accelSpecific.setChr6dm(&chr6dm);
+    tempKinematics.setChr6dm(&chr6dm);
+    tempKinematics.setGyroscope(&gyroSpecific);
+    compassSpecific.setChr6dm(&chr6dm);
+
     
     // Battery Monitor
     #ifdef BattMonitor
@@ -792,13 +805,10 @@
    * Measure critical sensors
    */
   void measureCriticalSensors() {
+    
+    chr6dm.read();
     gyro->measure();
     accel->measure();
-
-    // Battery Monitor
-    #ifdef BattMonitor
-      batteryMonitor->initialize();
-    #endif
   }
 #endif
 
@@ -806,7 +816,9 @@
 //****************** KINEMATICS DECLARATION **************
 //********************************************************
 #include "Kinematics.h"
-#ifdef FlightAngleARG
+#if defined AeroQuadMega_CHR6DM || defined APM_OP_CHR6DM
+  // CHR6DM kinematics need some special initialization, then, declared in CHR6DM declaration scope
+#elif FlightAngleARG
   #include "Kinematics_ARG.h"
   Kinematics_ARG tempKinematics;
 #elif defined FlightAngleMARG
