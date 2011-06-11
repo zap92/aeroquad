@@ -28,18 +28,16 @@
  ****************************************************************************/
 // Select which hardware you wish to use with the AeroQuad Flight Software
 
-//#define DEBUG_LOOP
-
 //#define AeroQuad_v1         // Arduino 2009 with AeroQuad Shield v1.7 and below
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
 //#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
 //#define AeroQuad_Mini       // Arduino Pro Mini with Ae  roQuad Mini Shield V1.0
 //#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
 //#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
-//#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
+#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
 //#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
-#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
+//#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
 //#define AeroQuadMega_CHR6DM // Clean Arduino Mega with CHR6DM as IMU/heading ref.
 //#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
 
@@ -85,7 +83,7 @@
 // D13 to D35 for yaw, connect servo to SERVO3
 // Please note that you will need to have battery connected to power on servos with v2.0 shield
 // *******************************************************************************************************************************
-//#define CameraControl
+#define CameraControl
 
 // On screen display implementation using MAX7456 chip. See OSD.h for more info and configuration.
 //#define MAX7456_OSD
@@ -103,6 +101,9 @@
 #endif
 
 
+//#define DEBUG_LOOP
+
+
 /**
  * Kenny todo.
  * @todo : add example test for mag, put also the address as define! UNIT TEST
@@ -115,11 +116,21 @@
 #include <EEPROM.h>
 #include <Wire.h>
 #include "AeroQuad.h"
-#include "Device_I2C.h"
+//#include "Device_I2C.h"
 #include <Axis.h>
 #include "PID.h"
 #include <AQMath.h>
-#include <APM_ADC.h>
+
+
+
+
+//********************************************************
+//********************************************************
+//********* PLATFORM SPECIFIC SECTION ********************
+//********************************************************
+//********************************************************
+
+
 
 // Create objects defined from Configuration Section above
 #ifdef AeroQuad_v1
@@ -140,12 +151,6 @@
 
   // Motor declaration
   #define MOTOR_PWM
-  
-  // Camera control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
   
   /**
    * Put AeroQuad_v1 specific intialization need here
@@ -183,12 +188,6 @@
   // Motor declaration
   #define MOTOR_PWM  
   
-  // Camera control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
-
   /**
    * Put AeroQuad_v1_IDG specific intialization need here
    */
@@ -207,6 +206,8 @@
 #endif
 
 #ifdef AeroQuad_v18
+  #include <Device_I2C.h>
+  
   // Gyroscope declaration
   #include <Gyroscope.h>
   #include <Gyroscope_ITG3200.h>
@@ -249,12 +250,6 @@
     BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
   #endif
   
-  // Camera Control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
-
   /**
    * Put AeroQuad_v18 specific intialization need here
    */
@@ -279,6 +274,8 @@
 #endif
 
 #ifdef AeroQuad_Mini
+  #include <Device_I2C.h>
+  
   // Gyroscope declaration
   #include <Gyroscope.h>
   #include <Gyroscope_ITG3200.h>
@@ -305,12 +302,6 @@
     BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
   #endif
   
-  // Camera control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
-
   /**
    * Put AeroQuad_Mini specific intialization need here
    */
@@ -355,12 +346,6 @@
   // Motor declaration
   #define MOTOR_PWM  
   
-  // Camera Control
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
-  
   /**
    * Put AeroQuadMega_v1 specific intialization need here
    */
@@ -378,6 +363,8 @@
 #endif
 
 #ifdef AeroQuadMega_v2
+  #include <Device_I2C.h>
+  
   // Gyroscope declaration
   #include <Gyroscope.h>
   #include <Gyroscope_ITG3200.h>
@@ -420,12 +407,6 @@
     BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
   #endif
 
-  // Camera Control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
-  
   #ifdef MAX7456_OSD
     #include "OSD.h"
     OSD osd;
@@ -468,6 +449,9 @@
 #endif
 
 #ifdef ArduCopter
+  #include <APM_ADC.h>
+  #include <Device_I2C.h>
+
   // Gyroscope declaration 
   #include <Gyroscope.h>
   #include <Gyroscope_APM.h>
@@ -538,6 +522,7 @@
 #endif
 
 #ifdef AeroQuad_Wii
+  #include <Device_I2C.h>
   // Platform Wii declaration
   #include <Platform_Wii.h>
   Platform_Wii platformWii;
@@ -559,12 +544,6 @@
 
   // Motor declaration
   #define MOTOR_PWM  
-  
-  // Camera control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
   
   #ifdef MAX7456_OSD
     #include "OSD.h"
@@ -598,6 +577,7 @@
 #endif
 
 #ifdef AeroQuadMega_Wii
+  #include <Device_I2C.h>
   // Platform Wii declaration
   #include <Platform_Wii.h>
   Platform_Wii platformWii;
@@ -619,12 +599,6 @@
   // Motor declaration
   #define MOTOR_PWM
   
-  // Camera control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
-
   /**
    * Put AeroQuadMega_Wii specific intialization need here
    */
@@ -647,6 +621,7 @@
 #endif
 
 #ifdef AeroQuadMega_CHR6DM
+  #include <Device_I2C.h>
   #include <Platform_CHR6DM.h>
   CHR6DM chr6dm;
   
@@ -694,12 +669,6 @@
     BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
   #endif
   
-  // Camera control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
-  
   /**
    * Put AeroQuadMega_CHR6DM specific intialization need here
    */
@@ -733,6 +702,7 @@
 #endif
 
 #ifdef APM_OP_CHR6DM
+  #include <Device_I2C.h>
   #include <Platform_CHR6DM.h>
   CHR6DM chr6dm;
   
@@ -780,12 +750,6 @@
     BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
   #endif  
   
-  // Camera control declaration
-  #ifdef CameraControl
-    #include "Camera.h"
-    Camera_AeroQuad camera;
-  #endif
-  
   /**
    * Put APM_OP_CHR6DM specific intialization need here
    */
@@ -821,6 +785,12 @@
     accel->measure();
   }
 #endif
+
+//********************************************************
+//********************************************************
+//********* HARDWARE GENERALIZATION SECTION **************
+//********************************************************
+//********************************************************
 
 //********************************************************
 //****************** KINEMATICS DECLARATION **************
@@ -890,6 +860,22 @@ Kinematics *kinematics = &tempKinematics;
   Motors_I2C motorsSpecific;
   Motors *motors = &motorsSpecific;
 #endif
+
+//********************************************************
+//************** CAMERA CONTROL DECLARATION **************
+//********************************************************
+// used only on mega for now
+#ifdef CameraControl
+  #if defined (__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    #include <CameraStabilizer.h>
+    #include <CameraStabilizer_Aeroquad.h>
+    CameraStabilizer_AeroQuad tempCameraStabilizer;
+    CameraStabilizer *camera = &tempCameraStabilizer;
+  #else
+    #undef CameraControl
+  #endif
+#endif
+
 
 //********************************************************
 //******** FLIGHT CONFIGURATION DECLARATION **************
@@ -987,12 +973,12 @@ void setup() {
   #endif
   
   // Camera stabilization setup
-  #ifdef CameraControl
-    camera.initialize();
-    camera.setmCameraRoll(11.11); // Need to figure out nice way to reverse servos
-    camera.setCenterRoll(1500); // Need to figure out nice way to set center position
-    camera.setmCameraPitch(11.11);
-    camera.setCenterPitch(1300);
+  #if defined (CameraControl)
+    camera->initialize();
+    camera->setmCameraRoll(11.11); // Need to figure out nice way to reverse servos
+    camera->setCenterRoll(1500); // Need to figure out nice way to set center position
+    camera->setmCameraPitch(11.11);
+    camera->setCenterPitch(1300);
   #endif
   
   #if defined(MAX7456_OSD)
