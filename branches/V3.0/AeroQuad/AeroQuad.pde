@@ -28,13 +28,13 @@
  ****************************************************************************/
 // Select which hardware you wish to use with the AeroQuad Flight Software
 
-//#define AeroQuad_v1         // Arduino 2009 with AeroQuad Shield v1.7 and below
+#define AeroQuad_v1         // Arduino 2009 with AeroQuad Shield v1.7 and below
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
 //#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
 //#define AeroQuad_Mini       // Arduino Pro Mini with Ae  roQuad Mini Shield V1.0
 //#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
 //#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
-#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
+//#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
 //#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
 //#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
@@ -57,7 +57,7 @@
 // *******************************************************************************************************************************
 // You must define one of the next 3 attitude stabilization modes or the software will not build
 // *******************************************************************************************************************************
-//#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
+#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
 //#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
 //#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
 //#define RateModeOnly // Use this if you only have a gyro sensor, this will disable any attitude modes.
@@ -68,7 +68,7 @@
 // flightAngle recommendations: use FlightAngleARG if you do not have a magnetometer, use DCM if you have a magnetometer installed
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //#define FlightAngleMARG // Experimental!  Fly at your own risk! Use this if you have a magnetometer installed and enabled HeadingMagHold above
-#define FlightAngleARG // Use this if you do not have a magnetometer installed
+//#define FlightAngleARG // Use this if you do not have a magnetometer installed
 //#define WirelessTelemetry  // Enables Wireless telemetry on Serial3  // Wireless telemetry enable
 //#define BinaryWrite // Enables fast binary transfer of flight data to Configurator
 //#define BinaryWritePID // Enables fast binary transfer of attitude PID data
@@ -107,7 +107,6 @@
 /**
  * Kenny todo.
  * @todo : add example test for mag, put also the address as define! UNIT TEST
- * @todo : camera ->> split
  * @todo : adapt Alan led class or use it, standardize led processing. Fix dave bug for WII
  *
  * @TODO : REMOVE DRIFT CORRECTION TEST FROM AGR WHEN ALAN AND JOHN HAVE FIX IT!
@@ -129,10 +128,6 @@
 //********* PLATFORM SPECIFIC SECTION ********************
 //********************************************************
 //********************************************************
-
-
-
-// Create objects defined from Configuration Section above
 #ifdef AeroQuad_v1
   // Gyroscope declaration
   #include <Gyroscope.h>
@@ -151,6 +146,9 @@
 
   // Motor declaration
   #define MOTOR_PWM
+  
+  // not supported on v1
+  #undef HeadingMagHold
   
   /**
    * Put AeroQuad_v1 specific intialization need here
@@ -187,6 +185,9 @@
 
   // Motor declaration
   #define MOTOR_PWM  
+  
+  // not supported on v1
+  #undef HeadingMagHold
   
   /**
    * Put AeroQuad_v1_IDG specific intialization need here
@@ -226,12 +227,9 @@
   // Motor declaration
   #define MOTOR_PWM_Timer
   
-  // Heading hold declaration
+  // heading mag hold declaration
   #ifdef HeadingMagHold
-    #include <compass.h>
-    #include <Magnetometer_HMC5843.h>
-    Magnetometer_HMC5843 compassSpecific;
-    Compass *compass = &compassSpecific;
+    #define HMC5843
   #endif
   
   // Altitude declaration
@@ -294,6 +292,10 @@
   // Motor declaration
   #define MOTOR_PWM_Timer
   
+  // not supported on mini
+  #undef HeadingMagHold
+
+  
   // Battery Monitor declaration
   #ifdef BattMonitor
     #include <BatteryMonitor.h>
@@ -346,6 +348,9 @@
   // Motor declaration
   #define MOTOR_PWM  
   
+  // not supported on v1
+  #undef HeadingMagHold
+  
   /**
    * Put AeroQuadMega_v1 specific intialization need here
    */
@@ -382,14 +387,12 @@
 
   // Motor declaration
   #define MOTOR_PWM_Timer
-
-  // Heading Hold declaration
+  
+  // heading mag hold declaration
   #ifdef HeadingMagHold
-    #include <Compass.h>
-    #include <Magnetometer_HMC5843.h>
-    Magnetometer_HMC5843 compassSpecific;
-    Compass *compass = &compassSpecific;
+    #define HMC5843
   #endif
+
 
   // Altitude declaration
   #ifdef AltitudeHold
@@ -470,14 +473,11 @@
   // Motor Declaration
   #define MOTOR_APM
   
-  // Heading hold declaration
+  // heading mag hold declaration
   #ifdef HeadingMagHold
-    #include <Compass.h>
-    #include <Magnetometer_HMC5843.h>
-    Magnetometer_HMC5843 compassSpecific;
-    Compass *compass = &compassSpecific;
+    #define HMC5843
   #endif
-
+ 
   // Altitude declaration
   #ifdef AltitudeHold
     #include <BarometricSensor.h>
@@ -545,6 +545,11 @@
   // Motor declaration
   #define MOTOR_PWM  
   
+  // heading mag hold declaration
+  #ifdef HeadingMagHold
+    #define HMC5843
+  #endif
+  
   #ifdef MAX7456_OSD
     #include "OSD.h"
     OSD osd;
@@ -599,6 +604,12 @@
   // Motor declaration
   #define MOTOR_PWM
   
+  // heading mag hold declaration
+  #ifdef HeadingMagHold
+    #define HMC5843
+  #endif
+
+  
   /**
    * Put AeroQuadMega_Wii specific intialization need here
    */
@@ -648,11 +659,13 @@
   Kinematics_CHR6DM tempKinematics;
   
   // Compas declaration
+  #define HeadingMagHold
   #include <Compass.h>
   #include <Magnetometer_CHR6DM.h>
   Magnetometer_CHR6DM compassSpecific;
   Compass *compass = &compassSpecific;
 
+  
   // Altitude declaration
   #ifdef AltitudeHold
     #include <BarometricSensor.h>
@@ -729,6 +742,7 @@
   Kinematics_CHR6DM tempKinematics;
   
   // Compas declaration
+  #define HeadingMagHold
   #include <Compass.h>
   #include <Magnetometer_CHR6DM.h>
   Magnetometer_CHR6DM compassSpecific;
@@ -862,11 +876,26 @@ Kinematics *kinematics = &tempKinematics;
 #endif
 
 //********************************************************
+//******* HEADING HOLD MAGNETOMETER DECLARATION **********
+//********************************************************
+#if defined (HeadingMagHold)
+  #if defined (APM_OP_CHR6DM) || defined (AeroQuadMega_CHR6DM)
+   // CHR6DM have it's own way... need to generalize it!
+  #elif defined (HMC5843)
+    #include <Compass.h>
+    #include <Magnetometer_HMC5843.h>
+    Magnetometer_HMC5843 compassSpecific;
+    Compass *compass = &compassSpecific;
+  #endif
+#endif
+
+
+//********************************************************
 //************** CAMERA CONTROL DECLARATION **************
 //********************************************************
 // used only on mega for now
 #ifdef CameraControl
-  #if defined (__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+  #if defined (__AVR_ATmega1280__) || defined (__AVR_ATmega2560__)
     #include <CameraStabilizer.h>
     #include <CameraStabilizer_Aeroquad.h>
     CameraStabilizer_AeroQuad tempCameraStabilizer;
