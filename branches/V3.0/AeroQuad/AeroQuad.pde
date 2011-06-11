@@ -28,16 +28,16 @@
  ****************************************************************************/
 // Select which hardware you wish to use with the AeroQuad Flight Software
 
-#define AeroQuad_v1         // Arduino 2009 with AeroQuad Shield v1.7 and below
+//#define AeroQuad_v1         // Arduino 2009 with AeroQuad Shield v1.7 and below
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
 //#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
-//#define AeroQuad_Mini       // Arduino Pro Mini with Ae  roQuad Mini Shield V1.0
+//#define AeroQuad_Mini       // Arduino Pro Mini with AeroQuad Mini Shield V1.0
 //#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
 //#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
 //#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
-//#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
+#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
 //#define AeroQuadMega_CHR6DM // Clean Arduino Mega with CHR6DM as IMU/heading ref.
 //#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
 
@@ -57,7 +57,7 @@
 // *******************************************************************************************************************************
 // You must define one of the next 3 attitude stabilization modes or the software will not build
 // *******************************************************************************************************************************
-#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
+//#define HeadingMagHold // Enables HMC5843 Magnetometer, gets automatically selected if CHR6DM is defined
 //#define AltitudeHold // Enables BMP085 Barometer (experimental, use at your own risk)
 //#define BattMonitor //define your personal specs in BatteryMonitor.h! Full documentation with schematic there
 //#define RateModeOnly // Use this if you only have a gyro sensor, this will disable any attitude modes.
@@ -121,8 +121,6 @@
 #include <AQMath.h>
 
 
-
-
 //********************************************************
 //********************************************************
 //********* PLATFORM SPECIFIC SECTION ********************
@@ -147,8 +145,10 @@
   // Motor declaration
   #define MOTOR_PWM
   
-  // not supported on v1
+  // unsuported in v1
+  #undef AltitudeHold
   #undef HeadingMagHold
+  #undef BattMonitor
   
   /**
    * Put AeroQuad_v1 specific intialization need here
@@ -186,8 +186,10 @@
   // Motor declaration
   #define MOTOR_PWM  
   
-  // not supported on v1
+  // unsuported in v1
+  #undef AltitudeHold
   #undef HeadingMagHold
+  #undef BattMonitor
   
   /**
    * Put AeroQuad_v1_IDG specific intialization need here
@@ -234,18 +236,12 @@
   
   // Altitude declaration
   #ifdef AltitudeHold
-    #include <BarometricSensor.h>
-    #include <BarometricSensor_BMP085.h>
-    BarometricSensor_BMP085 barometricSensorSpecific;
-    BarometricSensor *barometricSensor = &barometricSensorSpecific;
+    #define BMP085
   #endif
   
   // Battery Monitor declaration
   #ifdef BattMonitor
-    #include <BatteryMonitor.h>
-    #include <BatteryMonitor_AQ.h>
-    BatteryMonitor_AQ batteryMonitorSpecific;
-    BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
+    #define BATTERY_MONITOR_AQ
   #endif
   
   /**
@@ -292,17 +288,14 @@
   // Motor declaration
   #define MOTOR_PWM_Timer
   
-  // not supported on mini
-  #undef HeadingMagHold
-
-  
   // Battery Monitor declaration
   #ifdef BattMonitor
-    #include <BatteryMonitor.h>
-    #include <BatteryMonitor_AQ.h>
-    BatteryMonitor_AQ batteryMonitorSpecific;
-    BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
+    #define BATTERY_MONITOR_AQ
   #endif
+  
+  // unsuported in mini
+  #undef AltitudeHold
+  #undef HeadingMagHold
   
   /**
    * Put AeroQuad_Mini specific intialization need here
@@ -347,15 +340,18 @@
   
   // Motor declaration
   #define MOTOR_PWM  
-  
-  // not supported on v1
+
+  // unsuported on mega v1  
+  #undef AltitudeHold
   #undef HeadingMagHold
+  #undef BattMonitor
   
   /**
    * Put AeroQuadMega_v1 specific intialization need here
    */
   void initPlatform() {
     gyroSpecific.setAref(aref);
+    accelSpecific.setAref(aref);
   }
   
   /**
@@ -393,21 +389,14 @@
     #define HMC5843
   #endif
 
-
   // Altitude declaration
   #ifdef AltitudeHold
-    #include <BarometricSensor.h>
-    #include <BarometricSensor_BMP085.h>
-    BarometricSensor_BMP085 barometricSensorSpecific;
-    BarometricSensor *barometricSensor = &barometricSensorSpecific;
+    #define BMP085
   #endif
 
   // Battery Monitor declaration
   #ifdef BattMonitor
-    #include <BatteryMonitor.h>
-    #include <BatteryMonitor_AQ.h>
-    BatteryMonitor_AQ batteryMonitorSpecific;
-    BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
+    #define BATTERY_MONITOR_AQ
   #endif
 
   #ifdef MAX7456_OSD
@@ -480,18 +469,12 @@
  
   // Altitude declaration
   #ifdef AltitudeHold
-    #include <BarometricSensor.h>
-    #include <BarometricSensor_BMP085.h>
-    BarometricSensor_BMP085 barometricSensorSpecific;
-    BarometricSensor *barometricSensor = &barometricSensorSpecific;
+    #define BMP085
   #endif
   
   // Battery monitor declaration
   #ifdef BattMonitor
-    #include <BatteryMonitor.h>
-    #include <BatteryMonitor_APM.h>
-    BatteryMonitor_APM batteryMonitorSpecific;
-    BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
+    #define BATTERY_MONITOR_APM
   #endif
   
   #ifdef MAX7456_OSD
@@ -523,6 +506,7 @@
 
 #ifdef AeroQuad_Wii
   #include <Device_I2C.h>
+  
   // Platform Wii declaration
   #include <Platform_Wii.h>
   Platform_Wii platformWii;
@@ -548,6 +532,16 @@
   // heading mag hold declaration
   #ifdef HeadingMagHold
     #define HMC5843
+  #endif
+  
+  // Altitude declaration
+  #ifdef AltitudeHold
+    #define BMP085
+  #endif
+  
+  // Battery monitor declaration
+  #ifdef BattMonitor
+    #define BATTERY_MONITOR_AQ
   #endif
   
   #ifdef MAX7456_OSD
@@ -583,9 +577,11 @@
 
 #ifdef AeroQuadMega_Wii
   #include <Device_I2C.h>
+  
   // Platform Wii declaration
   #include <Platform_Wii.h>
   Platform_Wii platformWii;
+  
   // Gyroscope declaration
   #include <Gyroscope.h>
   #include <Gyroscope_Wii.h>
@@ -608,8 +604,17 @@
   #ifdef HeadingMagHold
     #define HMC5843
   #endif
-
   
+  // Altitude declaration
+  #ifdef AltitudeHold
+    #define BMP085
+  #endif
+  
+  // Battery monitor declaration
+  #ifdef BattMonitor
+    #define BATTERY_MONITOR_AQ
+  #endif
+
   /**
    * Put AeroQuadMega_Wii specific intialization need here
    */
@@ -660,26 +665,18 @@
   
   // Compas declaration
   #define HeadingMagHold
-  #include <Compass.h>
+  #define COMPASS_CHR6DM
   #include <Magnetometer_CHR6DM.h>
   Magnetometer_CHR6DM compassSpecific;
-  Compass *compass = &compassSpecific;
 
-  
   // Altitude declaration
   #ifdef AltitudeHold
-    #include <BarometricSensor.h>
-    #include <BarometricSensor_BMP085.h>
-    BarometricSensor_BMP085 barometricSensorSpecific;
-    BarometricSensor *barometricSensor = &barometricSensorSpecific;
+    #define BMP085
   #endif
   
   // Battery monitor declaration
   #ifdef BattMonitor
-    #include <BatteryMonitor.h>
-    #include <BatteryMonitor_APM.h>
-    BatteryMonitor_APM batteryMonitorSpecific;
-    BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
+    #define BATTERY_MONITOR_APM
   #endif
   
   /**
@@ -743,26 +740,19 @@
   
   // Compas declaration
   #define HeadingMagHold
-  #include <Compass.h>
+  #define COMPASS_CHR6DM
   #include <Magnetometer_CHR6DM.h>
   Magnetometer_CHR6DM compassSpecific;
-  Compass *compass = &compassSpecific;
 
   // Altitude declaration
   #ifdef AltitudeHold
-    #include <BarometricSensor.h>
-    #include <BarometricSensor_BMP085.h>
-    BarometricSensor_BMP085 barometricSensorSpecific;
-    BarometricSensor *barometricSensor = &barometricSensorSpecific;
+    #define BMP085
   #endif
   
   // Battery monitor declaration
   #ifdef BattMonitor
-    #include <BatteryMonitor.h>
-    #include <BatteryMonitor_APM.h>
-    BatteryMonitor_APM batteryMonitorSpecific;
-    BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
-  #endif  
+    #define BATTERY_MONITOR_APM
+  #endif
   
   /**
    * Put APM_OP_CHR6DM specific intialization need here
@@ -878,16 +868,40 @@ Kinematics *kinematics = &tempKinematics;
 //********************************************************
 //******* HEADING HOLD MAGNETOMETER DECLARATION **********
 //********************************************************
-#if defined (HeadingMagHold)
-  #if defined (APM_OP_CHR6DM) || defined (AeroQuadMega_CHR6DM)
-   // CHR6DM have it's own way... need to generalize it!
-  #elif defined (HMC5843)
-    #include <Compass.h>
-    #include <Magnetometer_HMC5843.h>
-    Magnetometer_HMC5843 compassSpecific;
-    Compass *compass = &compassSpecific;
-  #endif
+#if defined (HMC5843)
+  #include <Compass.h>
+  #include <Magnetometer_HMC5843.h>
+  Magnetometer_HMC5843 compassSpecific;
+  Compass *compass = &compassSpecific;
+#elif defined (COMPASS_CHR6DM)
+  #include <Compass.h>
+  Compass *compass = &compassSpecific;
 #endif
+
+//********************************************************
+//******* ALTITUDE HOLD BAROMETER DECLARATION ************
+//********************************************************
+#if defined (BMP085)
+  #include <BarometricSensor.h>
+  #include <BarometricSensor_BMP085.h>
+  BarometricSensor_BMP085 barometricSensorSpecific;
+  BarometricSensor *barometricSensor = &barometricSensorSpecific;
+#endif
+
+//********************************************************
+//*************** BATTERY MONITOR DECLARATION ************
+//********************************************************
+#if defined (BATTERY_MONITOR_AQ)
+  #include <BatteryMonitor.h>
+  #include <BatteryMonitor_AQ.h>
+  BatteryMonitor_AQ batteryMonitorSpecific;
+  BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
+#elif defined (BATTERY_MONITOR_APM)
+  #include <BatteryMonitor.h>
+  #include <BatteryMonitor_APM.h>
+  BatteryMonitor_APM batteryMonitorSpecific;
+  BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
+#endif  
 
 
 //********************************************************
