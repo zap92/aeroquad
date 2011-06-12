@@ -34,6 +34,7 @@
 #define TEMPERATURE 0
 #define PRESSURE 1
 
+
 class BarometricSensor_BMP085 : public BarometricSensor {
 private:
   byte overSamplingSetting;
@@ -62,7 +63,6 @@ private:
     while(!Wire.available()); // wait until data available
     xlsb = Wire.receive();
     return (((long)msb<<16) | ((long)lsb<<8) | ((long)xlsb)) >>(8-overSamplingSetting);
-	return 0;
   }
 
   void requestRawTemperature(void) {

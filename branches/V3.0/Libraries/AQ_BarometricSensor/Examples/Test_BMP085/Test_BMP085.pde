@@ -40,7 +40,7 @@ void setup() {
 
 void loop() {
   
-  if((millis() - timer) > 10) // 100Hz
+  if((millis() - timer) > 50) // 20Hz
   {
     timer = millis();
     barometricSensor.measure();
