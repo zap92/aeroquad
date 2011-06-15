@@ -43,29 +43,13 @@ void applyMotorCommand() {
 //  motors->setMotorCommand(SERVO,  filterSmooth(constrain(TRI_YAW_MIDDLE + YAW_DIRECTION * motorAxisCommandYaw, TRI_YAW_CONSTRAINT_MIN, TRI_YAW_CONSTRAINT_MAX),motors->getMotorCommand(SERVO),0.5));
 }
 
-void processMinMaxCommandPerMotor(byte motor) {  
-  if (motors->getMotorCommand(motor) <= MINTHROTTLE) {
-    delta = receiver->getData(THROTTLE) - MINTHROTTLE;
-    motorMaxCommand[motor] = constrain(receiver->getData(THROTTLE) + delta, MINTHROTTLE, MAXCHECK);
-  }
-  else if (motors->getMotorCommand(motor) >= MAXCOMMAND) {
-    delta = MAXCOMMAND - receiver->getData(THROTTLE);
-    motorMinCommand[motor] = constrain(receiver->getData(THROTTLE) - delta, MINTHROTTLE, MAXCOMMAND);
-  }     
-  else {
+void processMinMaxCommand() {
+
+  for (byte motor = 0; motor < LASTMOTOR; motor++) {
     motorMaxCommand[motor] = MAXCOMMAND;
     motorMinCommand[motor] = MINTHROTTLE;
   }
 }
-
-
-void processMinMaxCommand() {
-  processMinMaxCommandPerMotor(FRONT_LEFT);
-  processMinMaxCommandPerMotor(FRONT_RIGHT);
-  processMinMaxCommandPerMotor(REAR);
-  processMinMaxCommandPerMotor(SERVO);
-}
-
 
 void processHardManuevers() {
   if (receiver->getData(ROLL) < MINCHECK) {        // Maximum Left Roll Rate
