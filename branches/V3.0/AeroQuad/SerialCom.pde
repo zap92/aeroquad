@@ -182,6 +182,11 @@ void readSerialCommand() {
       camera.setServoMaxYaw(readFloatSerial());
 #endif
       break;
+    case '>':
+      for(byte channel = ROLL; channel<LASTCHANNEL; channel++) {
+        receiver->setChannelValue(channel, (int)readFloatSerial());
+      }
+      break;
     }
     digitalWrite(LEDPIN, HIGH);
   }
