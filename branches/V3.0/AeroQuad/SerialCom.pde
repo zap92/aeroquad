@@ -186,7 +186,7 @@ void readSerialCommand() {
       for(byte channel = ROLL; channel<MODE; channel++) {
         receiver->setChannelValue(channel, (int)readFloatSerial());
       }
-      queryType = 'Q';
+      queryType = SERIAL_READ();
       break;
     }
     digitalWrite(LEDPIN, HIGH);
