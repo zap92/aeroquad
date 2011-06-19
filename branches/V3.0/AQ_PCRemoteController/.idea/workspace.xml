@@ -62,43 +62,25 @@
       <file leaf-file-name="SerialCommunicator.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/SerialCommunicator.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="208" column="35" selection-start="6511" selection-end="6511" vertical-scroll-proportion="0.25053996">
+            <state line="208" column="35" selection-start="6511" selection-end="6511" vertical-scroll-proportion="0.14285715">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="PCRemoteControllerMainFrame.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/PCRemoteControllerMainFrame.java">
+      <file leaf-file-name="XBox360Pad.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/XBox360Pad.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="44" column="8" selection-start="2237" selection-end="2237" vertical-scroll-proportion="0.0">
+            <state line="42" column="82" selection-start="1315" selection-end="1315" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ShipConnectionPanelController.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/ShipConnectionPanel/ShipConnectionPanelController.java">
+      <file leaf-file-name="SaitecEvoFlightStick.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/SaitecEvoFlightStick.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="35" column="34" selection-start="1443" selection-end="1443" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="GamePadPanel.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/GamePadPanel.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="30" column="36" selection-start="963" selection-end="963" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="GamePadPanelController.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/GamePadPanelController.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="44" column="52" selection-start="1491" selection-end="1491" vertical-scroll-proportion="0.0">
+            <state line="54" column="91" selection-start="1600" selection-end="1600" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -118,8 +100,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/IGamePad.java" />
-        <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/XBox360Pad.java" />
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadDetection/GamePadDetectionController.java" />
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/Message/MessageFactory.java" />
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/Message/FlightDataMessage.java" />
@@ -129,11 +109,13 @@
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/GamePadPanel.java" />
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/IGamePadPanelController.java" />
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/ISerialCommunicator.java" />
-        <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/SaitecEvoFlightStick.java" />
-        <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/GamePad.java" />
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/GamePadPanelController.java" />
+        <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/Utils/MathUtils.java" />
+        <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/GamePad.java" />
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/PCRemoteControllerMainFrame.java" />
+        <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/XBox360Pad.java" />
         <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/SerialCommunicator.java" />
+        <option value="$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/SaitecEvoFlightStick.java" />
       </list>
     </option>
   </component>
@@ -167,6 +149,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
       <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
@@ -399,7 +382,6 @@
         </subPane>
       </pane>
       <pane id="Favorites" />
-      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -416,9 +398,9 @@
     <property name="GoToClass.toSaveIncludeLibraries" value="false" />
     <property name="MemberChooser.showClasses" value="true" />
     <property name="GoToClass.includeLibraries" value="false" />
-    <property name="options.searchVisible" value="true" />
-    <property name="options.splitter.details.proportions" value="0.2" />
     <property name="dynamic.classpath" value="false" />
+    <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="options.searchVisible" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
@@ -581,20 +563,20 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-2" y="0" width="1441" height="863" extended-state="0" />
+    <frame x="488" y="0" width="959" height="860" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.30212766" sideWeight="0.99707603" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3019943" sideWeight="0.9988789" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.30638298" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3062678" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32907802" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.35963923" sideWeight="0.69787234" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.35951328" sideWeight="0.6980057" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Dependency Viewer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.22836879" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -651,114 +633,92 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/Message/MessageFactory.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="0" selection-start="442" selection-end="442" vertical-scroll-proportion="0.5507559">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/Message/IMessageFactory.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="32" selection-start="82" selection-end="97" vertical-scroll-proportion="0.07343412">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/Message/FlightDataMessage.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="30" selection-start="78" selection-end="95" vertical-scroll-proportion="0.07343412">
-          <folding />
-        </state>
+        <state line="2" column="30" selection-start="78" selection-end="95" vertical-scroll-proportion="0.07343412" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/ShipConnectionPanel/IShipConnectionPanel.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="38" selection-start="300" selection-end="300" vertical-scroll-proportion="0.3837472">
-          <folding />
-        </state>
+        <state line="10" column="38" selection-start="300" selection-end="300" vertical-scroll-proportion="0.3837472" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/ISerialCommunicator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="18" column="45" selection-start="518" selection-end="518" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="18" column="45" selection-start="518" selection-end="518" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/Message/SerialMessage.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="4" column="41" selection-start="139" selection-end="139" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="4" column="41" selection-start="139" selection-end="139" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/IGamePad.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="17" selection-start="81" selection-end="81" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/SaitecEvoFlightStick.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="25" column="0" selection-start="761" selection-end="844" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/GamePad.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="27" column="42" selection-start="903" selection-end="903" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/GamePadPanelController.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="44" column="52" selection-start="1491" selection-end="1491" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="2" column="17" selection-start="81" selection-end="81" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/IGamePadPanelController.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="0" selection-start="147" selection-end="147" vertical-scroll-proportion="0.2302483">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/GamePadPanel.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="30" column="36" selection-start="963" selection-end="963" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="6" column="0" selection-start="147" selection-end="147" vertical-scroll-proportion="0.2302483" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/ShipConnectionPanel/ShipConnectionPanel.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="25" column="34" selection-start="1023" selection-end="1023" vertical-scroll-proportion="0.039534885">
-          <folding />
-        </state>
+        <state line="25" column="34" selection-start="1023" selection-end="1023" vertical-scroll-proportion="0.039534885" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/ShipConnectionPanel/ShipConnectionPanelController.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="35" column="34" selection-start="1443" selection-end="1443" vertical-scroll-proportion="0.0">
+        <state line="35" column="34" selection-start="1443" selection-end="1443" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/GamePadPanel.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="30" column="36" selection-start="963" selection-end="963" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/GamePad/GamePadPanelController.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="44" column="52" selection-start="1491" selection-end="1491" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/Utils/MathUtils.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="12" column="65" selection-start="455" selection-end="455" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/GamePad.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="95" column="0" selection-start="2896" selection-end="2896" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/UI/PCRemoteControllerMainFrame.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="44" column="8" selection-start="2237" selection-end="2237" vertical-scroll-proportion="0.0">
+        <state line="44" column="19" selection-start="2228" selection-end="2228" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/XBox360Pad.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="42" column="82" selection-start="1315" selection-end="1315" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/GamePad/GamePadController/SaitecEvoFlightStick.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="54" column="91" selection-start="1600" selection-end="1600" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/AeroQuad/PCRemoteController/SerialCommunicator/SerialCommunicator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="208" column="35" selection-start="6511" selection-end="6511" vertical-scroll-proportion="0.25053996">
+        <state line="208" column="35" selection-start="6511" selection-end="6511" vertical-scroll-proportion="0.14285715">
           <folding />
         </state>
       </provider>
