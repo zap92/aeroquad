@@ -7,6 +7,8 @@ import AeroQuad.PCRemoteController.UI.ArtificialHorizon.ArtificialHorizonControl
 import AeroQuad.PCRemoteController.UI.GamePad.GamePadPanel;
 import AeroQuad.PCRemoteController.UI.GamePad.GamePadPanelController;
 import AeroQuad.PCRemoteController.UI.GamePad.IGamePadPanelController;
+import AeroQuad.PCRemoteController.UI.MotorsPanel.MotorsPanel;
+import AeroQuad.PCRemoteController.UI.MotorsPanel.MotorsPanelController;
 import AeroQuad.PCRemoteController.UI.ShipConnectionPanel.ShipConnectionPanel;
 import AeroQuad.PCRemoteController.UI.ShipConnectionPanel.ShipConnectionPanelController;
 import AeroQuad.PCRemoteController.srcimport.ArtificialHorizon.PanelGUI;
@@ -40,8 +42,8 @@ public class PCRemoteControllerMainFrame extends JFrame
         new ArtificialHorizonController(haPanel, communicator);
         mainPanel.add(haPanel, BorderLayout.WEST);
 
-//        final MotorsPanel motorPanel = new MotorsPanel(new MotorsPanelController(communicator));
-//        mainPanel.add(motorPanel, BorderLayout.SOUTH);
+        final MotorsPanel motorPanel = new MotorsPanel(new MotorsPanelController(communicator));
+        mainPanel.add(motorPanel, BorderLayout.SOUTH);
         getContentPane().add(mainPanel);
         pack();
         setVisible(true);

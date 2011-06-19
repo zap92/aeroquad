@@ -206,7 +206,7 @@ public class SerialCommunicator implements ISerialCommunicator
             {
                 try
                 {
-                    Thread.sleep(150);
+                    Thread.sleep(25);
                     if (_specialRequest != null)
                     {
                         for (final char c : _specialRequest.toCharArray())
@@ -221,6 +221,8 @@ public class SerialCommunicator implements ISerialCommunicator
                     }
                     else if (_transmitterValue != null)
                     {
+                        _lastRequest = _lastRequest.equals(FLIGHT_DATA_REQUEST) ? SENSORS_DATA_REQUEST : FLIGHT_DATA_REQUEST;
+                        _transmitterValue += _lastRequest;
                         sendMessage(_transmitterValue);
                         _transmitterValue = null;
                     }
@@ -233,4 +235,7 @@ public class SerialCommunicator implements ISerialCommunicator
             }
         }
     }
+    private final String FLIGHT_DATA_REQUEST = ";S";
+    private final String SENSORS_DATA_REQUEST = ";Q";
+    private String _lastRequest = FLIGHT_DATA_REQUEST;
 }

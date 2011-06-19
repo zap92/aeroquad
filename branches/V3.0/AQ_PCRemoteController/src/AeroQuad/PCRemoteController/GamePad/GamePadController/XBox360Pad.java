@@ -1,12 +1,19 @@
 package AeroQuad.PCRemoteController.GamePad.GamePadController;
 
 import AeroQuad.PCRemoteController.SerialCommunicator.ISerialCommunicator;
+import AeroQuad.PCRemoteController.Utils.MathUtils;
 import de.hardcode.jxinput.Axis;
 import de.hardcode.jxinput.Directional;
 import de.hardcode.jxinput.JXInputDevice;
 
 public class XBox360Pad extends GamePad
 {
+    private final String X_AXIS = "X Axis";
+    private final String Y_AXIS = "Y Axis";
+    private final String X_ROTATION = "X Rotation";
+    private final String Y_ROTATION = "Y Rotation";
+
+
     public XBox360Pad(final JXInputDevice device, final ISerialCommunicator serialCommunicator)
     {
         super(device, serialCommunicator);
@@ -21,12 +28,28 @@ public class XBox360Pad extends GamePad
     @Override
     protected void updateDirectionnalValue(Directional directional)
     {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     protected void updateAxisValue(Axis axis)
     {
-        //To change body of implemented methods use File | Settings | File Templates.
+        if (axis.getName().equals(X_AXIS))
+        {
+            _transmitterValue[YAW] = (int) MathUtils.map(axis.getValue(), -1, 1, 1000, 2000);
+        }
+        else if (axis.getName().equals(Y_AXIS))
+        {
+            final double value = MathUtils.map(axis.getValue(),0,-1,1000,2000);
+            _transmitterValue[THROTTLE] = (int)MathUtils.constrain(value,1000,1500);
+        }
+        else if (axis.getName().equals(X_ROTATION))
+        {
+
+            _transmitterValue[ROLL] = (int)MathUtils.map(axis.getValue(),-1,1,1250,1750);
+        }
+        else if (axis.getName().equals(Y_ROTATION))
+        {
+            _transmitterValue[PITCH] = (int)MathUtils.map(axis.getValue(),1,-1,1250,1750);
+        }
     }
 }

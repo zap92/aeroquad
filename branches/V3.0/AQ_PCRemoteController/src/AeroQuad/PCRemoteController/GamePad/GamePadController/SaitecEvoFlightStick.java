@@ -44,15 +44,15 @@ public class SaitecEvoFlightStick extends GamePad
     {
         if (axis.getName().equals(X_AXIS))
         {
-            _transmitterValue[ROLL] = (int)MathUtils.map(axis.getValue(),-1,1,1000,2000);
+            _transmitterValue[ROLL] = (int)MathUtils.map(axis.getValue(),-1,1,1250,1750);
         }
         else if (axis.getName().equals(Y_AXIS))
         {
-            _transmitterValue[PITCH] = (int)MathUtils.map(axis.getValue(),1,-1,1000,2000);
+            _transmitterValue[PITCH] = (int)MathUtils.map(axis.getValue(),1,-1,1250,2750);
         }
-        if (axis.getName().equals(Z_AXIS))
+        else if (axis.getName().equals(Z_AXIS))
         {
-            _transmitterValue[THROTTLE] = (int)MathUtils.map(axis.getValue(),1,-1,1000,2000);
+            _transmitterValue[THROTTLE] = (int)MathUtils.map(axis.getValue(),1,-1,1000,1500);
         }
         else if (axis.getName().equals(Z_ROTATION))
         {
