@@ -225,7 +225,7 @@ void processFlightControl() {
 
   // *********************** Command Motors **********************
   if (armed == ON && safetyCheck == ON) {
-    motors->write(); // Defined in Motors.h
+    motors->write();
   }
 }
 
