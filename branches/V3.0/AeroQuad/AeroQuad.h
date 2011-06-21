@@ -347,12 +347,8 @@ int motorAxisCommandPitch = 0;
 int motorAxisCommandYaw = 0;
 
 #if defined quadXConfig || defined quadPlusConfig || defined triConfig || defined quadY4
-  int motorMinCommand[4];
-  int motorMaxCommand[4];
   int motorConfiguratorCommand[4];
 #elif defined hexXConfig || defined hexPlusConfig
-  int motorMinCommand[6];
-  int motorMaxCommand[6];
   int motorConfiguratorCommand[6];
 #endif
 
