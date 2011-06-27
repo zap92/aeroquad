@@ -197,10 +197,15 @@ void processFlightControl() {
     applyMotorCommand();
   } 
 
+  // *********************** process min max motor command *******************
+  processMinMaxMotorCommand();
+
+  // Allows quad to do acrobatics by lowering power to opposite motors during hard manuevers
+  processHardManuevers();
+  
   // Apply limits to motor commands
   for (byte motor = 0; motor < LASTMOTOR; motor++) {
-//    motors->setMotorCommand(motor, constrain(motors->getMotorCommand(motor), motorMinCommand[motor], motorMaxCommand[motor]));
-    motors->setMotorCommand(motor, constrain(motors->getMotorCommand(motor), MINCOMMAND, MAXCOMMAND));
+    motors->setMotorCommand(motor, constrain(motors->getMotorCommand(motor), motorMinCommand[motor], motorMaxCommand[motor]));
   }
 
   // If throttle in minimum position, don't apply yaw
