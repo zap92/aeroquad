@@ -72,21 +72,23 @@ void processMinMaxCommand() {
 }
 
 void processHardManuevers() {
-  if (receiver->getData(ROLL) < MINCHECK) {        // Maximum Left Roll Rate
-    motorMinCommand[RIGHT] = MAXCOMMAND;
-    motorMaxCommand[LEFT] = minAcro;
-  }
-  else if (receiver->getData(ROLL) > MAXCHECK) {   // Maximum Right Roll Rate
-    motorMinCommand[LEFT] = MAXCOMMAND;
-    motorMaxCommand[RIGHT] = minAcro;
-  }
-  else if (receiver->getData(PITCH) < MINCHECK) {  // Maximum Nose Up Pitch Rate
-    motorMinCommand[FRONT] = MAXCOMMAND;
-    motorMaxCommand[REAR] = minAcro;
-  }
-  else if (receiver->getData(PITCH) > MAXCHECK) {  // Maximum Nose Down Pitch Rate
-    motorMinCommand[REAR] = MAXCOMMAND;
-    motorMaxCommand[FRONT] = minAcro;
+  if (flightMode == ACRO) {
+    if (receiver->getData(ROLL) < MINCHECK) {        // Maximum Left Roll Rate
+      motorMinCommand[RIGHT] = MAXCOMMAND;
+      motorMaxCommand[LEFT] = minAcro;
+    }
+    else if (receiver->getData(ROLL) > MAXCHECK) {   // Maximum Right Roll Rate
+      motorMinCommand[LEFT] = MAXCOMMAND;
+      motorMaxCommand[RIGHT] = minAcro;
+    }
+    else if (receiver->getData(PITCH) < MINCHECK) {  // Maximum Nose Up Pitch Rate
+      motorMinCommand[FRONT] = MAXCOMMAND;
+      motorMaxCommand[REAR] = minAcro;
+    }
+    else if (receiver->getData(PITCH) > MAXCHECK) {  // Maximum Nose Down Pitch Rate
+      motorMinCommand[REAR] = MAXCOMMAND;
+      motorMaxCommand[FRONT] = minAcro;
+    }
   }
 }
 
