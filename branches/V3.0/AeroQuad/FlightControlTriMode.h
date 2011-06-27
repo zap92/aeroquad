@@ -64,4 +64,40 @@ void applyMotorCommand() {
   }
 }
 
+<<<<<<< .mine
+
+void processMinMaxCommand() {
+   /** @todo: kenny, fix this */
+  processMinMaxCommandPerMotor(FRONT_LEFT);
+  processMinMaxCommandPerMotor(FRONT_RIGHT);
+  processMinMaxCommandPerMotor(REAR);
+  processMinMaxCommandPerMotor(SERVO);
+}
+
+
+void processHardManuevers() {
+  if (receiver->getData(ROLL) < MINCHECK) {        // Maximum Left Roll Rate
+    motorMinCommand[FRONT_RIGHT] = MAXCOMMAND;
+    motorMaxCommand[FRONT_LEFT]  = minAcro;
+    motorMaxCommand[REAR]        = throttle + motorAxisCommandPitch*4/3;
+  }
+  else if (receiver->getData(ROLL) > MAXCHECK) {   // Maximum Right Roll Rate
+    motorMinCommand[FRONT_LEFT]  = MAXCOMMAND;
+    motorMaxCommand[FRONT_RIGHT] = minAcro;
+    motorMaxCommand[REAR]        = throttle + motorAxisCommandPitch*4/3;
+  }
+  else if (receiver->getData(PITCH) < MINCHECK) {  // Maximum Nose Up Pitch Rate
+    motorMinCommand[FRONT_LEFT]  = MAXCOMMAND;
+    motorMinCommand[FRONT_RIGHT] = MAXCOMMAND;
+    motorMaxCommand[REAR]        = minAcro;
+  }
+  else if (receiver->getData(PITCH) > MAXCHECK) {  // Maximum Nose Down Pitch Rate
+    motorMinCommand[REAR]        = MAXCOMMAND;
+    motorMaxCommand[FRONT_LEFT]  = minAcro;
+    motorMaxCommand[FRONT_RIGHT] = minAcro;
+  }
+}
+
+=======
+>>>>>>> .r687
 #endif // #define _AQ_PROCESS_FLIGHT_CONTROL_X_MODE_H_
