@@ -198,7 +198,7 @@ void processFlightControl() {
   } 
 
   // *********************** process min max motor command *******************
-  processMinMaxMotorCommand();
+  processMinMaxCommand();
 
   // Allows quad to do acrobatics by lowering power to opposite motors during hard manuevers
   processHardManuevers();
