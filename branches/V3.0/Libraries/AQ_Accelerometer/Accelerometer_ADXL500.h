@@ -45,7 +45,7 @@ public:
   
     int accelADC[3];
     accelADC[XAXIS] = analogRead(1) - zero[PITCH];
-    accelADC[YAXIS] = analogRead(0) - zero[ROLL];
+    accelADC[YAXIS] = zero[ROLL]  - analogRead(0);
     accelADC[ZAXIS] = zero[ZAXIS] - analogRead(2);
     for (byte axis = XAXIS; axis < LASTAXIS; axis++) {
       meterPerSec[axis] = filterSmooth(accelADC[axis] * accelScaleFactor, meterPerSec[axis], smoothFactor);
