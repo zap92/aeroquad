@@ -341,7 +341,7 @@ void initReceiverFromEEPROM(void);
 void readPilotCommands(void); 
 //////////////////////////////////////////////////////
 
-// defined in FlightControl.pde Flight control needed
+// defined in FlightControl.pde Flight control needs
 int motorAxisCommandRoll = 0;
 int motorAxisCommandPitch = 0;
 int motorAxisCommandYaw = 0;
@@ -362,6 +362,7 @@ void processHeading();
 void processAltitudeHold();
 void processCalibrateESC();
 void processFlightControl();
+void processAltitudeHold();
 //////////////////////////////////////////////////////
 
 //defined in SerialCom.pde

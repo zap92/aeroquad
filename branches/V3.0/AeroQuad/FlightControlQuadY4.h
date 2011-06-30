@@ -27,16 +27,16 @@
 #define REAR_2      MOTOR4
 #define LASTMOTOR   MOTOR4+1
 
-#define YAW_DIRECTION 1 // if you want to reverse the yaw correction direction
-//#define YAW_DIRECTION -1
+//#define YAW_DIRECTION 1 // if you want to reverse the yaw correction direction
+#define YAW_DIRECTION -1
 
 
 void applyMotorCommand() {
   // Front = Front/Right, Back = Left/Rear, Left = Front/Left, Right = Right/Rear 
-  motors->setMotorCommand(FRONT_LEFT,  throttle - motorAxisCommandPitch + motorAxisCommandRoll);// - ((YAW_DIRECTION * motorAxisCommandYaw)/4));
-  motors->setMotorCommand(FRONT_RIGHT, throttle - motorAxisCommandPitch - motorAxisCommandRoll);// + ((YAW_DIRECTION * motorAxisCommandYaw)/4));
-  motors->setMotorCommand(REAR_2,      throttle + motorAxisCommandPitch +                        ((YAW_DIRECTION * motorAxisCommandYaw)));
-  motors->setMotorCommand(REAR_1,      throttle + motorAxisCommandPitch -                        ((YAW_DIRECTION * motorAxisCommandYaw)));
+  motors->setMotorCommand(FRONT_LEFT,  throttle - motorAxisCommandPitch + motorAxisCommandRoll);
+  motors->setMotorCommand(FRONT_RIGHT, throttle - motorAxisCommandPitch - motorAxisCommandRoll);
+  motors->setMotorCommand(REAR_2,      throttle + motorAxisCommandPitch - (YAW_DIRECTION * motorAxisCommandYaw));
+  motors->setMotorCommand(REAR_1,      throttle + motorAxisCommandPitch + (YAW_DIRECTION * motorAxisCommandYaw));
 }
 
 void processMinMaxCommand() {
@@ -70,9 +70,9 @@ void processMinMaxCommand() {
   }     
   else {
     motorMaxCommand[FRONT_LEFT] = MAXCOMMAND;
-    motorMaxCommand[REAR_2] = MAXCOMMAND;
+    motorMaxCommand[REAR_2]     = MAXCOMMAND;
     motorMinCommand[FRONT_LEFT] = MINTHROTTLE;
-    motorMinCommand[REAR_2] = MINTHROTTLE;
+    motorMinCommand[REAR_2]     = MINTHROTTLE;
   }
 }
 

@@ -190,7 +190,7 @@ void processFlightControl() {
   processHeading();
 
   // ********************** Altitude Adjust **********************************
-  processAltitudeHold();
+//  processAltitudeHold();     // move in the main loop executive
 
   // ********************** Calculate Motor Commands *************************
   if (armed && safetyCheck) {
