@@ -18,6 +18,7 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+
 /****************************************************************************
    Before flight, select the different user options for your AeroQuad below
    If you need additional assitance go to http://AeroQuad.com/forum
@@ -30,8 +31,8 @@
 
 //#define AeroQuad_v1         // Arduino 2009 with AeroQuad Shield v1.7 and below
 //#define AeroQuad_v1_IDG     // Arduino 2009 with AeroQuad Shield v1.7 and below using IDG yaw gyro
-//#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
-#define AeroQuad_Mini       // Arduino Pro Mini with AeroQuad Mini Shield V1.0
+#define AeroQuad_v18        // Arduino 2009 with AeroQuad Shield v1.8
+//#define AeroQuad_Mini       // Arduino Pro Mini with AeroQuad Mini Shield V1.0
 //#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
 //#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
@@ -45,12 +46,12 @@
  *********************** Define Flight Configuration ************************
  ****************************************************************************/
 // Use only one of the following definitions
-//#define quadXConfig
+#define quadXConfig
 //#define quadPlusConfig
 //#define hexPlusConfig
 //#define hexXConfig
 //#define triConfig
-#define quadY4
+//#define quadY4
 
 // *******************************************************************************************************************************
 // Optional Sensors
@@ -1194,7 +1195,7 @@ void loop () {
       
       #ifdef AltitudeHold
         if (sensorLoop == ON) {
-          altitude.measure(); // defined in altitude.h
+          barometricSensor->measure(); // defined in altitude.h
         }
       #endif
 
