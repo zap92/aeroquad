@@ -36,9 +36,9 @@
 //#define AeroQuad_Wii        // Arduino 2009 with Wii Sensors and AeroQuad Shield v1.x
 //#define AeroQuad_Paris_v3   // Define along with either AeroQuad_Wii to include specific changes for MultiWiiCopter Paris v3.0 board
 //#define AeroQuadMega_v1     // Arduino Mega with AeroQuad Shield v1.7 and below
-//#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
+#define AeroQuadMega_v2     // Arduino Mega with AeroQuad Shield v2.x
 //#define AeroQuadMega_Wii    // Arduino Mega with Wii Sensors and AeroQuad Shield v2.x
-#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
+//#define ArduCopter          // ArduPilot Mega (APM) with Oilpan Sensor Board
 //#define AeroQuadMega_CHR6DM // Clean Arduino Mega with CHR6DM as IMU/heading ref.
 //#define APM_OP_CHR6DM       // ArduPilot Mega with CHR6DM as IMU/heading ref., Oilpan for barometer (just uncomment AltitudeHold for baro), and voltage divider
 
@@ -51,8 +51,9 @@
 //#define hexPlusConfig
 //#define hexXConfig
 //#define triConfig
-//#define quadY4
-#define hexY6Config
+//#define quadY4Config
+//#define hexY6Config
+#define octoX8Congig
 
 // *******************************************************************************************************************************
 // Optional Sensors
@@ -853,11 +854,6 @@ Kinematics *kinematics = &tempKinematics;
 //********************************************************
 //********************** MOTORS DECLARATION **************
 //********************************************************
-//#if defined hexY6Config
-//  #include <Motors.h>        // @todo Kenny : remove this and use PWM_timer
-//  #include <Motors_PWM.h>
-//  Motors_PWM motorsSpecific;
-//  Motors *motors = &motorsSpecific;
 #if defined triConfig 
   #include <Motors.h>
   #include <Motors_PWM_Tri.h>
@@ -953,13 +949,14 @@ Kinematics *kinematics = &tempKinematics;
   #include "FlightControlHexXMode.h"
 #elif defined triConfig
   #include "FlightControlTriMode.h"
-#elif defined quadY4
-  #include "FlightControlQuadY4.h"
-#elif defined quadY4
+#elif defined quadY4Config
   #include "FlightControlQuadY4.h"
 #elif defined hexY6Config
-  #include "FlightControlHexY6.h"    
+  #include "FlightControlHexY6.h"  
+#elif defined octoX8Congig
+  #include "FlightControlOctoX8.h"
 #endif
+
 
 // Include this last as it contains objects from above declarations
 #include "DataStorage.h"
@@ -991,11 +988,14 @@ void setup() {
   initPlatform();
   
   // Configure motors
-  #if defined(quadXConfig) || defined(quadPlusConfig) || defined(quadY4)
+  #if defined(quadXConfig) || defined(quadPlusConfig) || defined(quadY4Config)
      motors->initialize(); 
   #elif defined(hexPlusConfig) || defined(hexXConfig) || defined (hexY6Config)
      motors->initialize(SIX_Motors); 
+  #elif defined (octoX8Congig)
+     motors->initialize(HEIGHT_Motors); 
   #endif
+
 
   // Setup receiver pins for pin change interrupts
   if (receiverLoop == ON) {
