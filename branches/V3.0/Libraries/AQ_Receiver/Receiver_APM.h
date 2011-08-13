@@ -47,24 +47,23 @@ public:
     receiverPin[AUX] = 5;
   }
 
-  void initialize(void) {
+  void initialize(int nbChannel = 6) {
+    Receiver::initialize(nbChannel);
   }
 
   void read(void) {
-    for(byte channel = ROLL; channel < LASTCHANNEL; channel++) {
-      //currentTime = micros();
+    for(byte channel = ROLL; channel < lastChannel; channel++) {
       // Apply transmitter calibration adjustment
       receiverData[channel] = (mTransmitter[channel] * ((readReceiverChannel(receiverPin[channel])/*+600)/2*/))) + bTransmitter[channel];
       // Smooth the flight control transmitter inputs
       transmitterCommandSmooth[channel] = filterSmooth(receiverData[channel], transmitterCommandSmooth[channel], transmitterSmooth[channel]);
-      //previousTime = currentTime;
     }
 
     // Reduce transmitter commands using xmitFactor and center around 1500
     for (byte channel = ROLL; channel < THROTTLE; channel++)
       transmitterCommand[channel] = ((transmitterCommandSmooth[channel] - transmitterZero[channel]) * xmitFactor) + transmitterZero[channel];
     // No xmitFactor reduction applied for throttle, mode and
-    for (byte channel = THROTTLE; channel < LASTCHANNEL; channel++)
+    for (byte channel = THROTTLE; channel < lastChannel; channel++)
       transmitterCommand[channel] = transmitterCommandSmooth[channel];
   }
 };

@@ -83,14 +83,15 @@ public:
   Receiver_PPM() {
   }
 
-  void initialize(void) {
+  void initialize(int nbChannel = 6) {
+    Receiver::initialize(nbChannel);
     attachInterrupt(0, rxInt, RISING);
   }
 
   void read(void) {
   
     
-	for(byte channel = ROLL; channel < LASTCHANNEL; channel++) {
+	for(byte channel = ROLL; channel < lastChannel; channel++) {
 	  uint8_t oldSREG;
       oldSREG = SREG;
       cli(); // Let's disable interrupts
@@ -107,7 +108,7 @@ public:
 	
 	
     // Reduce transmitter commands using xmitFactor and center around 1500
-    for (byte channel = ROLL; channel < LASTCHANNEL; channel++)
+    for (byte channel = ROLL; channel < lastChannel; channel++)
       if (channel < THROTTLE)
         transmitterCommand[channel] = ((transmitterCommandSmooth[channel] - transmitterZero[channel]) * xmitFactor) + transmitterZero[channel];
       else

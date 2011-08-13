@@ -35,12 +35,16 @@
 #define MAXCHECK MAXCOMMAND - 100
 #define MINTHROTTLE MINCOMMAND + 100
 #define LEVELOFF 100
-#define LASTCHANNEL 6
+#define MAX_NB_CHANNEL 8
+
 //int delta;
 
 
 class Receiver {
 protected:
+  
+  int lastChannel;
+
   float xmitFactor;
   int receiverData[LASTCHANNEL];
   int transmitterTrim[3];
@@ -60,22 +64,25 @@ public:
     transmitterCommand[THROTTLE] = 1000;
     transmitterCommand[MODE] = 1000;
     transmitterCommand[AUX] = 1000;
+  }
 
-    for (byte channel = ROLL; channel < LASTCHANNEL; channel++)
+
+  virtual void initialize(int nbChannel = 6) {
+    lastChannel = nbChannel;
+	
+    for (byte channel = ROLL; channel < lastChannel; channel++)
       transmitterCommandSmooth[channel] = 1.0;
     for (byte channel = ROLL; channel < THROTTLE; channel++)
       transmitterZero[channel] = 1500;
 	
-    for (byte channel = ROLL; channel < LASTCHANNEL; channel++)
+    for (byte channel = ROLL; channel < lastChannel; channel++)
       mTransmitter[channel] = 1;
-    for (byte channel = ROLL; channel < LASTCHANNEL; channel++)
+    for (byte channel = ROLL; channel < lastChannel; channel++)
       bTransmitter[channel] = 1;
-    for (byte channel = ROLL; channel < LASTCHANNEL; channel++)
-      transmitterSmooth[channel] = 1;
+    for (byte channel = ROLL; channel < lastChannel; channel++)
+      transmitterSmooth[channel] = 1; 
   }
-
-
-  virtual void initialize(void) {}
+  
   virtual void read(void) {}
   virtual void setChannelValue(byte channel,int value) {}
   
