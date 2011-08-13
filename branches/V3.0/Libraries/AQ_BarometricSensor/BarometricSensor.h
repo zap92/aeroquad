@@ -25,9 +25,11 @@
 
 class BarometricSensor {
 protected:
-  double altitude;
-  float smoothFactor;
+  double altitude, rawAltitude;
+  float groundTemperature; // remove later
+  float groundPressure; // remove later
   float groundAltitude;
+  float smoothFactor;
   
 public:
   
@@ -55,6 +57,29 @@ public:
   
   const float getSmoothFactor() {
     return smoothFactor;
+  }
+  
+  void measureGround() {
+    // measure initial ground pressure (multiple samples)
+    groundAltitude = 0;
+    for (int i=0; i < 25; i++) {
+      measure();
+      delay(26);
+      groundAltitude += rawAltitude;
+    }
+    groundAltitude = groundAltitude / 25.0;
+  }
+
+  const float getRawData() {
+    return rawAltitude;
+  }
+  
+  const float getGroundAltitude() {
+    return groundAltitude;
+  }
+
+  void setStartAltitude(float value) {
+    altitude = value;
   }
 };
 

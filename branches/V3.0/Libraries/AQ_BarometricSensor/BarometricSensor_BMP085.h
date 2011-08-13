@@ -45,7 +45,6 @@ private:
   long temperature;
   long rawPressure, rawTemperature;
   byte select, pressureCount;
-  double rawAltitude;
   float pressureFactor;
   
   void requestRawPressure(void) {
@@ -83,7 +82,9 @@ public:
     // 3 = ultra high resolution
     overSamplingSetting = 3;
     pressure = 0;
+    groundPressure = 0;
     temperature = 0;
+    groundTemperature = 0;
     groundAltitude = 0;
     pressureFactor = 1/5.255;
   }
@@ -191,28 +192,8 @@ public:
     altitude = filterSmooth(rawAltitude, altitude, smoothFactor);
   }
   
-  void measureGround() {
-    // measure initial ground pressure (multiple samples)
-    groundAltitude = 0;
-    for (int i=0; i < 25; i++) {
-      measure();
-      delay(26);
-      groundAltitude += rawAltitude;
-    }
-    groundAltitude = groundAltitude / 25.0;
-  }
-
-  const float getRawData() {
-    return rawAltitude;
-  }
   
-  const float getGroundAltitude() {
-    return groundAltitude;
-  }
-
-  void setStartAltitude(float value) {
-    altitude = value;
-  }
+  
 };
 
 #endif
