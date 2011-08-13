@@ -911,7 +911,7 @@ Kinematics *kinematics = &tempKinematics;
   #include <BatteryMonitor.h>
   #include <BatteryMonitor_AQ.h>
   BatteryMonitor_AQ batteryMonitorSpecific;
-  BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
+    BatteryMonitor* batteryMonitor = &batteryMonitorSpecific;
 #elif defined (BATTERY_MONITOR_APM)
   #include <BatteryMonitor.h>
   #include <BatteryMonitor_APM.h>
@@ -1005,7 +1005,7 @@ void setup() {
 
   // Setup receiver pins for pin change interrupts
   if (receiverLoop == ON) {
-    receiver->initialize();
+    receiver->initialize(LASTCHANNEL);
     initReceiverFromEEPROM();
   }
        

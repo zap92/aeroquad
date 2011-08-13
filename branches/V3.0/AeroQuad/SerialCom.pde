@@ -165,7 +165,7 @@ void readSerialCommand() {
       accel->calibrate();
 #if defined(AeroQuadMega_CHR6DM) || defined(APM_OP_CHR6DM)
       kinematics->calibrate();
-      accel->setOneG(accel->getFlightData(ZAXIS));
+      accel->setOneG(accel->getMeterPerSec(ZAXIS));
 #endif
       break;
     case 'd': // *** Spare ***
