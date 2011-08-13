@@ -46,14 +46,14 @@ protected:
   int lastChannel;
 
   float xmitFactor;
-  int receiverData[LASTCHANNEL];
+  int receiverData[MAX_NB_CHANNEL];
   int transmitterTrim[3];
   int transmitterZero[3];
-  int transmitterCommand[LASTCHANNEL];
-  int transmitterCommandSmooth[LASTCHANNEL];
-  float mTransmitter[LASTCHANNEL];
-  float bTransmitter[LASTCHANNEL];
-  float transmitterSmooth[LASTCHANNEL];
+  int transmitterCommand[MAX_NB_CHANNEL];
+  int transmitterCommandSmooth[MAX_NB_CHANNEL];
+  float mTransmitter[MAX_NB_CHANNEL];
+  float bTransmitter[MAX_NB_CHANNEL];
+  float transmitterSmooth[MAX_NB_CHANNEL];
   
 public:  
   Receiver() {
