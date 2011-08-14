@@ -191,9 +191,6 @@ public:
     //rawAltitude = (101325.0-pressure)/4096*346;
     altitude = filterSmooth(rawAltitude, altitude, smoothFactor);
   }
-  
-  
-  
 };
 
 #endif
