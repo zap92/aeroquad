@@ -137,9 +137,9 @@ void processHardManuevers() {
       motorMaxCommand[REAR_RIGHT_2]  = minAcro;
     }
     else if (receiver->getData(PITCH) < MINCHECK) {  // Maximum Nose Up Pitch Rate
-      motorMinCommand[FRONT_LEFT]    =  MAXCOMMAND;
+      motorMinCommand[FRONT_LEFT]    = MAXCOMMAND;
       motorMinCommand[FRONT_RIGHT]   = MAXCOMMAND;
-      motorMinCommand[FRONT_LEFT_2]  =  MAXCOMMAND;
+      motorMinCommand[FRONT_LEFT_2]  = MAXCOMMAND;
       motorMinCommand[FRONT_RIGHT_2] = MAXCOMMAND;
       motorMaxCommand[REAR_LEFT]     = minAcro;
       motorMaxCommand[REAR_RIGHT]    = minAcro;

@@ -51,8 +51,8 @@ void applyMotorCommand() {
   motors->setMotorCommand(FRONT_LEFT,  throttle + motorAxisCommandRoll - motorAxisCommandPitch*2/3);
   motors->setMotorCommand(FRONT_RIGHT, throttle - motorAxisCommandRoll - motorAxisCommandPitch*2/3);
   motors->setMotorCommand(REAR,        throttle + motorAxisCommandPitch*4/3);
-  const float yawMotorCommand = constrain(motorAxisCommandYaw,-MAX_RECEIVER_OFFSET-abs(receiver->getData(YAW)),+MAX_RECEIVER_OFFSET+abs(receiver->getData(YAW)));
-  motors->setMotorCommand(SERVO,  constrain(TRI_YAW_MIDDLE + YAW_DIRECTION * yawMotorCommand, TRI_YAW_CONSTRAINT_MIN, TRI_YAW_CONSTRAINT_MAX));
+  const float yawMotorCommand  = constrain(motorAxisCommandYaw,-MAX_RECEIVER_OFFSET-abs(receiver->getData(YAW)),+MAX_RECEIVER_OFFSET+abs(receiver->getData(YAW)));
+  motors->setMotorCommand(SERVO, constrain(TRI_YAW_MIDDLE + YAW_DIRECTION * yawMotorCommand, TRI_YAW_CONSTRAINT_MIN, TRI_YAW_CONSTRAINT_MAX));
 }
 
 void processMinMaxCommand() {

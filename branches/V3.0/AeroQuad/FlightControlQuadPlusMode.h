@@ -52,18 +52,18 @@ void processMinMaxCommand() {
   if ((motors->getMotorCommand(FRONT) <= MINTHROTTLE) || (motors->getMotorCommand(REAR) <= MINTHROTTLE)){
     delta = receiver->getData(THROTTLE) - MINTHROTTLE;
     motorMaxCommand[RIGHT] = constrain(receiver->getData(THROTTLE) + delta, MINTHROTTLE, MAXCHECK);
-    motorMaxCommand[LEFT] =  constrain(receiver->getData(THROTTLE) + delta, MINTHROTTLE, MAXCHECK);
+    motorMaxCommand[LEFT]  = constrain(receiver->getData(THROTTLE) + delta, MINTHROTTLE, MAXCHECK);
   }
   else if ((motors->getMotorCommand(FRONT) >= MAXCOMMAND) || (motors->getMotorCommand(REAR) >= MAXCOMMAND)) {
     delta = MAXCOMMAND - receiver->getData(THROTTLE);
     motorMinCommand[RIGHT] = constrain(receiver->getData(THROTTLE) - delta, MINTHROTTLE, MAXCOMMAND);
-    motorMinCommand[LEFT] =  constrain(receiver->getData(THROTTLE) - delta, MINTHROTTLE, MAXCOMMAND);
+    motorMinCommand[LEFT]  = constrain(receiver->getData(THROTTLE) - delta, MINTHROTTLE, MAXCOMMAND);
   }     
   else {
     motorMaxCommand[RIGHT] = MAXCOMMAND;
-    motorMaxCommand[LEFT] =  MAXCOMMAND;
+    motorMaxCommand[LEFT]  = MAXCOMMAND;
     motorMinCommand[RIGHT] = MINTHROTTLE;
-    motorMinCommand[LEFT] =  MINTHROTTLE;
+    motorMinCommand[LEFT]  = MINTHROTTLE;
   }
 
   if ((motors->getMotorCommand(LEFT) <= MINTHROTTLE) || (motors->getMotorCommand(RIGHT) <= MINTHROTTLE)){
@@ -88,18 +88,18 @@ void processHardManuevers() {
   if (flightMode == ACRO) {
     if (receiver->getData(ROLL) < MINCHECK) {        // Maximum Left Roll Rate
       motorMinCommand[RIGHT] = MAXCOMMAND;
-      motorMaxCommand[LEFT] = minAcro;
+      motorMaxCommand[LEFT]  = minAcro;
     }
     else if (receiver->getData(ROLL) > MAXCHECK) {   // Maximum Right Roll Rate
-      motorMinCommand[LEFT] = MAXCOMMAND;
+      motorMinCommand[LEFT]  = MAXCOMMAND;
       motorMaxCommand[RIGHT] = minAcro;
     }
     else if (receiver->getData(PITCH) < MINCHECK) {  // Maximum Nose Up Pitch Rate
       motorMinCommand[FRONT] = MAXCOMMAND;
-      motorMaxCommand[REAR] = minAcro;
+      motorMaxCommand[REAR]  = minAcro;
     }
     else if (receiver->getData(PITCH) > MAXCHECK) {  // Maximum Nose Down Pitch Rate
-      motorMinCommand[REAR] = MAXCOMMAND;
+      motorMinCommand[REAR]  = MAXCOMMAND;
       motorMaxCommand[FRONT] = minAcro;
     }
   }
