@@ -30,54 +30,57 @@
 #define MARG 4
 
 // This class is responsible for calculating vehicle attitude
-byte kinematicsType;
-float kinematicsAngle[3];
-float gyroAngle[2];
-float correctedRateVector[3];
-float earthAccel[3];
+class Kinematics {
+protected:
+  byte type;
+  float angle[3];
+  float gyroAngle[2];
+  float correctedRateVector[3];
+  float earthAccel[3];
 
-void initializeBaseKinematicsParam(float hdgX, float hdgY) {
-  for (byte axis = ROLL; axis < LASTAXIS; axis++)
-    kinematicsAngle[axis] = 0.0;
-  gyroAngle[ROLL] = 0;
-  gyroAngle[PITCH] = 0;
-}
-
-void initializeKinematics(float hdgX, float hdgY);
-void calculateKinematics(float rollRate,           float pitchRate,     float yawRate,       
+public:  
+  Kinematics(void) {
+    for (byte axis = ROLL; axis < LASTAXIS; axis++)
+      angle[axis] = 0.0;
+    gyroAngle[ROLL] = 0;
+    gyroAngle[PITCH] = 0;
+  }
+  
+  virtual void initialize(float hdgX, float hdgY);
+  virtual void calculate(float rollRate,           float pitchRate,     float yawRate,       
                          float longitudinalAccel,  float lateralAccel,  float verticalAccel, 
                          float oneG,               float magX,          float magY,
-                         float G_Dt);
-float getGyroUnbias(byte axis);
-void calibrateKinematics();
+						 float G_Dt);
+  virtual float getGyroUnbias(byte axis);
+  virtual void calibrate();
  
-  // returns the kinematicsAngle of a specific axis in SI units (radians)
-//  const float getData(byte axis) {
-//    return kinematicsAngle[axis];
-//  }
+  // returns the angle of a specific axis in SI units (radians)
+  const float getData(byte axis) {
+    return angle[axis];
+  }
   // return heading as +PI/-PI
-//  const float getHeading(byte axis) {
-//    return(kinematicsAngle[axis]);
-//  }
+  const float getHeading(byte axis) {
+    return(angle[axis]);
+  }
   
   // This really needs to be in Radians to be consistent
   // I'll fix later - AKA
   // returns heading in degrees as 0-360
-const float kinematicsGetDegreesHeading(byte axis) {
-  float tDegrees;
+  const float getDegreesHeading(byte axis) {
+    float tDegrees;
     
-  tDegrees = degrees(kinematicsAngle[axis]);
-  if (tDegrees < 0.0)
-    return (tDegrees + 360.0);
-  else
-    return (tDegrees);
-}
+    tDegrees = degrees(angle[axis]);
+    if (tDegrees < 0.0)
+      return (tDegrees + 360.0);
+    else
+      return (tDegrees);
+  }
   
-//  const byte getType(void) {
+  const byte getType(void) {
     // This is set in each subclass to identify which algorithm used
-//    return kinematicsType;
-//  }
-
+    return type;
+  }
+};
 
 #endif
 

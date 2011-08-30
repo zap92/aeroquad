@@ -29,15 +29,17 @@
 
 #include "Kinematics.h"
 
-float dcmMatrix[9];
-float omegaP[3];
-float omegaI[3];
-float omega[3];
-float errorCourse;
-float kpRollPitch;
-float kiRollPitch;
-float kpYaw;
-float kiYaw;
+class Kinematics_DCM : public Kinematics {
+private:
+  float dcmMatrix[9];
+  float omegaP[3];
+  float omegaI[3];
+  float omega[3];
+  float errorCourse;
+  float kpRollPitch;
+  float kiRollPitch;
+  float kpYaw;
+  float kiYaw;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Matrix Update
@@ -75,7 +77,8 @@ void matrixUpdate(float p, float q, float r, float G_Dt)
 ////////////////////////////////////////////////////////////////////////////////
 // Normalize
 ////////////////////////////////////////////////////////////////////////////////
-void normalize() 
+
+void normalize(void) 
 {
   float error=0;
   float temporary[9];
@@ -107,7 +110,7 @@ void driftCorrection(float ax, float ay, float az, float oneG, float magX, float
   float accelVector[3];
   float accelWeight;
   float errorRollPitch[3];
-#ifdef HeadingMagHold  // not know here
+#ifdef HeadingMagHold  
   float errorCourse;
   float errorYaw[3];
   float scaledOmegaP[3];
@@ -139,7 +142,7 @@ void driftCorrection(float ax, float ay, float az, float oneG, float magX, float
   
   //  Yaw Compensation
   
-  #ifdef HeadingMagHold  // not know here
+  #ifdef HeadingMagHold
     errorCourse = (dcmMatrix[0] * magY) - (dcmMatrix[3] * magX);
     vectorScale(3, errorYaw, &dcmMatrix[6], errorCourse);
   
@@ -174,9 +177,9 @@ void driftCorrection(float ax, float ay, float az, float oneG, float magX, float
 
 void eulerAngles(void)
 {
-  kinematicsAngle[ROLL]  =  atan2(dcmMatrix[7], dcmMatrix[8]);
-  kinematicsAngle[PITCH] =  -asin(dcmMatrix[6]);
-  kinematicsAngle[YAW]   =  atan2(dcmMatrix[3], dcmMatrix[0]);
+  angle[ROLL]  =  atan2(dcmMatrix[7], dcmMatrix[8]);
+  angle[PITCH] =  -asin(dcmMatrix[6]);
+  angle[YAW]   =  atan2(dcmMatrix[3], dcmMatrix[0]);
 } 
   
 ////////////////////////////////////////////////////////////////////////////////
@@ -196,27 +199,28 @@ void earthAxisAccels(float ax, float ay, float az, float oneG)
   earthAccel[ZAXIS] = vectorDotProduct(3, &dcmMatrix[6], &accelVector[0]) + oneG;
 } 
   
- 
+public:
+  Kinematics_DCM():Kinematics() {}
+  
 ////////////////////////////////////////////////////////////////////////////////
 // Initialize DCM
 ////////////////////////////////////////////////////////////////////////////////
 
-void initializeKinematics(float hdgX, float hdgY) 
-{
-  initializeBaseKinematicsParam(hdgX,hdgY);
-  for (byte i=0; i<3; i++) {
-    omegaP[i] = 0;
-    omegaI[i] = 0;
-  }
-  dcmMatrix[0] =  hdgX;
-  dcmMatrix[1] = -hdgY;
-  dcmMatrix[2] =  0;
-  dcmMatrix[3] =  hdgY;
-  dcmMatrix[4] =  hdgX;
-  dcmMatrix[5] =  0;
-  dcmMatrix[6] =  0;
-  dcmMatrix[7] =  0;
-  dcmMatrix[8] =  1;
+  void initialize(float hdgX, float hdgY) 
+  {
+    for (byte i=0; i<3; i++) {
+      omegaP[i] = 0;
+      omegaI[i] = 0;
+    }
+    dcmMatrix[0] =  hdgX;
+    dcmMatrix[1] = -hdgY;
+    dcmMatrix[2] =  0;
+    dcmMatrix[3] =  hdgY;
+    dcmMatrix[4] =  hdgX;
+    dcmMatrix[5] =  0;
+    dcmMatrix[6] =  0;
+    dcmMatrix[7] =  0;
+    dcmMatrix[8] =  1;
 
     // Original from John
 //    kpRollPitch = 1.6;
@@ -232,37 +236,37 @@ void initializeKinematics(float hdgX, float hdgY)
     kpYaw = -1.0;
     kiYaw = -0.002;
 */
-  kpRollPitch = 0.1;        // alternate 0.05;
-  kiRollPitch = 0.0002;     // alternate 0.0001;
+    kpRollPitch = 0.1;        // alternate 0.05;
+    kiRollPitch = 0.0002;     // alternate 0.0001;
     
-  kpYaw = -0.1;             // alternate -0.05;
-  kiYaw = -0.0002;          // alternate -0.0001;
+    kpYaw = -0.1;             // alternate -0.05;
+    kiYaw = -0.0002;          // alternate -0.0001;
     
-}
+  }
   
 ////////////////////////////////////////////////////////////////////////////////
 // Calculate DCM
 ////////////////////////////////////////////////////////////////////////////////
 
-void calculateKinematics(float rollRate,            float pitchRate,      float yawRate,  
-                         float longitudinalAccel,   float lateralAccel,   float verticalAccel, 
-                         float oneG,                float magX,           float magY,
-				         float G_Dt) {
+  void calculate(float rollRate,            float pitchRate,      float yawRate,  
+                 float longitudinalAccel,   float lateralAccel,   float verticalAccel, 
+                 float oneG,                float magX,           float magY,
+				 float G_Dt) {
     
-  matrixUpdate(rollRate, pitchRate, yawRate, G_Dt); 
-  normalize();
-  driftCorrection(longitudinalAccel, lateralAccel, verticalAccel, oneG, magX, magY);
-  eulerAngles();
-  earthAxisAccels(longitudinalAccel, lateralAccel, verticalAccel, oneG);
-}
+    matrixUpdate(rollRate, pitchRate, yawRate, G_Dt); 
+    normalize();
+    driftCorrection(longitudinalAccel, lateralAccel, verticalAccel, oneG, magX, magY);
+    eulerAngles();
+    earthAxisAccels(longitudinalAccel, lateralAccel, verticalAccel, oneG);
+  }
   
-float getGyroUnbias(byte axis) {
-  return correctedRateVector[axis];
-}
+  float getGyroUnbias(byte axis) {
+    return correctedRateVector[axis];
+  }
   
-void calibrateKinematics() {};
+  void calibrate() {};
   
-
+};
 
 #endif
 
