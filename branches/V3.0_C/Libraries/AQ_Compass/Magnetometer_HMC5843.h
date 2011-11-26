@@ -49,9 +49,9 @@ void initializeMagnetometer() {
   magCalibration[ZAXIS] = 1.0;
     
   while (success == false && numAttempts < 5 ) {
-     
+    
     numAttempts++;
- 
+  
     updateRegisterI2C(COMPASS_ADDRESS, 0x00, 0x11);  // Set positive bias configuration for sensor calibraiton
     delay(50);
    
@@ -64,22 +64,21 @@ void initializeMagnetometer() {
     measureMagnetometer(0.0, 0.0);                    // Read calibration data
     delay(10);
    
-    if ( fabs(measuredMagX) > 500.0 && fabs(measuredMagX) < 1000.0 \
-        && fabs(measuredMagY) > 500.0 && fabs(measuredMagY) < 1000.0 \
+    if ( fabs(measuredMagX) > 500.0 && fabs(measuredMagX) < 1000.0 
+        && fabs(measuredMagY) > 500.0 && fabs(measuredMagY) < 1000.0 
         && fabs(measuredMagZ) > 500.0 && fabs(measuredMagZ) < 1000.0) {
       magCalibration[XAXIS] = fabs(715.0 / measuredMagX);
       magCalibration[YAXIS] = fabs(715.0 / measuredMagY);
       magCalibration[ZAXIS] = fabs(715.0 / measuredMagZ);
-    
+   
       success = true;
     }
    
-    updateRegisterI2C(COMPASS_ADDRESS, 0x00, 0x18); // 50Hz update rate
-    delay(20);
-    updateRegisterI2C(COMPASS_ADDRESS, 0x01, SENSOR_GAIN); // Gain as defined above
-    delay(20);
-    updateRegisterI2C(COMPASS_ADDRESS, 0x02, 0x00); // Continuous conversion
-    delay(20);
+    updateRegisterI2C(COMPASS_ADDRESS, 0x00, 0x10);  // Set 10hz update rate and normal operaiton
+    delay(50);
+
+    updateRegisterI2C(COMPASS_ADDRESS, 0x02, 0x00); // Continuous Update mode
+    delay(50);                           // Mode change delay (1/Update Rate) **
   }
 
   measureMagnetometer(0.0, 0.0);  // Assume 1st measurement at 0 degrees roll and 0 degrees pitch
@@ -93,30 +92,26 @@ void measureMagnetometer(float roll, float pitch) {
   sendByteI2C(COMPASS_ADDRESS, 0x03);
   Wire.requestFrom(COMPASS_ADDRESS, 6);
 
-  rawMag[XAXIS] =  ((Wire.receive() << 8) | Wire.receive());
-  rawMag[YAXIS] = -((Wire.receive() << 8) | Wire.receive());
-  rawMag[ZAXIS] = -((Wire.receive() << 8) | Wire.receive());
+  measuredMagX =  ((Wire.receive() << 8) | Wire.receive()) * magCalibration[XAXIS];
+  measuredMagY = -((Wire.receive() << 8) | Wire.receive()) * magCalibration[YAXIS];
+  measuredMagZ = -((Wire.receive() << 8) | Wire.receive()) * magCalibration[ZAXIS];
 
   Wire.endTransmission();
 
-  measuredMagX = rawMag[XAXIS] + magBias[XAXIS];
-  measuredMagY = rawMag[YAXIS] + magBias[YAXIS];
-  measuredMagZ = rawMag[ZAXIS] + magBias[ZAXIS];
+  cosRoll =  cos(roll);
+  sinRoll =  sin(roll);
+  cosPitch = cos(pitch);
+  sinPitch = sin(pitch);
 
-  float cosRoll =  cos(roll);
-  float sinRoll =  sin(roll);
-  float cosPitch = cos(pitch);
-  float sinPitch = sin(pitch);
-
-  magX = (float)measuredMagX * cosPitch + \
-         (float)measuredMagY * sinRoll * sinPitch + \
-         (float)measuredMagZ * cosRoll * sinPitch;
+  magX = ((float)measuredMagX * magScale[XAXIS] + magOffset[XAXIS]) * cosPitch + 
+         ((float)measuredMagY * magScale[YAXIS] + magOffset[YAXIS]) * sinRoll * sinPitch + 
+         ((float)measuredMagZ * magScale[ZAXIS] + magOffset[ZAXIS]) * cosRoll * sinPitch;
            
-  magY = (float)measuredMagY * cosRoll - \
-         (float)measuredMagZ * sinRoll;
+  magY = ((float)measuredMagY * magScale[YAXIS] + magOffset[YAXIS]) * cosRoll - 
+         ((float)measuredMagZ * magScale[ZAXIS] + magOffset[ZAXIS]) * sinRoll;
 
   tmp  = sqrt(magX * magX + magY * magY);
-   
+    
   hdgX = magX / tmp;
   hdgY = -magY / tmp;
 }
